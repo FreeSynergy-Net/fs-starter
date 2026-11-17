@@ -59,7 +59,8 @@ pub trait Program {
     /// The contract the program's server offers (`history 0.1`): what `fs:requires` of a frontend is checked against.
     fn contract(&self) -> &ContractReq;
 
-    /// The frontend that always comes with the program (ADR 0074 §8).
+    /// The frontend that comes with the program and opens by default (ADR 0074 §8). A default only (O11): the person can switch
+    /// to another in the display menu (kept by [`Preference`]), and that choice wins over this one.
     fn standard_frontend(&self) -> &FrontendId;
 
     /// Runs the server with its own words (`fs-<program> serve ...`); returns when it ends. Review condition S2: the starter
