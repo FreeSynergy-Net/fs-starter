@@ -3,11 +3,11 @@ mod support;
 
 use std::ffi::OsString;
 
-use fs_starter::coded_stub::Coded;
 use fs_starter::{
     ActorName, ContractReq, FrontendId, ProgramName, ResumeToken, StartWords, StarterCode,
     Version3, Words, parse,
 };
+use fs_types::coded::Coded;
 use support::{fid, os, text};
 
 fn usage_word(words: &[&str]) -> String {

@@ -4,11 +4,11 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use fs_starter::coded_stub::{Code, Coded, ErrorCode, Param};
 use fs_starter::{
     ContractReq, Exit, Failure, Found, FrontendId, FrontendManifest, Place, Program, ProgramName,
     Trust,
 };
+use fs_types::coded::{Code, Coded, ErrorCode, Param};
 
 /// The codes of the demo program: `demo-error-x`.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

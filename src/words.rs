@@ -7,7 +7,7 @@
 use std::ffi::OsString;
 use std::path::PathBuf;
 
-use crate::coded_stub::Coded;
+use fs_types::coded::Coded;
 
 use crate::codes::{StarterCode, keys};
 use crate::names::{ActorName, FrontendId, ProgramName, ResumeToken};

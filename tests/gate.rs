@@ -5,8 +5,8 @@ use std::path::PathBuf;
 use std::time::{Duration, Instant};
 
 use fs_rpc::{Expected, SingleTimes};
-use fs_starter::coded_stub::Param;
 use fs_starter::{ServerGate, SingleGate, StarterCode};
+use fs_types::coded::Param;
 
 /// K28: the server cannot start: `server{cause}` with a known cause, well inside the overall time.
 #[test]

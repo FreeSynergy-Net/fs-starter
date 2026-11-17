@@ -3,7 +3,7 @@
 //! Pattern: Observer/Port (`Tell`; the standard writes to stderr, the program can put its MessageFormat 2 words in front,
 //! the suite records). Replaces the `eprintln!` sentences of activities `starter.rs` (:99, :104, :119, :134, :145).
 
-use crate::coded_stub::Code;
+use fs_types::coded::Code;
 
 use crate::names::ProgramName;
 

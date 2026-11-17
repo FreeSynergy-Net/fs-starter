@@ -7,9 +7,9 @@
 use std::marker::PhantomData;
 use std::path::{Path, PathBuf};
 
-use crate::coded_stub::Coded;
 use capnp::capability::FromClientHook;
 use fs_rpc::{CommandStarter, Expected, Param, RpcError, SingleTimes, ensure_single};
+use fs_types::coded::Coded;
 
 use crate::codes::{StarterCode, keys};
 

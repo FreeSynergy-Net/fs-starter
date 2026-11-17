@@ -2,7 +2,7 @@
 //!
 //! Pattern: none, an enum with total `match`es (as `StarterCode`).
 //!
-//! In the probe these are `fs_conformance::Coded` (its stand-in `fault`); after the fs-types lift both are `fs_types::coded` (today `coded_stub`).
+//! `fs_conformance::Coded` and `fs_conformance::ErrorCode` are re-exports of `fs_types::coded`: the suite and the starter use one type.
 
 use fs_conformance::ErrorCode;
 

@@ -8,7 +8,7 @@ use std::io;
 use std::path::PathBuf;
 use std::time::Instant;
 
-use crate::coded_stub::Coded;
+use fs_types::coded::Coded;
 
 use crate::codes::{StarterCode, keys};
 use crate::decide::{Chosen, Next, decide, pick, precheck};

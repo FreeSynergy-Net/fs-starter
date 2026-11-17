@@ -6,11 +6,11 @@ use std::io;
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use fs_starter::coded_stub::Coded;
 use fs_starter::{
     ActorName, Ended, Failure, FrontendId, HookOutcome, Launcher, Listing, ManifestSource,
     McpEntry, Note, Preference, ProgramName, ServerGate, StartCx, StartHook, StarterCode, Tell, Up,
 };
+use fs_types::coded::Coded;
 
 pub struct FakeGate {
     pub answer: Result<Up, Coded<StarterCode>>,

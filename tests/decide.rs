@@ -1,8 +1,8 @@
 //! K10-K12 of ENTWURF section 5: pick, decide, precheck.
 mod support;
 
-use fs_starter::coded_stub::Coded;
 use fs_starter::{Chosen, ContractReq, Next, StarterCode, Trust, Version3, decide, pick, precheck};
+use fs_types::coded::Coded;
 use support::{Demo, fid, found};
 
 /// K10: word > person > `fs:default` > standard.

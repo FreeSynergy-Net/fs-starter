@@ -8,7 +8,7 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use crate::coded_stub::{Code, Coded};
+use fs_types::coded::{Code, Coded};
 
 use crate::codes::StarterCode;
 use crate::frontend::ManifestSource;

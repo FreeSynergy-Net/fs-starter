@@ -4,8 +4,8 @@ mod support;
 use std::io::ErrorKind;
 use std::time::Duration;
 
-use fs_starter::coded_stub::{Coded, Param};
 use fs_starter::{Exit, Failure, Level, Listing, Note, StarterCode, TakenOverNote, Trust, Up};
+use fs_types::coded::{Coded, Param};
 use support::{FailingWriter, OpenAnswer, World, code_text, fid, found, os};
 
 fn code(exit: Exit) -> u8 {

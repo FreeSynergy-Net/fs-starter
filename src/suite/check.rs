@@ -5,8 +5,8 @@
 use std::ffi::OsString;
 use std::path::Path;
 
-use crate::coded_stub::message_key;
 use fs_conformance::{Coded, Cx, Need, Verdict};
+use fs_types::coded::message_key;
 
 use super::codes::{SuiteCode, keys};
 use super::fixture::{Arrange, Outcome, StarterFixture};
@@ -146,7 +146,7 @@ pub(crate) fn told(o: &Outcome, level: Level, c: StarterCode) -> Result<&Note, C
 
 /// The note has the text parameter `key` = `value`.
 pub(crate) fn param(note: &Note, key: &str, value: &str) -> Checked {
-    let ok = matches!(note.code.param(key), Some(crate::coded_stub::Param::Text(t)) if t == value);
+    let ok = matches!(note.code.param(key), Some(fs_types::coded::Param::Text(t)) if t == value);
     if ok {
         Ok(())
     } else {

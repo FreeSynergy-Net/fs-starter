@@ -2,7 +2,7 @@
 use std::collections::HashSet;
 
 use fs_starter::StarterCode;
-use fs_starter::coded_stub::{ErrorCode, message_key};
+use fs_types::coded::{ErrorCode, message_key};
 
 /// K16: `ALL` holds every variant once, `as_str` is unique kebab case, `message_key` is prefix and name.
 #[test]

@@ -6,7 +6,7 @@
 
 use std::path::{Path, PathBuf};
 
-use crate::coded_stub::Coded;
+use fs_types::coded::Coded;
 
 use crate::codes::{StarterCode, keys};
 use crate::frontend::{Found, FrontendManifest, Listing, ManifestSource, Place, Trust};

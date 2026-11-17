@@ -24,8 +24,6 @@
 #![deny(missing_docs)]
 #![warn(clippy::pedantic)]
 
-// Probe stand-in (O1): replaces `fs_types::coded` after the fs-types lift (a copy of `fs-conformance/src/fault.rs` at fs-types 339aa24).
-pub mod coded_stub;
 mod codes;
 mod decide;
 mod frontend;

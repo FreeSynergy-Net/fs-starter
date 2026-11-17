@@ -4,7 +4,7 @@
 
 use std::path::PathBuf;
 
-use crate::coded_stub::Coded;
+use fs_types::coded::Coded;
 
 use crate::codes::StarterCode;
 use crate::names::{ContractReq, FrontendId, ProgramName, Version3};

@@ -5,7 +5,7 @@
 
 use std::ffi::OsString;
 
-use crate::coded_stub::Code;
+use fs_types::coded::Code;
 
 use crate::names::{ActorName, ContractReq, FrontendId, ProgramName};
 

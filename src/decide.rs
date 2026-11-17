@@ -3,7 +3,7 @@
 //! Pattern: Strategy as pure functions. `decide` is activities `starter.rs` `decide` (:31; six copies, calendars :27 its own
 //! form) with typed codes instead of sentences, and calendars' rule that a missing standard frontend fails visibly (exit 1).
 
-use crate::coded_stub::Coded;
+use fs_types::coded::Coded;
 
 use crate::codes::{StarterCode, keys};
 use crate::frontend::Found;
