@@ -65,7 +65,7 @@ pub const RESERVED_FRONTENDS: [&str; 8] = [
 ];
 
 impl ProgramName {
-    /// `None` unless [`is_name`] holds and the name does not start with `fs-` (that is the binary's prefix).
+    /// `None` unless the name form holds (`a-z`, `0-9`, `-`) and the name does not start with `fs-` (that is the binary's prefix).
     #[must_use]
     pub fn parse(s: &str) -> Option<Self> {
         (is_name(s) && !s.starts_with("fs-")).then(|| Self(s.to_owned()))
