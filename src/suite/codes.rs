@@ -1,5 +1,7 @@
 //! The codes of the suite's failures. Message key: `starter-suite-` and the name.
 //!
+//! Pattern: none, an enum with total `match`es (as `StarterCode`).
+//!
 //! In the probe these are `fs_conformance::Coded` (its stand-in `fault`); after the fs-types lift both are `fs_types::coded` (today `coded_stub`).
 
 use fs_conformance::ErrorCode;
