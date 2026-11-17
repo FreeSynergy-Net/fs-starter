@@ -131,6 +131,20 @@ fn k23_open_failed() {
     assert!(w.hooks[0].after.borrow().is_empty(), "no after_end");
 }
 
+/// The standard frontend is never asked with `--check` (mutant M7); another one is, once.
+#[test]
+fn standard_is_not_checked() {
+    let w = World::new();
+    assert_eq!(code(w.go(&[])), 0);
+    assert_eq!(w.launcher.checked.borrow().len(), 0);
+    let w = World::new().with_frontend("other", Trust::Packaged);
+    assert_eq!(code(w.go(&["--frontend", "other"])), 0);
+    assert_eq!(
+        w.launcher.checked.borrow().as_slice(),
+        [World::exe("other")]
+    );
+}
+
 /// K24: the frontend's exit is passed on; a signal or an out-of-range value is 1.
 #[test]
 fn k24_frontend_exit() {

@@ -19,12 +19,16 @@ fn other() -> FrontendId {
 const TOKEN: &str = "token-4f1c9a";
 
 rule!(
-    /// No words: the server is asked once, the standard frontend opens with `--socket <path>`, its exit is passed on.
+    /// No words: the server is asked once, the standard frontend opens (not asked with `--check`) with `--socket <path>`, its exit is passed on.
     OpenStandard, "starter.open-standard", |f, _cx| {
         let standard = f.program().standard_frontend().clone();
         let exe = f.exe_of(&standard);
         let o = f.start(&[]);
         gate(&o, 1)?;
+        // The standard frontend is never asked with `--check` (it opens anyway and shows a contract that does not fit itself).
+        if !o.checked.is_empty() {
+            return Err(fs_conformance::Coded::new(SuiteCode::Launched).with_text(keys::WHAT, "check").into());
+        }
         let words = opened(&o, &exe, standard.as_str())?;
         if words.len() < 2 || words[0] != "--socket" || words[1].is_empty() {
             return Err(fs_conformance::Coded::new(SuiteCode::WordMissing).with_text(keys::WORD, "--socket").into());
