@@ -5,13 +5,19 @@ use fs_starter::coded_stub::Coded;
 use fs_starter::{Chosen, ContractReq, Next, StarterCode, Trust, Version3, decide, pick, precheck};
 use support::{Demo, fid, found};
 
-/// K10: word > person > standard.
+/// K10: word > person > `fs:default` > standard.
 #[test]
 fn k10_pick() {
     let (word, person, standard) = (fid("w"), fid("p"), fid("simple"));
-    assert_eq!(pick(Some(&word), Some(person.clone()), &standard), word);
-    assert_eq!(pick(None, Some(person.clone()), &standard), person);
-    assert_eq!(pick(None, None, &standard), standard);
+    let default = fid("d");
+    let p = |w: Option<&_>, pe: Option<_>, d: Option<_>| pick(w, pe, d, &standard);
+    assert_eq!(
+        p(Some(&word), Some(person.clone()), Some(default.clone())),
+        word
+    );
+    assert_eq!(p(None, Some(person.clone()), Some(default.clone())), person);
+    assert_eq!(p(None, None, Some(default.clone())), default);
+    assert_eq!(p(None, None, None), standard);
 }
 
 fn named(code: StarterCode, frontend: &str) -> Coded<StarterCode> {

@@ -1,6 +1,6 @@
 //! What went wrong, as a code with typed parameters: never a sentence (ADR 0057; the line of fs-rpc `docs/errors.md`).
 //!
-//! STAND-IN for `fs_types::coded` (O1: `coded_stub` ersetzt `fs_types::coded` nach dem Lift) (decision T1 with condition: parameter keys are `String` as in `RpcError`, rpc-0003
+//! STAND-IN for `fs_types::coded` (O1: this module is replaced by `fs_types::coded` after the lift) (decision T1 with condition: parameter keys are `String` as in `RpcError`, rpc-0003
 //! `code/error.rs:13`; `message_key` is a free function, trait-delta rule 6: no default methods). When the fs-types tag carries
 //! it, this file is deleted and the crate re-exports `fs_types::coded` unchanged.
 //!

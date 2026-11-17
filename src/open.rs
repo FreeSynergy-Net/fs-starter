@@ -73,6 +73,7 @@ fn settle(
     let chosen = pick(
         w.frontend.as_ref(),
         parts.preference.frontend(program.name()),
+        listing.default_frontend().map(|f| f.manifest.id.clone()),
         standard,
     );
     let (state, exe) = locate(parts, listing, &chosen, &chosen != standard, socket);
@@ -131,6 +132,14 @@ pub(crate) fn start(parts: &Parts<'_>, w: &StartWords) -> Exit {
     let listing = parts.manifests.frontends(program.name());
     for refused in &listing.refused {
         say(parts, Level::Hint, refused.clone().erase());
+    }
+    // Only the first `fs:default` counts (listing order); each further one is told, never silently ignored.
+    for extra in listing.found.iter().filter(|f| f.manifest.default).skip(1) {
+        let file = extra.file.to_string_lossy();
+        let code = Coded::new(StarterCode::ManifestInvalid)
+            .with_text(keys::FILE, file)
+            .with_text(keys::FIELD, "fs:default");
+        say(parts, Level::Hint, code.erase());
     }
     let mut words: Vec<OsString> = vec!["--socket".into(), socket.into_os_string()];
     let (id, exe) = match settle(parts, &listing, w, &words) {

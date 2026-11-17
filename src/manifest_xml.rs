@@ -84,13 +84,33 @@ pub fn read_manifest(xml: &str, file: &Path) -> Result<FrontendManifest, Coded<S
             }
         }
     };
+    let default = match value("fs:default") {
+        None | Some("false") => false,
+        Some("true") => true,
+        Some(_) => return Err(refuse(file, "fs:default")),
+    };
     Ok(FrontendManifest {
         id,
         extends,
         exec,
         requires,
         min_program,
+        default,
     })
+}
+
+/// Reads at most `max` bytes of a file; more is `size`, unreadable or not text is `read`.
+fn read_limited(file: &Path, max: u64) -> Result<String, Coded<StarterCode>> {
+    use std::io::Read;
+    let f = std::fs::File::open(file).map_err(|_| refuse(file, "read"))?;
+    let mut text = String::new();
+    f.take(max.saturating_add(1))
+        .read_to_string(&mut text)
+        .map_err(|_| refuse(file, "read"))?;
+    if text.len() as u64 > max {
+        return Err(refuse(file, "size"));
+    }
+    Ok(text)
 }
 
 /// The two levels, user before system (ADR 0094 item 3).
@@ -100,30 +120,49 @@ pub struct XdgManifests {
     pub user: Option<PathBuf>,
     /// Each `<XDG_DATA_DIRS>/freesynergy/frontends` (default `/usr/local/share`, `/usr/share`), in order.
     pub system: Vec<PathBuf>,
+    /// The most bytes read from one manifest file; a bigger one is refused as `manifest-invalid{field=size}`.
+    pub max_bytes: u64,
 }
+
+/// The default of [`XdgManifests::max_bytes`]: 64 KiB.
+pub const MAX_MANIFEST_BYTES: u64 = 64 * 1024;
 
 impl XdgManifests {
     /// The levels from the environment (XDG Base Directory Specification).
     #[must_use]
     pub fn from_env() -> Self {
+        let var = |name: &str| std::env::var_os(name);
+        Self::from_vars(var("XDG_DATA_HOME"), var("HOME"), var("XDG_DATA_DIRS"))
+    }
+
+    /// The levels from the values of `XDG_DATA_HOME`, `HOME` and `XDG_DATA_DIRS`. A relative path is ignored (the
+    /// specification says so for both): `XDG_DATA_HOME` then falls back to `HOME`.
+    #[must_use]
+    pub fn from_vars(
+        data_home: Option<std::ffi::OsString>,
+        home: Option<std::ffi::OsString>,
+        data_dirs: Option<std::ffi::OsString>,
+    ) -> Self {
         let sub = |base: PathBuf| base.join("freesynergy").join("frontends");
-        let user = std::env::var_os("XDG_DATA_HOME")
-            .filter(|v| !v.is_empty())
+        let user = data_home
             .map(PathBuf::from)
-            .or_else(|| {
-                std::env::var_os("HOME").map(|h| PathBuf::from(h).join(".local").join("share"))
-            })
+            .filter(|p| p.is_absolute())
+            .or_else(|| home.map(|h| PathBuf::from(h).join(".local").join("share")))
             .map(sub);
-        let dirs = std::env::var_os("XDG_DATA_DIRS").filter(|v| !v.is_empty());
+        let dirs = data_dirs.filter(|v| !v.is_empty());
         let dirs = dirs.unwrap_or_else(|| "/usr/local/share:/usr/share".into());
         let system = std::env::split_paths(&dirs)
             .filter(|p| p.is_absolute())
             .map(sub)
             .collect();
-        Self { user, system }
+        Self {
+            user,
+            system,
+            max_bytes: MAX_MANIFEST_BYTES,
+        }
     }
 
-    fn read_level(dir: &Path, place: Place, out: &mut Listing) {
+    fn read_level(dir: &Path, place: Place, max_bytes: u64, out: &mut Listing) {
         let Ok(entries) = std::fs::read_dir(dir) else {
             return;
         }; // a missing level is no failure
@@ -131,9 +170,8 @@ impl XdgManifests {
         files.retain(|p| p.to_string_lossy().ends_with(".metainfo.xml"));
         files.sort();
         for file in files {
-            let manifest = std::fs::read_to_string(&file)
-                .map_err(|_| refuse(&file, "read"))
-                .and_then(|xml| read_manifest(&xml, &file));
+            let manifest =
+                read_limited(&file, max_bytes).and_then(|xml| read_manifest(&xml, &file));
             match manifest {
                 Ok(m) if out.get(&m.id).is_some() => {} // the user level has it already
                 Ok(manifest) => {
@@ -160,10 +198,20 @@ impl ManifestSource for XdgManifests {
     fn frontends(&self, program: &ProgramName) -> Listing {
         let mut out = Listing::default();
         if let Some(user) = &self.user {
-            Self::read_level(&user.join(program.as_str()), Place::User, &mut out);
+            Self::read_level(
+                &user.join(program.as_str()),
+                Place::User,
+                self.max_bytes,
+                &mut out,
+            );
         }
         for system in &self.system {
-            Self::read_level(&system.join(program.as_str()), Place::System, &mut out);
+            Self::read_level(
+                &system.join(program.as_str()),
+                Place::System,
+                self.max_bytes,
+                &mut out,
+            );
         }
         out
     }

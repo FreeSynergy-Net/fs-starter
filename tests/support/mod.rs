@@ -107,6 +107,7 @@ pub fn manifest(id: &str) -> FrontendManifest {
         exec: format!("fs-demo-{id}"),
         requires: vec![ContractReq::parse("demo 1.0").unwrap()],
         min_program: None,
+        default: false,
     }
 }
 

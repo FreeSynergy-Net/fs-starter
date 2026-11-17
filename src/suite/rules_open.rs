@@ -131,3 +131,20 @@ rule!(
         Ok(())
     }
 );
+
+rule!(
+    /// A manifest with `fs:default` opens when no word names a frontend (checked with `--check`); a word beats it.
+    ManifestDefault, "starter.manifest-default", |f, cx| {
+        let (other, standard) = (other(), f.program().standard_frontend().clone());
+        arrange(f, cx, &Arrange::DefaultFrontend(other.clone()))?;
+        let exe_other = f.exe_of(&other);
+        let o = f.start(&[]);
+        if o.checked != [exe_other.clone()] {
+            return Err(fs_conformance::Coded::new(SuiteCode::NotLaunched).with_text(keys::FRONTEND, "other").into());
+        }
+        opened(&o, &exe_other, other.as_str())?;
+        let o = f.start(&["--frontend", standard.as_str()]);
+        opened(&o, &f.exe_of(&standard), standard.as_str())?;
+        Ok(())
+    }
+);

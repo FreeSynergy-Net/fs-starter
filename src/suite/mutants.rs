@@ -30,11 +30,11 @@ impl Mutant<Bench> for BenchMutant {
     }
 }
 
-/// The twelve mutants (ids: `starter-bench.<name>`, well formed and unique: fs-conformance review condition A3).
+/// The thirteen mutants (ids: `starter-bench.<name>`, well formed and unique: fs-conformance review condition A3).
 #[must_use]
 pub fn bench_mutants() -> Vec<Box<dyn Mutant<Bench>>> {
     use BenchMutation as M;
-    let all: [BenchMutant; 12] = [
+    let all: [BenchMutant; 13] = [
         BenchMutant {
             id: "starter-bench.version-v",
             mutation: M::VersionV,
@@ -105,6 +105,11 @@ pub fn bench_mutants() -> Vec<Box<dyn Mutant<Bench>>> {
             id: "starter-bench.fresh-dropped",
             mutation: M::FreshDropped,
             must_fail: &["starter.fresh-passed"],
+        },
+        BenchMutant {
+            id: "starter-bench.default-ignored",
+            mutation: M::DefaultIgnored,
+            must_fail: &["starter.manifest-default"],
         },
     ];
     all.into_iter()

@@ -1,4 +1,4 @@
-//! The suite `starter`: its id and its twelve rules.
+//! The suite `starter`: its id and its thirteen rules.
 //!
 //! Pattern: Abstract factory (`StarterSuite` makes the rules) + generic rules `impl<F: StarterFixture + ?Sized> Rule<F>`.
 
@@ -30,6 +30,7 @@ impl<F: StarterFixture + ?Sized> Suite<F> for StarterSuite {
             Box::new(rules_words::McpActor),
             Box::new(rules_open::ResumedHidden),
             Box::new(rules_open::FreshPassed),
+            Box::new(rules_open::ManifestDefault),
         ]
     }
 }

@@ -42,6 +42,8 @@ pub enum BenchMutation {
     WordsTold,
     /// The frontend loses `--fresh`.
     FreshDropped,
+    /// A manifest's `fs:default` is not read (the standard frontend opens).
+    DefaultIgnored,
 }
 
 /// The bench. Folder of program files: `/bench/bin`; socket: [`Bench::SOCKET`].
@@ -82,7 +84,7 @@ impl Bench {
         let p = &*self.program;
         let mut ids = vec![p.standard_frontend().clone()];
         ids.extend(self.setups.iter().filter_map(|s| match s {
-            Arrange::ExtraFrontend(id) => Some(id.clone()),
+            Arrange::ExtraFrontend(id) | Arrange::DefaultFrontend(id) => Some(id.clone()),
             _ => None,
         }));
         let mut out = Listing::default();
@@ -103,6 +105,8 @@ impl Bench {
                 extends: p.app_id().to_owned(),
                 requires: vec![p.contract().clone()],
                 min_program: None,
+                default: self.has(&Arrange::DefaultFrontend(id.clone()))
+                    && !self.is(BenchMutation::DefaultIgnored),
                 id,
             };
             let file = PathBuf::from(format!("/bench/share/{}.metainfo.xml", manifest.id));

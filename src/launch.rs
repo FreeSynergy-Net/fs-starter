@@ -9,6 +9,7 @@ use std::ffi::OsString;
 use std::io;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::{Duration, Instant};
 
 /// Runs frontends.
 pub trait Launcher {
@@ -31,13 +32,27 @@ pub trait Launcher {
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ProcessLauncher {
     dirs: Vec<PathBuf>,
+    check_limit: Duration,
 }
+
+/// How long `--check` may run before the frontend is ended and counts as not startable (changeable: [`ProcessLauncher::with_check_limit`]).
+pub const CHECK_LIMIT: Duration = Duration::from_secs(10);
 
 impl ProcessLauncher {
     /// Looks in `dirs`, in this order.
     #[must_use]
     pub fn new(dirs: Vec<PathBuf>) -> Self {
-        Self { dirs }
+        Self {
+            dirs,
+            check_limit: CHECK_LIMIT,
+        }
+    }
+
+    /// The same launcher with another time limit for `--check`.
+    #[must_use]
+    pub fn with_check_limit(mut self, limit: Duration) -> Self {
+        self.check_limit = limit;
+        self
     }
 
     /// The folder of the running program, then `/usr/bin`. The store's `current/<frontend package>/` comes in with
@@ -72,8 +87,21 @@ impl Launcher for ProcessLauncher {
             .stdin(quiet())
             .stdout(quiet())
             .stderr(quiet())
-            .status();
-        status.ok().and_then(|s| s.code())
+            .spawn();
+        let mut child = status.ok()?;
+        let end = Instant::now() + self.check_limit;
+        loop {
+            match child.try_wait() {
+                Ok(Some(status)) => return status.code(),
+                Ok(None) if Instant::now() < end => std::thread::sleep(Duration::from_millis(10)),
+                // Too slow, or not askable any more: the frontend is ended and counts as not startable.
+                _ => {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    return None;
+                }
+            }
+        }
     }
 
     fn open(&self, exe: &Path, words: &[OsString]) -> io::Result<i32> {

@@ -5,7 +5,8 @@ use std::fs;
 use std::path::Path;
 
 use fs_starter::{
-    ContractReq, ManifestSource, Place, ProgramName, Trust, Version3, XdgManifests, read_manifest,
+    ContractReq, MAX_MANIFEST_BYTES, ManifestSource, Place, ProgramName, Trust, Version3,
+    XdgManifests, read_manifest,
 };
 use support::text;
 
@@ -190,6 +191,7 @@ fn k15_xdg_levels() {
     put(&system.join("demo"), "readme.txt", "ignored");
 
     let src = XdgManifests {
+        max_bytes: MAX_MANIFEST_BYTES,
         user: Some(user.clone()),
         system: vec![system.clone()],
     };
@@ -218,6 +220,7 @@ fn k15_xdg_levels() {
 
     // Only the system level.
     let only = XdgManifests {
+        max_bytes: MAX_MANIFEST_BYTES,
         user: None,
         system: vec![system.clone()],
     }
@@ -229,6 +232,7 @@ fn k15_xdg_levels() {
     );
     // Missing folders: empty, no refusal.
     let none = XdgManifests {
+        max_bytes: MAX_MANIFEST_BYTES,
         user: Some(tmp.path().join("nope")),
         system: vec![tmp.path().join("nada")],
     }

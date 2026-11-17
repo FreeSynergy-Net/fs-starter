@@ -22,6 +22,8 @@ pub struct FrontendManifest {
     pub requires: Vec<ContractReq>,
     /// `<requires><id version="X.Y.Z" compare="ge">` of the program, if given.
     pub min_program: Option<Version3>,
+    /// `fs:default` (`true`/`false`, missing = false): this installation asks for this frontend as the default (ADR 0094 item 4 b).
+    pub default: bool,
 }
 
 /// Which level a manifest came from; the user level wins over the system level for the same id.
@@ -65,6 +67,12 @@ pub struct Listing {
 }
 
 impl Listing {
+    /// The first usable manifest that asks to be the default (listing order: user level before system level, files sorted).
+    #[must_use]
+    pub fn default_frontend(&self) -> Option<&Found> {
+        self.found.iter().find(|f| f.manifest.default)
+    }
+
     /// The manifest of `id`, if usable.
     #[must_use]
     pub fn get(&self, id: &FrontendId) -> Option<&Found> {

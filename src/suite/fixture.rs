@@ -16,6 +16,8 @@ pub enum Arrange {
     ExtraFrontend(FrontendId),
     /// The answer of this frontend to `--check` (`None`: it cannot run).
     FrontendCheck(FrontendId, Option<i32>),
+    /// A second frontend with a packaged manifest that fits and asks to be the default (`fs:default` = true).
+    DefaultFrontend(FrontendId),
     /// This frontend has no manifest and no program file.
     FrontendGone(FrontendId),
     /// This frontend's manifest lies in the user level, put there by hand.

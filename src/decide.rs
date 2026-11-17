@@ -10,15 +10,18 @@ use crate::frontend::Found;
 use crate::names::{FrontendId, Version3};
 use crate::program::{Exit, Program};
 
-/// The frontend to try first: the word, else the person's choice, else the standard frontend (ADR 0094 item 4 b).
+/// The frontend to try first: the word, else the person's choice, else the installation's `fs:default`, else the program's
+/// standard frontend (ADR 0094 item 4 b).
 #[must_use]
 pub fn pick(
     word: Option<&FrontendId>,
     chosen_by_person: Option<FrontendId>,
+    manifest_default: Option<FrontendId>,
     standard: &FrontendId,
 ) -> FrontendId {
     word.cloned()
         .or(chosen_by_person)
+        .or(manifest_default)
         .unwrap_or_else(|| standard.clone())
 }
 
