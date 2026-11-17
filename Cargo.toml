@@ -1,0 +1,26 @@
+[package]
+name = "fs-starter"
+description = "The program shell of every FreeSynergy program: words, server gate, frontend pick from AppStream manifests, start, exit codes; plus an optional conformance suite"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[features]
+# The suite `starter` (rules + bench + mutants). Never in `default`: fs-conformance stays out of the normal graph (review A4).
+conformance = ["dep:fs-conformance", "dep:async-trait"]
+
+[dependencies]
+fs-rpc = { path = "../fs-rpc" }
+capnp = "0.27"
+tokio = { version = "1", features = ["rt"] }
+# New in this repo (already used by fs-packages-catalog); MIT OR Apache-2.0, no dependencies of its own.
+roxmltree = "0.20"
+# Probe pin (O1): the frame comes from fs-types main 339aa24; after the lift the tag replaces `rev`.
+fs-conformance = { git = "https://github.com/FreeSynergy/fs-types", rev = "339aa24fa61bc8e6c39ea7875d826ec6993cd24f", optional = true }
+async-trait = { version = "0.1", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
+tempfile = "3"
