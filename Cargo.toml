@@ -17,8 +17,8 @@ capnp = "0.27"
 tokio = { version = "1", features = ["rt"] }
 # New in this repo (already used by fs-packages-catalog); MIT OR Apache-2.0, no dependencies of its own.
 roxmltree = "0.20"
-# Probe pin (O1): the frame comes from fs-types main 339aa24; after the lift the tag replaces `rev`.
-fs-conformance = { git = "https://github.com/FreeSynergy/fs-types", rev = "339aa24fa61bc8e6c39ea7875d826ec6993cd24f", optional = true }
+# fs-conformance lives in the repo fs-types; the same tag as fs-types in fs-rpc (one source per library, lock check).
+fs-conformance = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4", optional = true }
 async-trait = { version = "0.1", optional = true }
 
 [dev-dependencies]
