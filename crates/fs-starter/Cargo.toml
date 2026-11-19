@@ -1,0 +1,30 @@
+[package]
+name = "fs-starter"
+description = "The program shell of every FreeSynergy program: words, server gate, frontend pick from AppStream manifests, start, exit codes; plus an optional conformance suite"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[features]
+# The suite `starter` (rules + bench + mutants). Never in `default`: fs-conformance stays out of the normal graph (review A4).
+conformance = ["dep:fs-conformance", "dep:async-trait"]
+
+[dependencies]
+fs-rpc = { path = "../fs-rpc" }
+# `coded` (error codes with typed parameters) comes from here (`fs_types::coded`).
+fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
+# The scaffold declares its own settings (ADR 0100 item 3); the library comes from fs-components, one tag.
+fs-settings = { git = "https://github.com/FreeSynergy/fs-components", tag = "v0.0.30" }
+capnp = "0.27"
+tokio = { version = "1", features = ["rt"] }
+# New in this repo (already used by fs-packages-catalog); MIT OR Apache-2.0, no dependencies of its own.
+roxmltree = "0.20"
+# fs-conformance lives in the repo fs-types; the same tag as fs-types in fs-rpc (one source per library, lock check).
+fs-conformance = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4", optional = true }
+async-trait = { version = "0.1", optional = true }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
+tempfile = "3"
