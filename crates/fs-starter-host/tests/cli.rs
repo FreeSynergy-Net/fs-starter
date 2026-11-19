@@ -82,10 +82,10 @@ fn a_bare_path_is_the_description_and_a_missing_one_is_not_a_usage_error() {
     assert_eq!(bare.status.code(), Some(0), "{}", text(&bare.stderr));
     let gone = format!("{}/no-such-folder", tasks());
     let out = host(&["--description", &gone, "--check"], "light");
-    let code = out.status.code().unwrap();
-    assert!(
-        code == i32::from(Exit::FAILED.code()) || code == i32::from(Exit::CONTRACT.code()),
-        "a missing description is failed or contract, not {code}: {}",
+    assert_eq!(
+        out.status.code(),
+        Some(i32::from(Exit::FAILED.code())),
+        "a missing description is a failure (the window would show it), not a contract problem: {}",
         text(&out.stderr)
     );
     assert!(text(&out.stderr).contains("no-such-folder"));
