@@ -3,6 +3,8 @@
 //! The key names are the constants of fs-rpc (`SINGLE_ASK_KEY`, `MCP_ENABLED_KEY`); a test keeps both in step. The words are
 //! MessageFormat 2 files of this crate ([`TEXT_EN`], [`TEXT_DE`]; ADR 0057).
 //!
+//! DRAFT, NOT DECIDED: the groups (`system`, `privacy`) and the place (profile, not per device) are the author's choice, not from an ADR; ADR 0100 (owner declares the key) is to judge them.
+//!
 //! Pattern: Strategy ([`Declares`], as every block) + constants (the texts are data).
 
 use fs_settings::{
