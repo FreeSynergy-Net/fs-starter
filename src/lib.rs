@@ -35,6 +35,7 @@ mod names;
 mod open;
 mod program;
 mod run;
+mod settings;
 mod tell;
 mod words;
 
@@ -51,5 +52,6 @@ pub use manifest_xml::{MAX_MANIFEST_BYTES, XdgManifests, read_manifest};
 pub use names::{ActorName, ContractReq, FrontendId, ProgramName, ResumeToken, Version3};
 pub use program::{Exit, Failure, McpEntry, NoPreference, Preference, Program};
 pub use run::{Parts, main_exit, run};
+pub use settings::{MCP_ENABLED, SINGLE_ASK, StarterSettings, TEXT_DE, TEXT_EN};
 pub use tell::{Level, Note, StderrTell, Tell};
 pub use words::{StartWords, Words, parse, synopsis};
