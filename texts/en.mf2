@@ -1,5 +1,5 @@
 # The words of the settings the scaffold declares in fs-starter, English (ADR 0057: MessageFormat 2). Every id needs a German twin in de.mf2.
 setting-label-fs-rpc-single-ask = Ask before ending a silent program
 setting-about-fs-rpc-single-ask = When a program of the same kind does not answer and could not be ended, ask first (wait, replace, abort). Without a window or terminal the program decides.
-setting-label-fs-mcp-enabled = Allow MCP
-setting-about-fs-mcp-enabled = Whether programs may offer their functions to AI helpers over MCP. Off by default. The vault is never reachable over MCP.
+setting-label-fs-mcp-enabled = AI entry (local) open
+setting-about-fs-mcp-enabled = Whether this machine's programs offer their local MCP entry. Off by default. This is no permission for an AI (that is a right); the vault is never reachable over MCP.

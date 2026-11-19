@@ -1,5 +1,5 @@
 # Die Woerter der Einstellungen, die das Geruest in fs-starter deklariert, Deutsch (ADR 0057: MessageFormat 2). Jede Id braucht ihr englisches Gegenstueck in en.mf2.
 setting-label-fs-rpc-single-ask = Vor dem Beenden eines schweigenden Programms fragen
 setting-about-fs-rpc-single-ask = Antwortet ein Programm der gleichen Art nicht und liess sich nicht beenden, wird zuerst gefragt (warten, ersetzen, abbrechen). Ohne Fenster oder Terminal entscheidet das Programm.
-setting-label-fs-mcp-enabled = MCP erlauben
-setting-about-fs-mcp-enabled = Ob Programme ihre Funktionen ueber MCP an KI-Helfer anbieten duerfen. Standardmaessig aus. Der Tresor ist ueber MCP nie erreichbar.
+setting-label-fs-mcp-enabled = KI-Eingang (lokal) offen
+setting-about-fs-mcp-enabled = Ob die Programme dieses Geraets ihren lokalen MCP-Eingang anbieten. Standardmaessig aus. Das ist keine Erlaubnis fuer eine KI (das ist ein Recht); der Tresor ist ueber MCP nie erreichbar.

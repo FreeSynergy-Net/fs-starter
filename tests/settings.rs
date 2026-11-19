@@ -1,6 +1,8 @@
 //! The declaration of the scaffold's settings (ADR 0100 item 3): `fs.rpc.single.ask` (flag, default yes) and
 //! `fs.mcp.enabled` (flag, default NO), the key names equal to the constants of fs-rpc, the words in both languages.
-use fs_settings::{Catalog, Declaration, Declares, Kind, Value};
+use std::collections::BTreeSet;
+
+use fs_settings::{Catalog, Declaration, Declares, GroupId, Kind, Place, Value};
 use fs_starter::{StarterSettings, TEXT_DE, TEXT_EN};
 
 fn all() -> Vec<Declaration> {
@@ -56,4 +58,75 @@ fn the_words_exist_in_both_languages() {
             }
         }
     }
+}
+
+/// The text of `id` in one file (the part after ` = `).
+fn text_of(file: &str, id: &str) -> String {
+    file.lines()
+        .find_map(|l| l.strip_prefix(&format!("{id} = ")))
+        .unwrap_or_else(|| panic!("{id} is missing"))
+        .to_owned()
+}
+
+/// The placeholders `{$name}` of a message.
+fn variables(text: &str) -> BTreeSet<String> {
+    text.split("{$")
+        .skip(1)
+        .filter_map(|rest| rest.split('}').next())
+        .map(|v| v.trim().to_owned())
+        .collect()
+}
+
+/// The groups: the person's asking is a `system` matter, the MCP entry is `ai` (strategy decision, review K4b).
+#[test]
+fn the_groups_are_system_and_ai() {
+    let group = |name: &str| GroupId::new(name).expect("a group");
+    assert_eq!(find(fs_rpc::SINGLE_ASK_KEY).group, group("system"));
+    assert_eq!(find(fs_rpc::MCP_ENABLED_KEY).group, group("ai"));
+}
+
+/// The place: the question is the person's (profile, the same on every device); the MCP entry belongs to THIS device.
+#[test]
+fn the_mcp_entry_is_per_device_the_question_is_per_profile() {
+    assert_eq!(find(fs_rpc::SINGLE_ASK_KEY).place, Place::Profile);
+    assert_eq!(find(fs_rpc::MCP_ENABLED_KEY).place, Place::Device);
+}
+
+/// German and English carry the same placeholders for every id (a variable only in one language would be lost or shown raw).
+#[test]
+fn german_and_english_have_the_same_variables() {
+    for d in all() {
+        for id in [d.label_key(), d.about_key()] {
+            assert_eq!(
+                variables(&text_of(TEXT_EN, &id)),
+                variables(&text_of(TEXT_DE, &id)),
+                "{id}: the placeholders differ"
+            );
+        }
+    }
+    // the helper itself sees a placeholder (else the test above proves nothing)
+    assert_eq!(variables("a {$x} b {$y}").len(), 2);
+    assert!(variables("no placeholder").is_empty());
+}
+
+/// The MCP switch says the entry is open, never that an AI is allowed (ADR 0100 E7: that is a right, not a setting).
+#[test]
+fn the_mcp_words_say_the_entry_is_open_never_that_an_ai_is_allowed() {
+    let label = d_label(fs_rpc::MCP_ENABLED_KEY);
+    assert_eq!(text_of(TEXT_EN, &label), "AI entry (local) open");
+    assert_eq!(text_of(TEXT_DE, &label), "KI-Eingang (lokal) offen");
+    for (file, words) in [
+        (TEXT_EN, ["allow", "permit"]),
+        (TEXT_DE, ["erlaub", "gestatt"]),
+    ] {
+        let t = text_of(file, &label).to_lowercase();
+        assert!(
+            words.iter().all(|w| !t.contains(w)),
+            "the label promises a permission: {t}"
+        );
+    }
+}
+
+fn d_label(key: &str) -> String {
+    find(key).label_key()
 }

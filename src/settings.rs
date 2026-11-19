@@ -3,7 +3,10 @@
 //! The key names are the constants of fs-rpc (`SINGLE_ASK_KEY`, `MCP_ENABLED_KEY`); a test keeps both in step. The words are
 //! MessageFormat 2 files of this crate ([`TEXT_EN`], [`TEXT_DE`]; ADR 0057).
 //!
-//! DRAFT, NOT DECIDED: the groups (`system`, `privacy`) and the place (profile, not per device) are the author's choice, not from an ADR; ADR 0100 (owner declares the key) is to judge them.
+//! Decided (strategy, review K4b): `fs.rpc.single.ask` group `system`, place profile; `fs.mcp.enabled` group `ai`, PER DEVICE (a local entry of this
+//! machine; a profile value would open it on other devices). `fs.mcp.enabled` means "the AI entry (local) is open", never "AI is allowed"
+//! (ADR 0100 E7: that is a right in fs-access). NO code reads `fs.mcp.enabled` yet: the property "human only" (an AI never sees or changes the
+//! switch, ADR 0091 item 5) follows with K6 in fs-settings; until then nothing may read this key.
 //!
 //! Pattern: Strategy ([`Declares`], as every block) + constants (the texts are data).
 
@@ -48,8 +51,9 @@ impl Declares for StarterSettings {
                 Self::key(MCP_ENABLED)?,
                 Kind::Flag,
                 Value::Flag(false),
-                GroupId::new("privacy")?,
-            ),
+                GroupId::new("ai")?,
+            )
+            .per_device(),
         ])
     }
 }
