@@ -60,6 +60,8 @@ fn size_limit() {
 }
 
 /// A relative `XDG_DATA_HOME` is ignored (back to `HOME`); an absolute one is used; relative data dirs are dropped.
+/// Unix only: the paths are written as Unix paths (`/data` is not absolute on Windows); the XDG variables are a Linux convention.
+#[cfg(unix)]
 #[test]
 fn relative_data_home() {
     let v = |s: &str| Some(OsString::from(s));
