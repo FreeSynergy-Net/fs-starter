@@ -1,0 +1,27 @@
+[package]
+name = "fs-starter-host"
+description = "The host: `fs-starter --description PATH` opens the window of a program from its description (blueprint folder, forms/ folder or one file), without building the program"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+repository.workspace = true
+
+[lib]
+name = "fs_starter_host"
+
+# The binary a person (or the program's launcher) starts. Its name is the name of the repository.
+[[bin]]
+name = "fs-starter"
+path = "src/main.rs"
+
+# Only git tags and the sibling crate. `fs-forms-run` (the window of a description) brings fs-components v0.0.30, fs-forms-client
+# (fs-rpc v0.0.3, fs-interfaces) and the description reader; `fs-forms-bin` is NOT a dependency (it depends on `fs-starter`: a cycle).
+[dependencies]
+fs-starter = { path = "../fs-starter" }
+fs-forms-run = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.4" }
+
+# Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
+[dev-dependencies]
+tempfile = "3"
+png = "0.18"
