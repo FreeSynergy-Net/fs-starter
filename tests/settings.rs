@@ -127,6 +127,27 @@ fn the_mcp_words_say_the_entry_is_open_never_that_an_ai_is_allowed() {
     }
 }
 
+/// The MCP switch is OFF by default and both explanations say so (ADR 0054 note 2 (a)); the single-ask explanation does not claim it.
+#[test]
+fn the_mcp_explanations_say_off_by_default_in_both_languages() {
+    let about = |file: &str| text_of(file, &find(fs_rpc::MCP_ENABLED_KEY).about_key());
+    assert!(
+        about(TEXT_EN).contains("Off by default."),
+        "{}",
+        about(TEXT_EN)
+    );
+    assert!(
+        about(TEXT_DE).contains("Standardmaessig aus."),
+        "{}",
+        about(TEXT_DE)
+    );
+    assert!(
+        !about(TEXT_DE).contains("Standardmaessig an"),
+        "{}",
+        about(TEXT_DE)
+    );
+}
+
 fn d_label(key: &str) -> String {
     find(key).label_key()
 }
