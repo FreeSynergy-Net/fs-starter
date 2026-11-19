@@ -12,7 +12,7 @@ repository.workspace = true
 conformance = ["dep:fs-conformance", "dep:async-trait"]
 
 [dependencies]
-fs-rpc = { path = "../fs-rpc" }
+fs-rpc = { git = "https://github.com/FreeSynergy/fs-rpc", tag = "v0.0.3" }
 # `coded` (error codes with typed parameters) comes from here (`fs_types::coded`).
 fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
 # The scaffold declares its own settings (ADR 0100 item 3); the library comes from fs-components, one tag.
