@@ -173,6 +173,11 @@ pub(crate) fn start(parts: &Parts<'_>, w: &StartWords) -> Exit {
     if let Some(token) = &token {
         words.extend(["--resumed".into(), token.as_os_str().to_owned()]);
     }
+    // The frontend is resumed whether the person or a hook gave the token: `after_end` sees the truth.
+    let cx = StartCx {
+        resumed: token.is_some(),
+        ..cx
+    };
     let began = Instant::now();
     match parts.launcher.open(&exe, &words) {
         Ok(code) => {

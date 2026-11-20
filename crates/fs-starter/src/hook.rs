@@ -20,7 +20,8 @@ pub struct StartCx<'a> {
     pub frontend: &'a FrontendId,
     /// `--fresh` was given.
     pub fresh: bool,
-    /// `--resumed` was given.
+    /// The frontend gets a token: `--resumed` was given, or (in `after_end`) a hook supplied one. `before_open` and
+    /// `resume_token` see only the person's word.
     pub resumed: bool,
 }
 

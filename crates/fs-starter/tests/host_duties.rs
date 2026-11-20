@@ -3,7 +3,7 @@ mod support;
 
 use std::time::Duration;
 
-use fs_starter::{Ended, PROBATION};
+use fs_starter::{Ended, McpEntry, McpOff, McpSwitch, PROBATION, Parts, StartHook, run};
 use support::{FakeHook, World, os};
 
 /// `fs.mcp.enabled` off (the default): `mcp --as a` is `mcp-disabled`, exit 1, the entry is never served; on, it is served.
@@ -67,6 +67,53 @@ fn session_hook_supplies_the_token() {
         w.opened()[0].1,
         os(&["--socket", "/run/demo.sock", "--resumed", "mine"])
     );
+}
+
+/// Two hooks with a token: the FIRST one wins (listing order), and the frontend counts as resumed at the end (K1).
+#[test]
+fn first_hook_token_wins_and_marks_resumed() {
+    let mut w = with_token("first");
+    w.hooks.push(FakeHook {
+        token: Some("second"),
+        ..FakeHook::go()
+    });
+    assert_eq!(w.go(&[]).code(), 0);
+    assert_eq!(
+        w.opened()[0].1,
+        os(&["--socket", "/run/demo.sock", "--resumed", "first"])
+    );
+    // `before_open` saw no `--resumed` word; `after_end` sees the token that went to the frontend.
+    assert!(!w.hooks[0].before.borrow()[0].1);
+    assert!(w.hooks[0].after.borrow()[0].2);
+    // Without any token, `resumed` stays false at the end.
+    let mut n = World::new();
+    n.hooks.push(FakeHook::go());
+    assert_eq!(n.go(&[]).code(), 0);
+    assert!(!n.hooks[0].after.borrow()[0].2);
+}
+
+/// ADR 0097: MCP is off after installation. The standard `McpOff` answers no, and `run` with it is `mcp-disabled`.
+#[test]
+fn mcp_off_is_the_standard_and_disables() {
+    assert!(!McpOff.enabled());
+    let w = World::new();
+    let hooks: Vec<&dyn StartHook> = Vec::new();
+    let parts = Parts {
+        program: &w.program,
+        gate: &w.gate,
+        manifests: &w.manifests,
+        preference: &w.pref,
+        launcher: &w.launcher,
+        tell: &w.tell,
+        hooks: &hooks,
+        mcp: w.mcp.as_ref().map(|m| m as &dyn McpEntry),
+        mcp_switch: &McpOff,
+        default_socket: w.default_socket.clone(),
+    };
+    let exit = run(&parts, &os(&["mcp", "--as", "claude-a"]), &mut Vec::new());
+    assert_eq!(exit.code(), 1);
+    assert_eq!(w.tell.keys(), ["starter-error-mcp-disabled"]);
+    assert!(w.mcp.as_ref().expect("mcp").actors.borrow().is_empty());
 }
 
 /// Self-update: an update hook sees how long the frontend ran against the probation (120 s) and can fall back.
