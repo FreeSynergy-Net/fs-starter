@@ -7,7 +7,7 @@ use fs_types::coded::{ErrorCode, message_key};
 /// K16: `ALL` holds every variant once, `as_str` is unique kebab case, `message_key` is prefix and name.
 #[test]
 fn k16_starter_codes() {
-    assert_eq!(StarterCode::ALL.len(), 13);
+    assert_eq!(StarterCode::ALL.len(), 14);
     let unique: HashSet<_> = StarterCode::ALL.iter().collect();
     assert_eq!(unique.len(), StarterCode::ALL.len());
     let names: HashSet<_> = StarterCode::ALL.iter().map(|c| c.as_str()).collect();

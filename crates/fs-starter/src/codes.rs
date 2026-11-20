@@ -37,6 +37,8 @@ pub enum StarterCode {
     McpMissing,
     /// `--version`/`--help` could not be written (parameter `kind`: `broken-pipe` or `other`). Exit 1.
     OutputFailed,
+    /// `mcp` was asked, but `fs.mcp.enabled` is off (the default). Exit 1.
+    McpDisabled,
 }
 
 impl ErrorCode for StarterCode {
@@ -55,6 +57,7 @@ impl ErrorCode for StarterCode {
         Self::OpenFailed,
         Self::McpMissing,
         Self::OutputFailed,
+        Self::McpDisabled,
     ];
 
     fn as_str(self) -> &'static str {
@@ -72,6 +75,7 @@ impl ErrorCode for StarterCode {
             Self::OpenFailed => "open-failed",
             Self::McpMissing => "mcp-missing",
             Self::OutputFailed => "output-failed",
+            Self::McpDisabled => "mcp-disabled",
         }
     }
 }

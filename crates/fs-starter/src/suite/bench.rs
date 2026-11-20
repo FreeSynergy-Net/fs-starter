@@ -10,9 +10,19 @@ use std::path::PathBuf;
 use super::fakes::{FakeGate, FakeLauncher, FakeManifests, FakeMcp, RecordingTell};
 use super::fixture::{Arrange, Outcome, StarterFixture};
 use crate::frontend::{Found, FrontendManifest, Listing, Place, Trust};
+use crate::mcp::McpSwitch;
 use crate::names::{ContractReq, FrontendId, ProgramName};
 use crate::program::{Exit, Failure, NoPreference, Program};
 use crate::run::{Parts, run};
+
+/// The switch `fs.mcp.enabled` is on for the conformance run (the MCP rules need the entry served).
+struct SwitchOn;
+
+impl McpSwitch for SwitchOn {
+    fn enabled(&self) -> bool {
+        true
+    }
+}
 
 /// One wrong wiring a program could have. Each must make at least one rule fail (`bench_mutants`).
 #[non_exhaustive]
@@ -217,6 +227,7 @@ impl StarterFixture for Bench {
             tell: &tell,
             hooks: &[],
             mcp: Some(&mcp),
+            mcp_switch: &SwitchOn,
             default_socket: Some(PathBuf::from(Self::SOCKET)),
         };
         let mut words: Vec<OsString> = words.iter().map(|w| OsString::from(*w)).collect();

@@ -5,7 +5,16 @@ use std::ffi::OsString;
 use std::io;
 use std::path::PathBuf;
 
-use fs_starter::{Exit, Level, Listing, McpEntry, Parts, StartHook, Trust, Up, run};
+use fs_starter::{Exit, Level, Listing, McpEntry, McpSwitch, Parts, StartHook, Trust, Up, run};
+
+/// The switch `fs.mcp.enabled` as a plain answer.
+pub struct FakeSwitch(pub bool);
+
+impl McpSwitch for FakeSwitch {
+    fn enabled(&self) -> bool {
+        self.0
+    }
+}
 
 use super::{
     Demo, FakeGate, FakeHook, FakeLauncher, FakeManifests, FakeMcp, FakePref, FakeTell, OpenAnswer,
@@ -22,6 +31,7 @@ pub struct World {
     pub tell: FakeTell,
     pub hooks: Vec<FakeHook>,
     pub mcp: Option<FakeMcp>,
+    pub mcp_on: bool,
     pub default_socket: Option<PathBuf>,
 }
 
@@ -52,6 +62,7 @@ impl World {
             mcp: Some(FakeMcp {
                 actors: RefCell::default(),
             }),
+            mcp_on: true,
             default_socket: Some(PathBuf::from("/run/demo.sock")),
         }
     }
@@ -82,6 +93,7 @@ impl World {
             tell: &self.tell,
             hooks: &hooks,
             mcp: self.mcp.as_ref().map(|m| m as &dyn McpEntry),
+            mcp_switch: &FakeSwitch(self.mcp_on),
             default_socket: self.default_socket.clone(),
         };
         run(&parts, &os(words), out)

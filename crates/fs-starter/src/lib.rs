@@ -12,7 +12,8 @@
 //!   a sentence (ADR 0057; the program words it in its MessageFormat 2 files).
 //! - `mcp` needs `--as <actor>`; the starter never takes the actor from the session, the environment or the person:
 //!   an AI works as its own named actor and never as the person (ADR 0091; rule "an AI may work, but not take over the user").
-//!   Whether MCP is switched on is decided by the MCP entry, never here.
+//!   The starter asks the [`McpSwitch`] (`fs.mcp.enabled`, off by default) before the MCP entry is served; what the actor may do
+//!   is decided by the MCP entry, never here.
 //! - The token of `--resumed` goes to the frontend only; it is in no note, no output, no hook (ADR 0069 addendum, item 5).
 //! - The starter knows no session, no module and no update (review condition S1): `--fresh`/`--resumed` are words it
 //!   passes on; update probation hooks in through [`StartHook`] (no edge to fs-update, ADR 0097 decision 1).
@@ -31,6 +32,7 @@ mod gate;
 mod hook;
 mod launch;
 mod manifest_xml;
+mod mcp;
 mod names;
 mod open;
 mod program;
@@ -46,9 +48,10 @@ pub use codes::{StarterCode, keys};
 pub use decide::{Chosen, Next, decide, pick, precheck};
 pub use frontend::{Found, FrontendManifest, Listing, ManifestSource, Place, Trust};
 pub use gate::{ServerGate, SingleGate, TakenOverNote, Up, server_code};
-pub use hook::{Ended, HookOutcome, StartCx, StartHook};
+pub use hook::{Ended, HookOutcome, PROBATION, StartCx, StartHook};
 pub use launch::{CHECK_LIMIT, Launcher, ProcessLauncher};
 pub use manifest_xml::{MAX_MANIFEST_BYTES, XdgManifests, read_manifest};
+pub use mcp::{McpOff, McpSwitch};
 pub use names::{ActorName, ContractReq, FrontendId, ProgramName, ResumeToken, Version3};
 pub use program::{Exit, Failure, McpEntry, NoPreference, Preference, Program};
 pub use run::{Parts, main_exit, run};

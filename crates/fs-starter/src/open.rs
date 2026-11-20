@@ -162,7 +162,15 @@ pub(crate) fn start(parts: &Parts<'_>, w: &StartWords) -> Exit {
     if w.fresh {
         words.push("--fresh".into());
     }
-    if let Some(token) = &w.resumed {
+    // A token given by the person wins; otherwise (not `--fresh`) the first hook with a session's token supplies one.
+    let token = w.resumed.clone().or_else(|| {
+        if w.fresh {
+            None
+        } else {
+            parts.hooks.iter().find_map(|h| h.resume_token(&cx))
+        }
+    });
+    if let Some(token) = &token {
         words.extend(["--resumed".into(), token.as_os_str().to_owned()]);
     }
     let began = Instant::now();

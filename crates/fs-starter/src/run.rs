@@ -15,6 +15,7 @@ use crate::frontend::ManifestSource;
 use crate::gate::ServerGate;
 use crate::hook::StartHook;
 use crate::launch::Launcher;
+use crate::mcp::McpSwitch;
 use crate::program::{Exit, Failure, McpEntry, Preference, Program};
 use crate::tell::{Level, Note, Tell};
 use crate::words::{Words, parse, synopsis};
@@ -38,6 +39,8 @@ pub struct Parts<'a> {
     pub hooks: &'a [&'a dyn StartHook],
     /// The MCP entry, if this build has one.
     pub mcp: Option<&'a dyn McpEntry>,
+    /// `fs.mcp.enabled` (standard [`crate::McpOff`]): asked before the MCP entry is served.
+    pub mcp_switch: &'a dyn McpSwitch,
     /// The socket when no `--socket` is given (`fs_rpc::default_socket(<name>)`); `None` = there is none.
     pub default_socket: Option<PathBuf>,
 }
@@ -72,8 +75,15 @@ pub fn run(parts: &Parts<'_>, words: &[OsString], out: &mut dyn Write) -> Exit {
             .serve(&rest)
             .map_or_else(|f| failed(parts, f), |()| Exit::DONE),
         Words::Mcp { actor } => {
-            // The actor is the one given, unchanged; the entry decides whether MCP is on and what the actor may do.
-            if let Some(entry) = parts.mcp {
+            // The actor is the one given, unchanged; the switch decides whether MCP is on, the entry what the actor may do.
+            if !parts.mcp_switch.enabled() {
+                say(
+                    parts,
+                    Level::Error,
+                    Coded::new(StarterCode::McpDisabled).erase(),
+                );
+                Exit::FAILED
+            } else if let Some(entry) = parts.mcp {
                 entry
                     .serve_mcp(&actor)
                     .map_or_else(|f| failed(parts, f), |()| Exit::DONE)

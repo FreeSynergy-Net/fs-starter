@@ -6,7 +6,7 @@
 
 use std::time::Duration;
 
-use crate::names::{FrontendId, ProgramName};
+use crate::names::{FrontendId, ProgramName, ResumeToken};
 use crate::program::Failure;
 
 /// What a hook may know of a start. No resume token (only whether there is one).
@@ -42,6 +42,17 @@ pub struct Ended {
     pub after: Duration,
 }
 
+/// fs-update's probation (ADR 0069 addendum, item 5): a new version that ends before this has not proved itself.
+pub const PROBATION: Duration = Duration::from_secs(120);
+
+impl Ended {
+    /// The frontend ended within the probation ([`PROBATION`]); the update hook falls back to the previous version then.
+    #[must_use]
+    pub fn within_probation(&self) -> bool {
+        self.after < PROBATION
+    }
+}
+
 /// A hook around opening the frontend. Both methods are required (no default methods, trait-delta rule 6).
 pub trait StartHook {
     /// Before the frontend opens, after the server and the frontend are settled.
@@ -49,4 +60,9 @@ pub trait StartHook {
 
     /// After the frontend ended (not called when it could not be run).
     fn after_end(&self, cx: &StartCx<'_>, ended: &Ended);
+
+    /// The session's token to resume with, when the person gave no `--resumed` and no `--fresh` (interface only: the starter
+    /// knows no session, a session block above it answers here, no edge to fs-session). `None` = nothing to resume. The first
+    /// hook that answers `Some` wins; the token goes to the frontend only.
+    fn resume_token(&self, cx: &StartCx<'_>) -> Option<ResumeToken>;
 }

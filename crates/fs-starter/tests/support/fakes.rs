@@ -8,7 +8,7 @@ use std::time::Duration;
 
 use fs_starter::{
     ActorName, Ended, Failure, FrontendId, HookOutcome, Launcher, Listing, ManifestSource,
-    McpEntry, Note, Preference, ProgramName, ServerGate, StartCx, StartHook, StarterCode, Tell, Up,
+    McpEntry, Note, Preference, ProgramName, ResumeToken, ServerGate, StartCx, StartHook, StarterCode, Tell, Up,
 };
 use fs_types::coded::Coded;
 
@@ -112,11 +112,17 @@ pub struct FakeHook {
     pub stop: Option<Failure>,
     pub before: RefCell<Vec<(bool, bool, String)>>,
     pub after: RefCell<Vec<(i32, Duration, bool)>>,
+    /// The session's token this hook offers (`resume_token`).
+    pub token: Option<&'static str>,
+    /// What `after_end` saw of the probation (`Ended::within_probation`).
+    pub probation: RefCell<Vec<bool>>,
 }
 
 impl FakeHook {
     pub fn go() -> Self {
         Self {
+            token: None,
+            probation: RefCell::default(),
             stop: None,
             before: RefCell::default(),
             after: RefCell::default(),
@@ -135,6 +141,11 @@ impl StartHook for FakeHook {
         self.after
             .borrow_mut()
             .push((ended.code, ended.after, cx.resumed));
+        self.probation.borrow_mut().push(ended.within_probation());
+    }
+    fn resume_token(&self, _cx: &StartCx<'_>) -> Option<ResumeToken> {
+        self.token
+            .and_then(|t| ResumeToken::parse(std::ffi::OsStr::new(t)))
     }
 }
 

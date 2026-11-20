@@ -5,8 +5,9 @@
 //!
 //! Decided (strategy, review K4b): `fs.rpc.single.ask` group `system`, place profile; `fs.mcp.enabled` group `ai`, PER DEVICE (a local entry of this
 //! machine; a profile value would open it on other devices). `fs.mcp.enabled` means "the AI entry (local) is open", never "AI is allowed"
-//! (ADR 0100 E7: that is a right in fs-access). NO code reads `fs.mcp.enabled` yet: the property "human only" (an AI never sees or changes the
-//! switch, ADR 0091 item 5) follows with K6 in fs-settings; until then nothing may read this key.
+//! (ADR 0100 E7: that is a right in fs-access). The starter asks the switch only through [`crate::McpSwitch`] (standard
+//! [`crate::McpOff`]); no code here reads the store. The property "human only" (an AI never sees or changes the switch,
+//! ADR 0091 item 5) follows with K6 in fs-settings; the `-bin` must not wire a reader before that.
 //!
 //! Pattern: Strategy ([`Declares`], as every block) + constants (the texts are data).
 
