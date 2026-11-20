@@ -2,6 +2,7 @@
 name = "fs-starter"
 description = "The program shell of every FreeSynergy program: words, server gate, frontend pick from AppStream manifests, start, exit codes; plus an optional conformance suite"
 version.workspace = true
+authors.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true

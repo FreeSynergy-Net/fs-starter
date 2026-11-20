@@ -1,0 +1,24 @@
+# Release of FreeSynergy starter on a version tag (fs-release caller, pinned).
+name: release
+on:
+  push: { tags: ["v*"] }
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+  packages: write
+jobs:
+  release:
+    uses: FreeSynergy/fs-release/.github/workflows/release.yml@v0.0.15
+    with:
+      # `fs-starter` is the host binary of the package `fs-starter-host` (the library `fs-starter` has none).
+      binaries: fs-starter
+      cargo-package: fs-starter-host
+      name: fs-starter
+      kind: app
+      app-id: net.freesynergy.Starter
+      macos: false
+      windows-targets: x86_64
+    secrets:
+      GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}

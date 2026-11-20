@@ -2,6 +2,7 @@
 name = "fs-starter-host"
 description = "The host: `fs-starter --description PATH` opens the window of a program from its description (blueprint folder, forms/ folder or one file), without building the program"
 version.workspace = true
+authors.workspace = true
 edition.workspace = true
 license.workspace = true
 rust-version.workspace = true

@@ -1630,7 +1630,7 @@ dependencies = [
 
 [[package]]
 name = "fs-starter"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "async-trait",
  "capnp",
@@ -1645,7 +1645,7 @@ dependencies = [
 
 [[package]]
 name = "fs-starter-host"
-version = "0.0.0"
+version = "0.0.1"
 dependencies = [
  "fs-forms-run",
  "fs-starter",
