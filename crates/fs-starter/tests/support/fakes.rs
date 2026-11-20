@@ -8,7 +8,8 @@ use std::time::Duration;
 
 use fs_starter::{
     ActorName, Ended, Failure, FrontendId, HookOutcome, Launcher, Listing, ManifestSource,
-    McpEntry, Note, Preference, ProgramName, ResumeToken, ServerGate, StartCx, StartHook, StarterCode, Tell, Up,
+    McpEntry, Note, Preference, ProgramName, ResumeToken, ServerGate, StartCx, StartHook,
+    StarterCode, Tell, Up,
 };
 use fs_types::coded::Coded;
 
