@@ -1524,8 +1524,8 @@ source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.5#4031c55977cfd5a
 dependencies = [
  "capnp",
  "capnp-rpc",
- "fs-interfaces",
- "fs-rpc",
+ "fs-interfaces 0.0.28",
+ "fs-rpc 0.0.3",
  "tokio",
 ]
 
@@ -1575,6 +1575,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs-interfaces"
+version = "0.0.29"
+source = "git+https://github.com/FreeSynergy/fs-interfaces?tag=v0.0.29#4f5834db3ac382a9f5897d467e066ed151d1c6cf"
+dependencies = [
+ "capnp",
+ "fs-types",
+]
+
+[[package]]
 name = "fs-objects"
 version = "0.0.8"
 source = "git+https://github.com/FreeSynergy/fs-objects?tag=v0.0.8#b638ef3ade2d07f8f03b6ad30c1e57c78f0bf87f"
@@ -1609,7 +1618,26 @@ dependencies = [
  "capnp",
  "capnp-rpc",
  "chrono",
- "fs-interfaces",
+ "fs-interfaces 0.0.28",
+ "fs-objects",
+ "fs-types",
+ "futures",
+ "rustix 1.1.6",
+ "tokio",
+ "tokio-util",
+ "uuid",
+ "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "fs-rpc"
+version = "0.0.5"
+source = "git+https://github.com/FreeSynergy/fs-rpc?tag=v0.0.5#cbb584c0535e82078a78d9a4eca3fa3e0119aab3"
+dependencies = [
+ "capnp",
+ "capnp-rpc",
+ "chrono",
+ "fs-interfaces 0.0.29",
  "fs-objects",
  "fs-types",
  "futures",
@@ -1622,8 +1650,8 @@ dependencies = [
 
 [[package]]
 name = "fs-settings"
-version = "0.0.30"
-source = "git+https://github.com/FreeSynergy/fs-components?tag=v0.0.30#66b8945ad1a4404ad7e84dd9cca40fda1d47d199"
+version = "0.0.33"
+source = "git+https://github.com/FreeSynergy/fs-components?tag=v0.0.33#ee6d72b8dddc361ae9258c4d7ad4b5e85407fe6a"
 dependencies = [
  "fs-types",
 ]
@@ -1635,7 +1663,7 @@ dependencies = [
  "async-trait",
  "capnp",
  "fs-conformance",
- "fs-rpc",
+ "fs-rpc 0.0.5",
  "fs-settings",
  "fs-types",
  "roxmltree",
