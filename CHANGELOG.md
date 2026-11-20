@@ -2,6 +2,11 @@
 
 Version = tag.
 
+## 0.0.2
+
+- Lifted pins in `crates/fs-starter`: `fs-rpc` v0.0.3 -> v0.0.5, `fs-settings` (repo fs-components) v0.0.30 -> v0.0.33; `fs-interfaces` comes as v0.0.29 through `fs-rpc` v0.0.5; `fs-types` and `fs-conformance` stay on v0.0.4 (the tag `fs-rpc` v0.0.5 uses). `Cargo.lock` is refreshed by cargo; the pins test follows. No code change. Known: the host crate still gets `fs-rpc` v0.0.3, `fs-interfaces` v0.0.28 and `fs-components` 0.0.30 through `fs-forms-run` v0.0.5, so those names have two sources in the Lock until fs-forms is lifted. Version 0.0.1 -> 0.0.2.
+- Auf Deutsch: Gehobene Pins in `crates/fs-starter`: `fs-rpc` v0.0.3 -> v0.0.5, `fs-settings` (Repo fs-components) v0.0.30 -> v0.0.33; `fs-interfaces` kommt als v0.0.29 ueber `fs-rpc` v0.0.5; `fs-types` und `fs-conformance` bleiben auf v0.0.4 (der Tag, den `fs-rpc` v0.0.5 nutzt). `Cargo.lock` von cargo erneuert; der Pins-Test folgt. Keine Code-Aenderung. Bekannt: das Host-Crate bekommt ueber `fs-forms-run` v0.0.5 weiter `fs-rpc` v0.0.3, `fs-interfaces` v0.0.28 und `fs-components` 0.0.30, diese Namen haben also zwei Quellen im Lock, bis fs-forms gehoben ist. Version 0.0.1 -> 0.0.2.
+
 ## 0.0.1
 
 - First release: the host binary `fs-starter` (Linux and Windows x86_64, built by the CI from the tag) and the library `fs-starter`. The host opens the window of a program from its description (`fs-starter --description PATH`); sample data (`--sample-data`) shows it without a server. Parts not built yet (single instance, session, update, help, MCP) are named once on stderr. The release workflow `release.yml` calls fs-release v0.0.15; the workspace has `authors` (the release plan needs them for the package metadata). Version 0.0.0 -> 0.0.1.
