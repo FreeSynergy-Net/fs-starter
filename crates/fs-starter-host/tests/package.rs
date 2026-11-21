@@ -49,20 +49,13 @@ fn a_layout_that_is_only_a_placeholder_comment_is_said_and_never_an_empty_window
 }
 
 #[test]
+#[ignore = "needs FS_BLUEPRINT_BIN (a built fs-blueprint of fs-release main dcbf81b or newer)"]
 fn what_fs_blueprint_new_writes_is_accepted_by_the_host() {
     // The chain: scaffold.toml -> `fs-blueprint new` -> data package -> `fs-starter <package> --check`. Needs the built generator;
-    // its path comes in `FS_BLUEPRINT_BIN`. Without it the test says SKIPPED on stderr (visible with `--nocapture`); with
-    // `FS_BLUEPRINT_REQUIRED` set a missing path is a failure, so CI cannot stay green by skipping.
-    let Some(bin) = std::env::var_os("FS_BLUEPRINT_BIN") else {
-        assert!(
-            std::env::var_os("FS_BLUEPRINT_REQUIRED").is_none(),
-            "FS_BLUEPRINT_BIN is required here"
-        );
-        eprintln!(
-            "SKIPPED what_fs_blueprint_new_writes_is_accepted_by_the_host: FS_BLUEPRINT_BIN is not set"
-        );
-        return;
-    };
+    // its path comes in `FS_BLUEPRINT_BIN`. The test is `#[ignore]`d, so the skip shows in every run; `cargo test -- --ignored`
+    // runs it, and then a missing `FS_BLUEPRINT_BIN` is a failure.
+    let bin =
+        std::env::var_os("FS_BLUEPRINT_BIN").expect("FS_BLUEPRINT_BIN names a built fs-blueprint");
     let work = tempfile::tempdir().unwrap();
     let from = std::path::PathBuf::from(forms_package());
     std::fs::copy(

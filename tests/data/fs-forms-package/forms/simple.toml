@@ -1,4 +1,4 @@
-# created by fs-blueprint 0.0.16; from now on this file belongs to the program and is never overwritten
+# created by fs-blueprint of fs-release main dcbf81b, not yet tagged; from now on this file belongs to the program and is never overwritten
 schema = 1
 kind = "frontend"
 id = "simple"

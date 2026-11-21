@@ -72,7 +72,15 @@ fn a_description_is_checked_without_a_window_and_the_pending_parts_are_named_onc
     for part in ["single-instance", "session", "update", "help", "mcp"] {
         assert!(err.contains(part), "{part} not named: {err}");
     }
-    // the host has no program name of its own: "tasks" is only there as the package line read from the scaffold.toml
+    // the host has no program name of its own: "tasks" is only in the package line read from the scaffold.toml, nowhere else
+    let own_words: Vec<&str> = err
+        .lines()
+        .filter(|l| !l.contains("package tasks"))
+        .collect();
+    assert!(
+        !own_words.join("\n").to_lowercase().contains("tasks"),
+        "program name in the host's words: {err}"
+    );
     assert!(
         err.contains("package tasks (skeleton 0.1.0)"),
         "the package line is read from the folder: {err}"

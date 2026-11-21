@@ -90,14 +90,17 @@ impl StartHook for NoopHook {
 
 /// Builds the `Parts` of the host (MCP off, the no-op hook) and hands them to `f`.
 fn with_parts<R>(f: impl FnOnce(&Parts<'_>) -> R) -> R {
+    with_hooks(&[&NoopHook], f)
+}
+
+/// Builds the `Parts` of the host with the given hooks (the host passes the no-op hook; tests pass recorders).
+fn with_hooks<R>(hooks: &[&dyn StartHook], f: impl FnOnce(&Parts<'_>) -> R) -> R {
     let program = HostProgram::new();
     let (gate, manifests, launcher) = (
         NoGate,
         XdgManifests::from_env(),
         ProcessLauncher::standard(),
     );
-    let hook = NoopHook;
-    let hooks: [&dyn StartHook; 1] = [&hook];
     let parts = Parts {
         program: &program,
         gate: &gate,
@@ -105,7 +108,7 @@ fn with_parts<R>(f: impl FnOnce(&Parts<'_>) -> R) -> R {
         preference: &NoPreference,
         launcher: &launcher,
         tell: &StderrTell,
-        hooks: &hooks,
+        hooks,
         mcp: None,
         mcp_switch: &McpOff,
         default_socket: None,
@@ -121,33 +124,114 @@ pub fn run_library(words: &[OsString], out: &mut dyn io::Write) -> ExitCode {
 
 /// Runs `open` (the window) between the hooks: `before_open` may stop the start, `after_end` sees the code and the time (the
 /// update hook decides on the probation there; the default hook does nothing).
+///
+/// Session part pending: this does not call `StartHook::resume_token`, and `StartCx.fresh` is always `false` (even with `--fresh`),
+/// because the host does not read the start words of the library here. `resumed` is only what the caller passes. Both belong to the
+/// session part that is not built yet (README and CHANGELOG list it).
 pub fn around_window(frontend: &str, resumed: bool, open: impl FnOnce() -> ExitCode) -> ExitCode {
-    with_parts(|parts| {
-        let id = FrontendId::parse(frontend)
-            .unwrap_or_else(|| parts.program.standard_frontend().clone());
-        let cx = StartCx {
-            program: parts.program.name(),
-            version: parts.program.version(),
-            frontend: &id,
-            fresh: false,
-            resumed,
-        };
-        for hook in parts.hooks {
-            if let HookOutcome::Stop(f) = hook.before_open(&cx) {
-                eprintln!("fs-starter: {}", f.code);
-                return ExitCode::from(f.exit.code());
+    with_parts(|parts| run_around(parts, frontend, resumed, open))
+}
+
+fn run_around(
+    parts: &Parts<'_>,
+    frontend: &str,
+    resumed: bool,
+    open: impl FnOnce() -> ExitCode,
+) -> ExitCode {
+    let id =
+        FrontendId::parse(frontend).unwrap_or_else(|| parts.program.standard_frontend().clone());
+    let cx = StartCx {
+        program: parts.program.name(),
+        version: parts.program.version(),
+        frontend: &id,
+        fresh: false, // not wired: session part pending (see the doc above)
+        resumed,
+    };
+    for hook in parts.hooks {
+        if let HookOutcome::Stop(f) = hook.before_open(&cx) {
+            eprintln!("fs-starter: {}", f.code);
+            return ExitCode::from(f.exit.code());
+        }
+    }
+    let started = Instant::now();
+    let code = open();
+    // ExitCode has no accessor; the hook gets the time, and 0/1 as the coarse result known here.
+    let ended = Ended {
+        code: i32::from(code != ExitCode::SUCCESS),
+        after: started.elapsed(),
+    };
+    for hook in parts.hooks {
+        hook.after_end(&cx, &ended);
+    }
+    code
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::cell::{Cell, RefCell};
+
+    /// Records the calls; `stop` makes `before_open` refuse.
+    struct Spy<'a> {
+        stop: bool,
+        log: &'a RefCell<Vec<String>>,
+    }
+
+    impl StartHook for Spy<'_> {
+        fn before_open(&self, _cx: &StartCx<'_>) -> HookOutcome {
+            self.log.borrow_mut().push("before".into());
+            if self.stop {
+                HookOutcome::Stop(Failure {
+                    exit: Exit::FAILED,
+                    code: Coded::new(StarterCode::Usage).erase(),
+                })
+            } else {
+                HookOutcome::Go
             }
         }
-        let started = Instant::now();
-        let code = open();
-        // ExitCode has no accessor; the hook gets the time, and 0/1 as the coarse result known here.
-        let ended = Ended {
-            code: i32::from(code != ExitCode::SUCCESS),
-            after: started.elapsed(),
-        };
-        for hook in parts.hooks {
-            hook.after_end(&cx, &ended);
+        fn after_end(&self, _cx: &StartCx<'_>, ended: &Ended) {
+            self.log.borrow_mut().push(format!("after {}", ended.code));
         }
-        code
-    })
+        fn resume_token(&self, _cx: &StartCx<'_>) -> Option<ResumeToken> {
+            None
+        }
+    }
+
+    #[test]
+    fn a_stopping_before_open_prevents_the_window_and_after_end() {
+        let log = RefCell::new(Vec::new());
+        let opened = Cell::new(false);
+        let spy = Spy {
+            stop: true,
+            log: &log,
+        };
+        let code = with_hooks(&[&spy], |p| {
+            run_around(p, "simple", false, || {
+                opened.set(true);
+                ExitCode::SUCCESS
+            })
+        });
+        assert!(!opened.get(), "the window must not run after a Stop");
+        assert_eq!(code, ExitCode::from(Exit::FAILED.code()));
+        assert_eq!(*log.borrow(), ["before"], "no after_end without a window");
+    }
+
+    #[test]
+    fn after_end_runs_after_the_window_with_its_result() {
+        let log = RefCell::new(Vec::new());
+        let opened = Cell::new(false);
+        let spy = Spy {
+            stop: false,
+            log: &log,
+        };
+        let code = with_hooks(&[&spy], |p| {
+            run_around(p, "simple", false, || {
+                opened.set(true);
+                ExitCode::FAILURE
+            })
+        });
+        assert!(opened.get());
+        assert_eq!(code, ExitCode::FAILURE);
+        assert_eq!(*log.borrow(), ["before", "after 1"]);
+    }
 }
