@@ -2,7 +2,8 @@
 //! blueprint folder with `scaffold.toml`, a folder with `forms/*.toml`, or one file), without building the program. It has no
 //! program name and no special case; every word it does not know is handed to `fs-forms-run`, which owns the window.
 //!
-//! What the starter shell of this crate's sibling `fs-starter` will add (single instance, session, update, help, MCP switch) is
+//! The MCP switch is built (`McpOff`, see `shell.rs`: MCP is off) and the start hooks run (a no-op until `fs-update` is bound). What the
+//! starter shell of this crate's sibling `fs-starter` will add (single instance, session, update, help, MCP entry) is
 //! NOT built here: it is named once on stderr with the code `skeleton-part-pending`.
 //!
 //! Pattern: Facade: this file only declares modules and re-exports the public API.
@@ -13,7 +14,9 @@
 mod host;
 mod package;
 mod pending;
+mod shell;
 
 pub use host::{HELP, run, version_line};
 pub use package::{Package, line as package_line, read as read_package};
-pub use pending::{CODE, PENDING, note};
+pub use pending::{CODE, PENDING, UPDATE_CODE, note};
+pub use shell::NoopHook;

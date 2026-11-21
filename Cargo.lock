@@ -1781,6 +1781,7 @@ version = "0.0.3"
 dependencies = [
  "fs-forms-run",
  "fs-starter",
+ "fs-types",
  "png 0.18.1",
  "tempfile",
  "toml",

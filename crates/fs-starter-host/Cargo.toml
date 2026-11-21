@@ -16,10 +16,11 @@ name = "fs_starter_host"
 name = "fs-starter"
 path = "src/main.rs"
 
-# Only git tags and the sibling crate. `fs-forms-run` (the window of a description) brings fs-components v0.0.30, fs-forms-client
-# (fs-rpc v0.0.3, fs-interfaces) and the description reader; `fs-forms-bin` is NOT a dependency (it depends on `fs-starter`: a cycle).
+# Only git tags and the sibling crate. `fs-forms-run` (the window of a description) brings fs-components v0.0.33, fs-forms-client
+# (fs-rpc v0.0.5, fs-interfaces v0.0.29) and the description reader; `fs-forms-bin` is NOT a dependency (it depends on `fs-starter`: a cycle).
 [dependencies]
 fs-starter = { path = "../fs-starter" }
+fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
 fs-forms-run = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.7" }
 toml = "0.8"
 

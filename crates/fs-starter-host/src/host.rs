@@ -8,7 +8,7 @@ use std::process::ExitCode;
 use fs_forms_run::{Command, Config, FileLink, LayoutLink, SocketLink, session_locale};
 use fs_starter::Exit;
 
-use crate::{package, pending};
+use crate::{package, pending, shell};
 
 /// The help text of the host (the words of the window host follow it).
 pub const HELP: &str = "fs-starter (--description PATH | PATH) [--frontend ID] [--style NAME] [--sample-data] [--picture FILE.png]\n\
@@ -24,6 +24,11 @@ pub fn version_line() -> String {
 /// Run the words after the program name and return the exit code (0 done, 1 failed, 2 wrong words, 3 contract).
 #[must_use]
 pub fn run(args: &[String]) -> ExitCode {
+    // `mcp --as <actor>` is a word of the starter library, not of the window host: it ends in `mcp-disabled` (MCP is off).
+    if args.first().map(String::as_str) == Some("mcp") {
+        let words: Vec<std::ffi::OsString> = args.iter().map(std::ffi::OsString::from).collect();
+        return shell::run_library(&words, &mut std::io::stdout().lock());
+    }
     match fs_forms_run::parse(args) {
         Err(message) => {
             eprintln!("fs-starter: {message}\nTry `fs-starter --help`.");
@@ -47,7 +52,7 @@ pub fn run(args: &[String]) -> ExitCode {
             if let Err(code) = announce(&c) {
                 return code;
             }
-            fs_forms_run::run(args)
+            shell::around_window(&c.frontend, c.resumed, || fs_forms_run::run(args))
         }
     }
 }

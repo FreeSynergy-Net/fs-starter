@@ -125,3 +125,28 @@ fn the_pending_parts_are_listed_in_one_place() {
     assert_eq!(fs_starter_host::PENDING.len(), 5);
     assert!(fs_starter_host::note().contains(fs_starter_host::CODE));
 }
+
+#[test]
+fn mcp_is_off_in_the_host_binary_and_the_actor_is_never_taken_from_elsewhere() {
+    // S4: the host builds `Parts` with `McpOff`; `mcp --as <actor>` ends with `mcp-disabled` (exit 1), the host serves no MCP.
+    let out = host(&["mcp", "--as", "tester"], "light");
+    assert_eq!(out.status.code(), Some(i32::from(Exit::FAILED.code())));
+    assert!(
+        text(&out.stderr).contains("mcp-disabled"),
+        "{}",
+        text(&out.stderr)
+    );
+    // without `--as` the starter library says so (exit 2): the actor is never guessed
+    let out = host(&["mcp"], "light");
+    assert_eq!(out.status.code(), Some(i32::from(Exit::USAGE.code())));
+}
+
+#[test]
+fn the_open_update_binding_is_visible_next_to_the_pending_parts() {
+    let out = host(&["--description", &tasks(), "--check"], "light");
+    assert!(
+        text(&out.stderr).contains(fs_starter_host::UPDATE_CODE),
+        "{}",
+        text(&out.stderr)
+    );
+}
