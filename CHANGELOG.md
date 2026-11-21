@@ -2,6 +2,16 @@
 
 Version = tag.
 
+## Unreleased
+
+### English
+
+- CI callers (`check.yml`, `windows.yml`, `release.yml`) pinned to fs-release v0.0.17 (was v0.0.16): the release that contains the generator with the valid forms layout seed and the nested types. No code change.
+
+### Deutsch
+
+- CI-Aufrufer (`check.yml`, `windows.yml`, `release.yml`) auf fs-release v0.0.17 gehoben (vorher v0.0.16): das Release mit dem Generator, der das gültige forms-Layout erzeugt, und den verschachtelten Typen. Keine Code-Änderung.
+
 ## 0.0.3
 
 - Fixes of the inspection report (S2, S4, S5, S6): the host builds `Parts` with `McpOff` (`crates/fs-starter-host/src/shell.rs`), so `fs-starter mcp --as ACTOR` ends with `mcp-disabled` (exit 1) and the host never serves MCP; the start hooks run around the window (`before_open`, `after_end` with code and time) with the default `NoopHook`; the binding to `fs-update` (ADR 0105 open point 9) stays open and is said on stderr as `update-binding-pending`. README states this and no longer says the host is outside the workspace. The doc of `Program` no longer promises generated code. The host `Cargo.toml` comment names the real pins (fs-components v0.0.33, fs-rpc v0.0.5); it takes `fs-types` v0.0.4 as a direct dependency (`coded::Coded`). The fixture `tests/data/fs-forms-package` is regenerated with `fs-blueprint new` (fs-release main dcbf81b, not yet tagged: v0.0.16 does not contain it); its layout `forms/simple.toml` is the generator's valid seed (schema 1, kind frontend), so `--check` succeeds; a comment-only layout is still reported with the coded cause (`layout-*`, exit non-zero).
