@@ -9,7 +9,7 @@ pub const CODE: &str = "skeleton-part-pending";
 pub const UPDATE_CODE: &str = "update-binding-pending";
 
 /// The parts that are not built: the starter pulls them in when the host is joined to it.
-pub const PENDING: [&str; 5] = ["single-instance", "session", "update", "help", "mcp"];
+pub const PENDING: [&str; 4] = ["session", "update", "help", "mcp"];
 
 /// The line for the person: the code and the parts.
 #[must_use]

@@ -23,6 +23,12 @@ fs-starter = { path = "../fs-starter" }
 fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
 fs-forms-run = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.9" }
 toml = "0.8"
+# Single instance (ADR 0097): the contract `Instance` of fs-interfaces, served and called through fs-rpc (the same pins as fs-forms-run).
+fs-interfaces = { git = "https://github.com/FreeSynergy/fs-interfaces", tag = "v0.0.29" }
+fs-rpc = { git = "https://github.com/FreeSynergy/fs-rpc", tag = "v0.0.5" }
+capnp = "0.27"
+capnp-rpc = "0.27"
+tokio = { version = "1", features = ["rt", "sync", "time", "net"] }
 
 # Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
 [dev-dependencies]

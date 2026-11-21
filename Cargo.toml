@@ -9,3 +9,8 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.89"
 repository = "https://github.com/FreeSynergy/fs-starter"
+
+# DURING WORK ONLY (CLAUDE.md 4b): fs-interfaces from the local head that has `instance.capnp` (branch unreviewed/instance-schema).
+# Remove this block when fs-interfaces is tagged with the contract and the pins above are lifted (bundle release).
+[patch."https://github.com/FreeSynergy/fs-interfaces"]
+fs-interfaces = { path = "/srv/FreeSynergy/.scratch/api-runner/wt/fs-interfaces-instance/crates/fs-interfaces" }

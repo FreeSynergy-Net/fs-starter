@@ -8,6 +8,7 @@ use std::process::ExitCode;
 use fs_forms_run::{Command, Config, FileLink, LayoutLink, SocketLink, session_locale};
 use fs_starter::Exit;
 
+use crate::instance::{self, Claim, InstanceTimes};
 use crate::{package, pending, shell};
 
 /// The help text of the host (the words of the window host follow it).
@@ -49,20 +50,31 @@ pub fn run(args: &[String]) -> ExitCode {
             check(&c)
         }
         Ok(Command::Window(c)) => {
-            if let Err(code) = announce(&c) {
-                return code;
-            }
+            let program = match announce(&c) {
+                Ok(program) => program,
+                Err(code) => return code,
+            };
+            // held until the window is closed; a second start of the same program ends here (`HandedOver`)
+            let _place = match single(program.as_deref(), args, c.picture.is_some()) {
+                Ok(place) => place,
+                Err(code) => return code,
+            };
             shell::around_window(&c.frontend, c.resumed, || fs_forms_run::run_code(args))
         }
     }
 }
 
 /// Say what the path is (a data package: its program, skeleton and layout) and which parts are pending. A package whose
-/// `scaffold.toml` cannot be read ends here with the code of a failure, it is never opened as an empty window.
-fn announce(c: &Config) -> Result<(), ExitCode> {
+/// `scaffold.toml` cannot be read ends here with the code of a failure, it is never opened as an empty window. Answers the
+/// program name of a package (`None`: another kind of description, which has no program of its own).
+fn announce(c: &Config) -> Result<Option<String>, ExitCode> {
+    let mut program = None;
     if let Some(path) = &c.description {
         match package::read(path) {
-            Ok(Some(p)) => eprintln!("{}", package::line(&p)),
+            Ok(Some(p)) => {
+                eprintln!("{}", package::line(&p));
+                program = Some(p.program);
+            }
             Ok(None) => {}
             Err(e) => {
                 eprintln!("fs-starter: {e}");
@@ -71,7 +83,37 @@ fn announce(c: &Config) -> Result<(), ExitCode> {
         }
     }
     eprintln!("{}", pending::note());
-    Ok(())
+    Ok(program)
+}
+
+/// The single instance of the program: `Ok(Some(guard))` the first window (hold it), `Ok(None)` nothing to hold (no program, no
+/// endpoint, or a picture, which has no window to protect), `Err(code)` this start ends (handed over: success; else a failure).
+/// A start that draws a picture takes the place only to learn who has it: a running window gets the words, else it lets go at once.
+fn single(
+    program: Option<&str>,
+    args: &[String],
+    picture: bool,
+) -> Result<Option<instance::Guard>, ExitCode> {
+    let Some(name) = program else {
+        return Ok(None);
+    };
+    let failed = |line: &str| {
+        eprintln!("fs-starter: {line}");
+        ExitCode::from(Exit::FAILED.code())
+    };
+    let endpoint = instance::endpoint_for(name).map_err(|e| failed(&e))?;
+    match instance::claim(endpoint.as_deref(), args, InstanceTimes::default()) {
+        Ok(Claim::First(guard)) => Ok((!picture).then_some(guard)),
+        Ok(Claim::HandedOver) => {
+            eprintln!("fs-starter: {}", instance::HANDED_OVER);
+            Err(ExitCode::from(Exit::DONE.code()))
+        }
+        Ok(Claim::Off(code)) => {
+            eprintln!("fs-starter: {code}");
+            Ok(None)
+        }
+        Err(e) => Err(failed(&e)),
+    }
 }
 
 /// `--check`: only fetch the description, say whether it is there. Fatal (the contract is not there) is the contract code.

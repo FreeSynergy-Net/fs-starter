@@ -1670,7 +1670,6 @@ dependencies = [
 [[package]]
 name = "fs-interfaces"
 version = "0.0.29"
-source = "git+https://github.com/FreeSynergy/fs-interfaces?tag=v0.0.29#4f5834db3ac382a9f5897d467e066ed151d1c6cf"
 dependencies = [
  "capnp",
  "fs-types",
@@ -1779,11 +1778,16 @@ dependencies = [
 name = "fs-starter-host"
 version = "0.0.3"
 dependencies = [
+ "capnp",
+ "capnp-rpc",
  "fs-forms-run",
+ "fs-interfaces",
+ "fs-rpc",
  "fs-starter",
  "fs-types",
  "png 0.18.1",
  "tempfile",
+ "tokio",
  "toml",
 ]
 
