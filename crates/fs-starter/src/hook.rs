@@ -1,8 +1,8 @@
 //! Hooks around opening a frontend, so a building block above the starter can take part without an edge upwards.
 //!
 //! Pattern: Inversion of control (`StartHook`). First user: fs-update's probation (ADR 0069 addendum, item 5: 120 s; a new
-//! version that dies before falls back to the previous one), wired in the program's `-bin` (ADR 0097 decision 1: fs-starter
-//! never depends on fs-update).
+//! version that dies before falls back to the previous one), bound by the one host (ADR 0105 (a); how fs-update is bound
+//! there is open, ADR 0105 open point 9); fs-starter never depends on fs-update).
 
 use std::time::Duration;
 

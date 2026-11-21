@@ -19,13 +19,74 @@ fn the_package_is_read_and_named_before_the_layout_is_fetched() {
 }
 
 #[test]
-fn a_layout_that_is_only_a_placeholder_is_said_and_never_an_empty_window() {
-    // The generated forms/simple.toml is a comment (E4 gap "layout empty"): fs-forms-run refuses it with a code; the host exits
-    // with a failure code instead of showing nothing.
+fn the_valid_seed_layout_of_the_generator_is_accepted() {
+    // `fs-blueprint new` seeds a real, readable forms layout (schema 1, kind frontend): `--check` succeeds.
     let out = host(&[&forms_package(), "--check"], "light");
+    let err = text(&out.stderr);
+    assert_eq!(out.status.code(), Some(0), "{err}");
+    assert!(!err.contains("layout-"), "no layout error: {err}");
+}
+
+/// A copy of the fixture in a temp folder whose `forms/simple.toml` is `layout`.
+fn package_with_layout(layout: &str) -> tempfile::TempDir {
+    let dir = tempfile::tempdir().unwrap();
+    let from = std::path::PathBuf::from(forms_package());
+    std::fs::copy(from.join("scaffold.toml"), dir.path().join("scaffold.toml")).unwrap();
+    std::fs::create_dir(dir.path().join("forms")).unwrap();
+    std::fs::write(dir.path().join("forms/simple.toml"), layout).unwrap();
+    dir
+}
+
+#[test]
+fn a_layout_that_is_only_a_placeholder_comment_is_said_and_never_an_empty_window() {
+    // The old generated forms/simple.toml was only a comment: fs-forms-run refuses it with a code; the host exits with a failure
+    // code instead of showing nothing.
+    let dir = package_with_layout("# the forms description of fs-forms (placeholder)\n");
+    let out = host(&[dir.path().to_str().unwrap(), "--check"], "light");
     let err = text(&out.stderr);
     assert_ne!(out.status.code(), Some(0), "{err}");
     assert!(err.contains("layout-"), "a coded cause is named: {err}");
+}
+
+#[test]
+fn what_fs_blueprint_new_writes_is_accepted_by_the_host() {
+    // The chain: scaffold.toml -> `fs-blueprint new` -> data package -> `fs-starter <package> --check`. Needs the built generator;
+    // its path comes in `FS_BLUEPRINT_BIN`. Without it the test says SKIPPED on stderr (visible with `--nocapture`); with
+    // `FS_BLUEPRINT_REQUIRED` set a missing path is a failure, so CI cannot stay green by skipping.
+    let Some(bin) = std::env::var_os("FS_BLUEPRINT_BIN") else {
+        assert!(
+            std::env::var_os("FS_BLUEPRINT_REQUIRED").is_none(),
+            "FS_BLUEPRINT_BIN is required here"
+        );
+        eprintln!(
+            "SKIPPED what_fs_blueprint_new_writes_is_accepted_by_the_host: FS_BLUEPRINT_BIN is not set"
+        );
+        return;
+    };
+    let work = tempfile::tempdir().unwrap();
+    let from = std::path::PathBuf::from(forms_package());
+    std::fs::copy(
+        from.join("scaffold.toml"),
+        work.path().join("scaffold.toml"),
+    )
+    .unwrap();
+    let made = work.path().join("made");
+    let generated = std::process::Command::new(bin)
+        .current_dir(work.path())
+        .args(["new", "scaffold.toml", "--out"])
+        .arg(&made)
+        .output()
+        .unwrap();
+    assert_eq!(
+        generated.status.code(),
+        Some(0),
+        "{}",
+        text(&generated.stderr)
+    );
+    let out = host(&[made.to_str().unwrap(), "--check"], "light");
+    let err = text(&out.stderr);
+    assert_eq!(out.status.code(), Some(0), "{err}");
+    assert!(err.contains("package forms (skeleton 0.1.0)"), "{err}");
 }
 
 #[test]

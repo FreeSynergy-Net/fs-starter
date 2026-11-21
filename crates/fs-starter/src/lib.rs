@@ -16,7 +16,8 @@
 //!   is decided by the MCP entry, never here.
 //! - The token of `--resumed` goes to the frontend only; it is in no note, no output, no hook (ADR 0069 addendum, item 5).
 //! - The starter knows no session, no module and no update (review condition S1): `--fresh`/`--resumed` are words it
-//!   passes on; update probation hooks in through [`StartHook`] (no edge to fs-update, ADR 0097 decision 1).
+//!   passes on; update probation hooks in through [`StartHook`] (no edge to fs-update; ADR 0105 (a): the one host
+//!   binds the hook, fs-update binding open, ADR 0105 open point 9).
 //! - Every choice the person can make stays theirs: the frontend comes from [`Preference`] when no word names one.
 //!
 //! Pattern: Template method ([`run`]) + Strategy (every part is a trait with a standard implementation and a fake) +

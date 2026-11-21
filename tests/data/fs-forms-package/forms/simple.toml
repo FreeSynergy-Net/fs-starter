@@ -1,1 +1,20 @@
-# the forms description of fs-forms (placeholder, as in the probe: the layout is not described yet)
+# created by fs-blueprint 0.0.16; from now on this file belongs to the program and is never overwritten
+schema = 1
+kind = "frontend"
+id = "simple"
+extends = "net.freesynergy.Forms"
+exec = "fs-forms-run"
+title = "forms-title"
+
+[[requires]]
+contract = "forms >=0.1 <0.2"
+
+[[message]]
+key = "forms-title"
+lang = "en"
+text = "Forms"
+
+[[message]]
+key = "forms-title"
+lang = "de"
+text = "Forms"
