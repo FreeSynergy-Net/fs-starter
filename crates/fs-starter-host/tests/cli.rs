@@ -69,9 +69,11 @@ fn a_description_is_checked_without_a_window_and_the_pending_parts_are_named_onc
         "fs-starter: the description of the frontend board is there"
     );
     assert_eq!(err.matches("skeleton-part-pending").count(), 1, "{err}");
-    for part in ["single-instance", "session", "update", "help", "mcp"] {
+    for part in ["session", "update", "help", "mcp"] {
         assert!(err.contains(part), "{part} not named: {err}");
     }
+    // the single instance is built (per program): it is no longer named as pending, and `--check` never claims a place
+    assert!(!err.contains("single-instance"), "still named: {err}");
     // the host has no program name of its own: "tasks" is only in the package line read from the scaffold.toml, nowhere else
     let own_words: Vec<&str> = err
         .lines()
@@ -130,7 +132,8 @@ fn without_a_server_and_without_a_description_the_check_ends_with_the_contract_c
 #[test]
 fn the_pending_parts_are_listed_in_one_place() {
     assert_eq!(fs_starter_host::CODE, "skeleton-part-pending");
-    assert_eq!(fs_starter_host::PENDING.len(), 5);
+    assert_eq!(fs_starter_host::PENDING.len(), 4);
+    assert!(!fs_starter_host::PENDING.contains(&"single-instance"));
     assert!(fs_starter_host::note().contains(fs_starter_host::CODE));
 }
 
