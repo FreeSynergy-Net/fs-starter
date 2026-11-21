@@ -1623,7 +1623,7 @@ source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089a
 dependencies = [
  "capnp",
  "capnp-rpc",
- "fs-interfaces",
+ "fs-interfaces 0.0.29",
  "fs-rpc",
  "tokio",
 ]
@@ -1670,6 +1670,16 @@ dependencies = [
 [[package]]
 name = "fs-interfaces"
 version = "0.0.29"
+source = "git+https://github.com/FreeSynergy/fs-interfaces?tag=v0.0.29#4f5834db3ac382a9f5897d467e066ed151d1c6cf"
+dependencies = [
+ "capnp",
+ "fs-types",
+]
+
+[[package]]
+name = "fs-interfaces"
+version = "0.0.30"
+source = "git+https://github.com/FreeSynergy/fs-interfaces?tag=v0.0.30#5e049ad0be2bc1a1b03ca5783da791b93a66edd7"
 dependencies = [
  "capnp",
  "fs-types",
@@ -1698,7 +1708,7 @@ source = "git+https://github.com/FreeSynergy/fs-modules-planning?tag=v0.0.2#4152
 dependencies = [
  "capnp",
  "capnp-rpc",
- "fs-interfaces",
+ "fs-interfaces 0.0.29",
  "fs-jscalendar",
  "fs-rpc",
  "serde_json",
@@ -1740,7 +1750,7 @@ dependencies = [
  "capnp",
  "capnp-rpc",
  "chrono",
- "fs-interfaces",
+ "fs-interfaces 0.0.29",
  "fs-objects",
  "fs-types",
  "futures",
@@ -1781,7 +1791,7 @@ dependencies = [
  "capnp",
  "capnp-rpc",
  "fs-forms-run",
- "fs-interfaces",
+ "fs-interfaces 0.0.30",
  "fs-rpc",
  "fs-starter",
  "fs-types",

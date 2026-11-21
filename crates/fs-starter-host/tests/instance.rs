@@ -1,5 +1,20 @@
 //! The single instance of a program window (ADR 0097): the first start holds the place, a second start of the same program hands
 //! its words over. Every test has its own temp folder as the runtime folder (never the real one, [TESTISOLATION]).
+//!
+//! Test list: t1 hand-over of the words; t2 two programs both first; t3 guard dropped, place free again; t4 stale socket file is
+//! first; t5 name that is a path refused; t6 open (0777) folder refused; t7 no runtime folder, program starts and says
+//! `single-instance-off`; t8 hung first instance -> `instance-not-answering`; t9 `--picture` against a held package; t10 unknown
+//! words refused; t11 a word too long refused.
+//!
+//! Mutants (documented, to be run in the review; each makes the named test red):
+//! - M1 `bind-over`: `claim_with` removes an existing socket file before binding (instead of letting `AddrInUse` mean "someone
+//!   holds it") -> a second start becomes First, nothing is handed over -> t1 red (`HandedOver` expected) and t8 red (the hung
+//!   listener's file is gone).
+//! - M2 `kill-the-hung`: `hand_over` removes the socket file (or the answer timeout is not applied) when the first instance does
+//!   not answer -> t8 red (`path.exists()` "nothing is killed or removed"; without the timeout the test hangs, then red by its
+//!   time bound).
+//!
+//! The mutants were first named only in the hand-over text of the work session; this block is their record in the repo.
 #![cfg(unix)]
 
 use std::os::unix::fs::{DirBuilderExt, PermissionsExt};

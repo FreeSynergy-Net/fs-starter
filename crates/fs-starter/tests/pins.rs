@@ -33,7 +33,7 @@ fn the_lifted_libraries_are_pinned_by_their_tags() {
     for (name, tag) in [
         ("fs-types", "v0.0.4"),
         ("fs-conformance", "v0.0.4"),
-        ("fs-interfaces", "v0.0.29"),
+        ("fs-interfaces", "v0.0.30"),
         ("fs-objects", "v0.0.8"),
         ("fs-settings", "v0.0.33"),
     ] {
