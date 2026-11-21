@@ -128,6 +128,9 @@ pub fn run_library(words: &[OsString], out: &mut dyn io::Write) -> ExitCode {
 /// Session part pending: this does not call `StartHook::resume_token`, and `StartCx.fresh` is always `false` (even with `--fresh`),
 /// because the host does not read the start words of the library here. `resumed` is only what the caller passes. Both belong to the
 /// session part that is not built yet (README and CHANGELOG list it).
+///
+/// A panic in `open` or a signal that ends the process skips `after_end`: the hook sees only a window that returned. A fall back after a
+/// crash needs a mark that the next start reads, not this hook. A code outside 0..=255 ends the process with 1 (`Exit::of_frontend`).
 pub fn around_window(frontend: &str, resumed: bool, open: impl FnOnce() -> i32) -> ExitCode {
     with_parts(|parts| run_around(parts, frontend, resumed, open))
 }
@@ -164,7 +167,7 @@ fn run_around(
         hook.after_end(&cx, &ended);
     }
     // Same mapping as `fs_forms_run::run`: a number outside 0..=255 ends as 1.
-    ExitCode::from(u8::try_from(code).unwrap_or(1))
+    ExitCode::from(Exit::of_frontend(code).code())
 }
 
 #[cfg(test)]
@@ -238,5 +241,19 @@ mod tests {
             ["before", "after 3"],
             "the hook sees the real code, not 0/1"
         );
+    }
+
+    #[test]
+    fn a_code_out_of_range_ends_with_failure_and_the_hook_sees_it() {
+        for raw in [-1, 256] {
+            let log = RefCell::new(Vec::new());
+            let spy = Spy {
+                stop: false,
+                log: &log,
+            };
+            let code = with_hooks(&[&spy], |p| run_around(p, "simple", false, || raw));
+            assert_eq!(code, ExitCode::from(1), "code {raw} must end with 1, not 0");
+            assert_eq!(*log.borrow(), ["before".to_owned(), format!("after {raw}")]);
+        }
     }
 }
