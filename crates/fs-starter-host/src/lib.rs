@@ -11,7 +11,9 @@
 #![warn(clippy::pedantic)]
 
 mod host;
+mod package;
 mod pending;
 
 pub use host::{HELP, run, version_line};
+pub use package::{Package, line as package_line, read as read_package};
 pub use pending::{CODE, PENDING, note};

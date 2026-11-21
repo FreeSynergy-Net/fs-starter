@@ -1,0 +1,82 @@
+schema = 2
+
+[program]
+name = "forms"
+version = "0.0.1"
+skeleton = "0.1.0"
+capability = "forms"
+summary = { en = "Surveys, questions and answers", de = "Umfragen, Fragen und Antworten" }
+description = { en = "Make surveys with conditional questions, collect named or anonymous answers and read the results.", de = "Umfragen mit bedingten Fragen machen, namentliche oder anonyme Antworten sammeln und die Ergebnisse lesen." }
+categories = ["Office", "Network"]
+
+[contract]
+version = "0.1"
+id = "0xc04d258971543501"
+
+[[type]]
+name = "Survey"
+standard = "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-orderedcollection"
+envelope = "OrderedCollection"
+media_type = "application/activity+json"
+label = { en = "Survey", de = "Umfrage" }
+
+[[type.field]]
+name = "name"
+basic = "text"
+standard = "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-name"
+label = { en = "Title", de = "Titel" }
+
+[[type.field]]
+name = "state"
+basic = "text"
+standard = "https://freesynergy.net/ns#state"
+label = { en = "State", de = "Zustand" }
+
+[[type.field]]
+name = "anonymity"
+basic = "text"
+standard = "https://freesynergy.net/ns#anonymity"
+label = { en = "Anonymity", de = "Anonymität" }
+
+[[type.field]]
+name = "minGroup"
+basic = "integer"
+standard = "https://freesynergy.net/ns#minGroup"
+label = { en = "Smallest batch", de = "Kleinste Gruppe" }
+
+[[type.field]]
+name = "aiAllowed"
+basic = "flag"
+standard = "https://freesynergy.net/ns#aiAllowed"
+label = { en = "AI may answer", de = "KI darf antworten" }
+
+[[type]]
+name = "Question"
+standard = "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-question"
+envelope = "Question"
+media_type = "application/activity+json"
+label = { en = "Question", de = "Frage" }
+
+[[type.field]]
+name = "text"
+basic = "text"
+standard = "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-name"
+label = { en = "Question", de = "Frage" }
+
+[[type.field]]
+name = "required"
+basic = "flag"
+standard = "https://freesynergy.net/ns#required"
+label = { en = "Required", de = "Pflicht" }
+
+[[type.field]]
+name = "choices"
+basic = "text"
+multiple = true
+standard = "https://www.w3.org/TR/activitystreams-vocabulary/#dfn-oneof"
+label = { en = "Choices", de = "Auswahl" }
+
+[frontend]
+standard = "simple"
+layout = "forms/simple.toml"
+covers = "all"

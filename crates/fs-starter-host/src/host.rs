@@ -8,7 +8,7 @@ use std::process::ExitCode;
 use fs_forms_run::{Command, Config, FileLink, LayoutLink, SocketLink, session_locale};
 use fs_starter::Exit;
 
-use crate::pending;
+use crate::{package, pending};
 
 /// The help text of the host (the words of the window host follow it).
 pub const HELP: &str = "fs-starter (--description PATH | PATH) [--frontend ID] [--style NAME] [--sample-data] [--picture FILE.png]\n\
@@ -38,14 +38,35 @@ pub fn run(args: &[String]) -> ExitCode {
             ExitCode::from(Exit::DONE.code())
         }
         Ok(Command::Check(c)) => {
-            eprintln!("{}", pending::note());
+            if let Err(code) = announce(&c) {
+                return code;
+            }
             check(&c)
         }
-        Ok(Command::Window(_)) => {
-            eprintln!("{}", pending::note());
+        Ok(Command::Window(c)) => {
+            if let Err(code) = announce(&c) {
+                return code;
+            }
             fs_forms_run::run(args)
         }
     }
+}
+
+/// Say what the path is (a data package: its program, skeleton and layout) and which parts are pending. A package whose
+/// `scaffold.toml` cannot be read ends here with the code of a failure, it is never opened as an empty window.
+fn announce(c: &Config) -> Result<(), ExitCode> {
+    if let Some(path) = &c.description {
+        match package::read(path) {
+            Ok(Some(p)) => eprintln!("{}", package::line(&p)),
+            Ok(None) => {}
+            Err(e) => {
+                eprintln!("fs-starter: {e}");
+                return Err(ExitCode::from(Exit::FAILED.code()));
+            }
+        }
+    }
+    eprintln!("{}", pending::note());
+    Ok(())
 }
 
 /// `--check`: only fetch the description, say whether it is there. Fatal (the contract is not there) is the contract code.

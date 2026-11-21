@@ -20,7 +20,8 @@ path = "src/main.rs"
 # (fs-rpc v0.0.3, fs-interfaces) and the description reader; `fs-forms-bin` is NOT a dependency (it depends on `fs-starter`: a cycle).
 [dependencies]
 fs-starter = { path = "../fs-starter" }
-fs-forms-run = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.5" }
+fs-forms-run = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.7" }
+toml = "0.8"
 
 # Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
 [dev-dependencies]

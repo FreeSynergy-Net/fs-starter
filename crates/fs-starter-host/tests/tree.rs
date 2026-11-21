@@ -8,7 +8,7 @@
 mod support;
 use support::tasks;
 
-use fs_forms_run::{Blocks, FileLink, LayoutLink, Node, Records, SampleRecords, compose};
+use fs_forms_run::{Blocks, FileLink, LayoutLink, Node, Records, SampleBoard, compose};
 
 fn block_of<'a>(nodes: &'a [Node], place: &str) -> Option<&'a str> {
     nodes.iter().find_map(|n| match n {
@@ -40,10 +40,10 @@ fn the_blueprint_of_a_program_gives_the_board_page_with_a_side_list_and_a_board(
 
 #[test]
 fn the_sample_records_make_a_board_with_three_columns() {
-    let columns = SampleRecords.columns();
+    let columns = SampleBoard::default().columns();
     let names: Vec<_> = columns.iter().map(|c| c.title.as_str()).collect();
     assert_eq!(names, ["To do", "Doing", "Done"]);
-    assert!(SampleRecords.is_sample(), "sample data says so");
+    assert!(SampleBoard::default().is_sample(), "sample data says so");
 }
 
 #[test]

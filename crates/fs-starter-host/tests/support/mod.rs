@@ -94,3 +94,11 @@ pub fn uniform(p: &Picture, x: std::ops::Range<u32>, y: std::ops::Range<u32>) ->
     let first = at(x.start, y.start);
     y.clone().all(|yy| x.clone().all(|xx| at(xx, yy) == first))
 }
+
+/// The data package `fs-blueprint new` wrote for fs-forms (a copy, `tests/data/fs-forms-package`).
+pub fn forms_package() -> String {
+    format!(
+        "{}/../../tests/data/fs-forms-package",
+        env!("CARGO_MANIFEST_DIR")
+    )
+}

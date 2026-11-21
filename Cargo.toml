@@ -1,12 +1,9 @@
 [workspace]
 resolver = "2"
-members = ["crates/fs-starter"]
-# Cycle breaker: fs-starter-host needs fs-forms-run (tag), fs-forms needs fs-starter (tag), so the Lock got two sources for fs-rpc/fs-interfaces/fs-components.
-# Card "re-add fs-starter-host after fs-forms lifted to v0.0.5+ pins (fs-starter v0.0.3)".
-exclude = ["crates/fs-starter-host"]
+members = ["crates/fs-starter", "crates/fs-starter-host"]
 
 [workspace.package]
-version = "0.0.2"
+version = "0.0.3"
 authors = ["FreeSynergy <support@freesynergy.net>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
