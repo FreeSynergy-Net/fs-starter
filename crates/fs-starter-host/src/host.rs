@@ -52,7 +52,7 @@ pub fn run(args: &[String]) -> ExitCode {
             if let Err(code) = announce(&c) {
                 return code;
             }
-            shell::around_window(&c.frontend, c.resumed, || fs_forms_run::run(args))
+            shell::around_window(&c.frontend, c.resumed, || fs_forms_run::run_code(args))
         }
     }
 }

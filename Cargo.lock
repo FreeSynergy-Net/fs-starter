@@ -910,7 +910,7 @@ checksum = "fe6d2e5af09e8c8ad56c969f2157a3d4238cebc7c55f0a517728c38f7b200f81"
 dependencies = [
  "serde",
  "termcolor",
- "unicode-width 0.1.14",
+ "unicode-width 0.2.3",
 ]
 
 [[package]]
@@ -1618,8 +1618,8 @@ dependencies = [
 
 [[package]]
 name = "fs-forms-client"
-version = "0.0.7"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.7#d74ce7d488d84027080345808f96193e87d82b97"
+version = "0.0.9"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1630,8 +1630,8 @@ dependencies = [
 
 [[package]]
 name = "fs-forms-exchange"
-version = "0.0.7"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.7#d74ce7d488d84027080345808f96193e87d82b97"
+version = "0.0.9"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1639,16 +1639,16 @@ dependencies = [
 
 [[package]]
 name = "fs-forms-layout"
-version = "0.0.7"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.7#d74ce7d488d84027080345808f96193e87d82b97"
+version = "0.0.9"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
 dependencies = [
  "sha2 0.10.9",
 ]
 
 [[package]]
 name = "fs-forms-run"
-version = "0.0.7"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.7#d74ce7d488d84027080345808f96193e87d82b97"
+version = "0.0.9"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
 dependencies = [
  "fs-components",
  "fs-components-app",

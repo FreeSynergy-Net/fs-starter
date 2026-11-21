@@ -122,13 +122,13 @@ pub fn run_library(words: &[OsString], out: &mut dyn io::Write) -> ExitCode {
     with_parts(|parts| ExitCode::from(fs_starter::run(parts, words, out).code()))
 }
 
-/// Runs `open` (the window) between the hooks: `before_open` may stop the start, `after_end` sees the code and the time (the
+/// Runs `open` (the window, returns the real exit code) between the hooks: `before_open` may stop the start, `after_end` sees the code and the time (the
 /// update hook decides on the probation there; the default hook does nothing).
 ///
 /// Session part pending: this does not call `StartHook::resume_token`, and `StartCx.fresh` is always `false` (even with `--fresh`),
 /// because the host does not read the start words of the library here. `resumed` is only what the caller passes. Both belong to the
 /// session part that is not built yet (README and CHANGELOG list it).
-pub fn around_window(frontend: &str, resumed: bool, open: impl FnOnce() -> ExitCode) -> ExitCode {
+pub fn around_window(frontend: &str, resumed: bool, open: impl FnOnce() -> i32) -> ExitCode {
     with_parts(|parts| run_around(parts, frontend, resumed, open))
 }
 
@@ -136,7 +136,7 @@ fn run_around(
     parts: &Parts<'_>,
     frontend: &str,
     resumed: bool,
-    open: impl FnOnce() -> ExitCode,
+    open: impl FnOnce() -> i32,
 ) -> ExitCode {
     let id =
         FrontendId::parse(frontend).unwrap_or_else(|| parts.program.standard_frontend().clone());
@@ -154,16 +154,17 @@ fn run_around(
         }
     }
     let started = Instant::now();
+    // `open` returns the REAL exit code (`fs_forms_run::run_code`: 0, 1, 2 usage, 3 contract); the hook sees it unchanged.
     let code = open();
-    // ExitCode has no accessor; the hook gets the time, and 0/1 as the coarse result known here.
     let ended = Ended {
-        code: i32::from(code != ExitCode::SUCCESS),
+        code,
         after: started.elapsed(),
     };
     for hook in parts.hooks {
         hook.after_end(&cx, &ended);
     }
-    code
+    // Same mapping as `fs_forms_run::run`: a number outside 0..=255 ends as 1.
+    ExitCode::from(u8::try_from(code).unwrap_or(1))
 }
 
 #[cfg(test)]
@@ -208,7 +209,7 @@ mod tests {
         let code = with_hooks(&[&spy], |p| {
             run_around(p, "simple", false, || {
                 opened.set(true);
-                ExitCode::SUCCESS
+                0
             })
         });
         assert!(!opened.get(), "the window must not run after a Stop");
@@ -227,11 +228,15 @@ mod tests {
         let code = with_hooks(&[&spy], |p| {
             run_around(p, "simple", false, || {
                 opened.set(true);
-                ExitCode::FAILURE
+                3
             })
         });
         assert!(opened.get());
-        assert_eq!(code, ExitCode::FAILURE);
-        assert_eq!(*log.borrow(), ["before", "after 1"]);
+        assert_eq!(code, ExitCode::from(3));
+        assert_eq!(
+            *log.borrow(),
+            ["before", "after 3"],
+            "the hook sees the real code, not 0/1"
+        );
     }
 }
