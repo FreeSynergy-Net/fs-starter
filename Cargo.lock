@@ -1618,20 +1618,20 @@ dependencies = [
 
 [[package]]
 name = "fs-forms-client"
-version = "0.0.9"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
+version = "0.0.10"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
 dependencies = [
  "capnp",
  "capnp-rpc",
- "fs-interfaces 0.0.29",
+ "fs-interfaces",
  "fs-rpc",
  "tokio",
 ]
 
 [[package]]
 name = "fs-forms-exchange"
-version = "0.0.9"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
+version = "0.0.10"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1639,16 +1639,16 @@ dependencies = [
 
 [[package]]
 name = "fs-forms-layout"
-version = "0.0.9"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
+version = "0.0.10"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
 dependencies = [
  "sha2 0.10.9",
 ]
 
 [[package]]
 name = "fs-forms-run"
-version = "0.0.9"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.9#aa4c96c4a34089ac61d2f752e51095fb449191b4"
+version = "0.0.10"
+source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
 dependencies = [
  "fs-components",
  "fs-components-app",
@@ -1665,15 +1665,6 @@ dependencies = [
  "fs-modules-planning-client",
  "fs-rpc",
  "tokio",
-]
-
-[[package]]
-name = "fs-interfaces"
-version = "0.0.29"
-source = "git+https://github.com/FreeSynergy/fs-interfaces?tag=v0.0.29#4f5834db3ac382a9f5897d467e066ed151d1c6cf"
-dependencies = [
- "capnp",
- "fs-types",
 ]
 
 [[package]]
@@ -1703,12 +1694,12 @@ dependencies = [
 
 [[package]]
 name = "fs-modules-planning-client"
-version = "0.0.2"
-source = "git+https://github.com/FreeSynergy/fs-modules-planning?tag=v0.0.2#4152a941dd39a6d5d6df21fb917f68e17a7a9d22"
+version = "0.0.3"
+source = "git+https://github.com/FreeSynergy/fs-modules-planning?tag=v0.0.3#e38ccbd8289844ef26ad971d42ce92f152c667f1"
 dependencies = [
  "capnp",
  "capnp-rpc",
- "fs-interfaces 0.0.29",
+ "fs-interfaces",
  "fs-jscalendar",
  "fs-rpc",
  "serde_json",
@@ -1744,13 +1735,13 @@ dependencies = [
 
 [[package]]
 name = "fs-rpc"
-version = "0.0.5"
-source = "git+https://github.com/FreeSynergy/fs-rpc?tag=v0.0.5#cbb584c0535e82078a78d9a4eca3fa3e0119aab3"
+version = "0.0.6"
+source = "git+https://github.com/FreeSynergy/fs-rpc?tag=v0.0.6#7c5ba2fd6a3aea16f29dd8bc5558c210f8ca6e61"
 dependencies = [
  "capnp",
  "capnp-rpc",
  "chrono",
- "fs-interfaces 0.0.29",
+ "fs-interfaces",
  "fs-objects",
  "fs-types",
  "futures",
@@ -1791,7 +1782,7 @@ dependencies = [
  "capnp",
  "capnp-rpc",
  "fs-forms-run",
- "fs-interfaces 0.0.30",
+ "fs-interfaces",
  "fs-rpc",
  "fs-starter",
  "fs-types",
