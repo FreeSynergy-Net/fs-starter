@@ -111,7 +111,7 @@ pub(super) fn check(folder: &Path, file: &Path) -> Result<bool, Refusal> {
 /// Open the file without following a symlink: on unix `O_NOFOLLOW` makes the open itself fail if the last part was swapped for a link
 /// after [`check`]. Windows has no such flag for this call: there only the check before applies (documented limit; the folder belongs
 /// to the installer).
-fn open_plain(file: &Path) -> std::io::Result<fs::File> {
+pub(super) fn open_plain(file: &Path) -> std::io::Result<fs::File> {
     let mut options = fs::OpenOptions::new();
     options.read(true);
     #[cfg(unix)]
@@ -125,9 +125,15 @@ fn open_plain(file: &Path) -> std::io::Result<fs::File> {
 /// Read the file of one module (checked by [`check`]) as the set of the module `name` (the folder name): opened without following a
 /// link and read at most [`MAX_BYTES`] + 1 bytes, so a file swapped after the check is neither followed nor read without a limit.
 pub(super) fn read_folder(file: &Path, name: &str) -> Result<ModuleSet, Refusal> {
+    let f = open_plain(file).map_err(|_| bad("read-failed"))?;
+    read_handle(f, name)
+}
+
+/// The same from an already opened file (the caller keeps the identity of the file it checked).
+pub(super) fn read_handle(f: fs::File, name: &str) -> Result<ModuleSet, Refusal> {
     let mut bytes = Vec::new();
-    open_plain(file)
-        .and_then(|f| f.take(MAX_BYTES + 1).read_to_end(&mut bytes))
+    f.take(MAX_BYTES + 1)
+        .read_to_end(&mut bytes)
         .map_err(|_| bad("read-failed"))?;
     if bytes.len() as u64 > MAX_BYTES {
         return Err(bad("too-large"));

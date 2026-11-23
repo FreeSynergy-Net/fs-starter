@@ -3,7 +3,8 @@
 //!
 //! Pattern: Strategy (the check is a trait with replaceable implementations) + Specification (the system check).
 
-use std::path::PathBuf;
+use std::fs::File;
+use std::path::{Path, PathBuf};
 
 use fs_starter::{MODULES_DIR, SystemPlaces};
 
@@ -16,6 +17,12 @@ pub trait Verifier {
     /// Is the package of this set signed by a key we trust? The default refuses.
     fn verify(&self, _set: &ModuleSet) -> bool {
         false
+    }
+
+    /// Like [`Verifier::verify`], but for the file that was really opened (`file`, found at `path`): a check that looks at files must
+    /// look at this one, not at a path made from the name. The default asks [`Verifier::verify`].
+    fn verify_file(&self, set: &ModuleSet, _path: &Path, _file: &File) -> bool {
+        self.verify(set)
     }
 }
 
@@ -60,6 +67,14 @@ impl Default for SystemPackaged {
 }
 
 impl Verifier for SystemPackaged {
+    /// The file that was opened and read must be the file that passes [`SystemPlaces::check`]: the way to `path` is below a system
+    /// place, root's, no link, nobody else may write; and the open handle is the very file `path` names now (same device and inode),
+    /// so a file swapped for another one between the check and the read is not accepted. Everything the handle gave was read from
+    /// that file. The folder the caller named is the caller's: only the file counts, never a path made from the module name.
+    fn verify_file(&self, set: &ModuleSet, path: &Path, file: &File) -> bool {
+        word(&set.module) && self.places.check(path).is_ok() && same_file(path, file)
+    }
+
     fn verify(&self, set: &ModuleSet) -> bool {
         // the name is a folder name of the modules folder: no way out of it
         word(&set.module)
@@ -74,4 +89,19 @@ impl Verifier for SystemPackaged {
                 )
                 .is_ok()
     }
+}
+
+/// Is the open `file` the one that `path` names at this moment (no link followed)? Unix: same device and inode. Elsewhere never.
+#[cfg(unix)]
+fn same_file(path: &Path, file: &File) -> bool {
+    use std::os::unix::fs::MetadataExt;
+    match (std::fs::symlink_metadata(path), file.metadata()) {
+        (Ok(a), Ok(b)) => !a.file_type().is_symlink() && a.dev() == b.dev() && a.ino() == b.ino(),
+        _ => false,
+    }
+}
+
+#[cfg(not(unix))]
+fn same_file(_path: &Path, _file: &File) -> bool {
+    false
 }

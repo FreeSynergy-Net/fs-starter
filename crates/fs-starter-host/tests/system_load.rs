@@ -56,3 +56,56 @@ fn a_module_the_verifier_does_not_accept_is_refused_and_not_added() {
     assert_eq!(refused.len(), 1);
     assert_eq!(r.entries().len(), 4);
 }
+
+/// The check looks at the file that is really read, not at a path made from the module name (review S1): a world-writable folder
+/// of someone else, named to `load_packages`, is refused although the verifier's own modules folder is clean.
+#[test]
+fn a_foreign_world_writable_folder_is_not_accepted_as_a_package() {
+    let (t, _modules, v) = world();
+    let foreign = t.path().join("foreign");
+    let cat = foreign.join("capture/catalog");
+    fs::create_dir_all(&cat).unwrap();
+    fs::write(cat.join("commands.json"), capture()).unwrap();
+    mode(&cat.join("commands.json"), 0o644);
+    for d in [&cat, &foreign.join("capture")] {
+        mode(d, 0o755);
+    }
+    mode(&foreign, 0o777);
+    let mut r = Registry::new();
+    let refused = r.load_packages(&foreign, &v).unwrap();
+    assert_eq!(refused, [("capture".to_owned(), vec![Refusal::NotTrusted])]);
+    assert_eq!(r.entries().len(), 4);
+    // the same folder, closed, is still no system place of this verifier
+    mode(&foreign, 0o755);
+    let mut r = Registry::new();
+    assert_eq!(r.load_packages(&foreign, &v).unwrap().len(), 1);
+}
+
+/// A link in the way (here the modules place itself) refuses the file; a file swapped after the open is not the one that was checked.
+#[test]
+fn a_link_in_the_way_and_a_swapped_file_are_refused() {
+    use fs_starter_host::registry::Verifier;
+    let (t, modules, _v) = world();
+    let uid = fs::metadata(&modules).unwrap().uid();
+    let set = support::sets::set("capture", &["capture.shot"]);
+    let file = modules.join("capture/catalog/commands.json");
+    let verifier = |root: &Path| {
+        let places = SystemPlaces::for_test(vec![root.to_path_buf()], uid);
+        SystemPackaged::for_test(places, root.to_path_buf())
+    };
+    // clean: accepted through the handle
+    let open = fs::File::open(&file).unwrap();
+    assert!(verifier(&modules).verify_file(&set, &file, &open));
+    // swapped after the open: the handle is no longer the file at the path
+    let other = modules.join("capture/catalog/other.json");
+    fs::write(&other, capture()).unwrap();
+    mode(&other, 0o644);
+    fs::rename(&other, &file).unwrap();
+    assert!(!verifier(&modules).verify_file(&set, &file, &open));
+    // a link as the place: refused
+    let link = t.path().join("link");
+    std::os::unix::fs::symlink(&modules, &link).unwrap();
+    let through = link.join("capture/catalog/commands.json");
+    let open = fs::File::open(&through).unwrap();
+    assert!(!verifier(&link).verify_file(&set, &through, &open));
+}
