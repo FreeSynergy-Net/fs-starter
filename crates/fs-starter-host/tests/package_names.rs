@@ -10,19 +10,27 @@ const OLD: &str = "fs-starter-host";
 
 fn manifest() -> toml::Table {
     let path = concat!(env!("CARGO_MANIFEST_DIR"), "/Cargo.toml");
-    fs::read_to_string(path).expect("read Cargo.toml").parse().expect("parse Cargo.toml")
+    fs::read_to_string(path)
+        .expect("read Cargo.toml")
+        .parse()
+        .expect("parse Cargo.toml")
 }
 
 fn table<'a>(root: &'a toml::Table, keys: &[&str]) -> &'a toml::Table {
     let mut t = root;
     for k in keys {
-        t = t.get(*k).and_then(|v| v.as_table()).unwrap_or_else(|| panic!("Cargo.toml lacks [{}]", keys.join(".")));
+        t = t
+            .get(*k)
+            .and_then(|v| v.as_table())
+            .unwrap_or_else(|| panic!("Cargo.toml lacks [{}]", keys.join(".")));
     }
     t
 }
 
 fn text<'a>(t: &'a toml::Table, key: &str) -> &'a str {
-    t.get(key).and_then(|v| v.as_str()).unwrap_or_else(|| panic!("key `{key}` missing or not a string"))
+    t.get(key)
+        .and_then(|v| v.as_str())
+        .unwrap_or_else(|| panic!("key `{key}` missing or not a string"))
 }
 
 #[test]
@@ -39,7 +47,10 @@ fn both_formats_take_over_the_earlier_package() {
     let m = manifest();
     let deb = table(&m, &["package", "metadata", "deb"]);
     for key in ["replaces", "conflicts", "provides"] {
-        assert!(text(deb, key).split(',').any(|p| p.trim() == OLD), "deb `{key}` must name {OLD}");
+        assert!(
+            text(deb, key).split(',').any(|p| p.trim() == OLD),
+            "deb `{key}` must name {OLD}"
+        );
     }
     let rpm = table(&m, &["package", "metadata", "generate-rpm", "obsoletes"]);
     assert!(rpm.contains_key(OLD), "rpm obsoletes must name {OLD}");
@@ -47,7 +58,13 @@ fn both_formats_take_over_the_earlier_package() {
 
 #[test]
 fn the_release_caller_uses_the_same_name() {
-    let path = concat!(env!("CARGO_MANIFEST_DIR"), "/../../.github/workflows/release.yml");
+    let path = concat!(
+        env!("CARGO_MANIFEST_DIR"),
+        "/../../.github/workflows/release.yml"
+    );
     let yml = fs::read_to_string(path).expect("read release.yml");
-    assert!(yml.lines().any(|l| l.trim() == format!("name: {PROGRAM}")), "release.yml: `name: {PROGRAM}` missing");
+    assert!(
+        yml.lines().any(|l| l.trim() == format!("name: {PROGRAM}")),
+        "release.yml: `name: {PROGRAM}` missing"
+    );
 }
