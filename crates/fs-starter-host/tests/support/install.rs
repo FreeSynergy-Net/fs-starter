@@ -29,6 +29,17 @@ pub enum Service {
     Link,
 }
 
+/// A symbolic link `file` to `target`: `symlink` on unix, `symlink_file` on Windows (the runner of the CI is an administrator, so it may create one).
+#[cfg(unix)]
+pub fn link(target: &Path, file: &Path) -> std::io::Result<()> {
+    std::os::unix::fs::symlink(target, file)
+}
+
+#[cfg(windows)]
+pub fn link(target: &Path, file: &Path) -> std::io::Result<()> {
+    std::os::windows::fs::symlink_file(target, file)
+}
+
 pub struct Install {
     pub dir: TempDir,
     pub runtime: TempDir,
@@ -79,7 +90,7 @@ impl Install {
         match service {
             Service::Fake => drop(std::fs::copy(fake, &file).unwrap()),
             Service::None => {}
-            Service::Link => std::os::unix::fs::symlink(fake, &file).unwrap(),
+            Service::Link => link(Path::new(fake), &file).unwrap(),
         }
         self
     }

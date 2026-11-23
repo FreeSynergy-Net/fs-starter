@@ -22,6 +22,16 @@ jobs:
         with:
           components: rustfmt,clippy
           cache-key: windows
+      # Development state (PLAN 4b): Cargo.toml [patch] names the heads of three sibling repositories by relative path. They are cloned next
+      # to the checkout at exactly the heads the comment in Cargo.toml names (the same ones the branch review looked at); removed at the lift to tags.
+      - name: Sibling repositories of the [patch] state
+        shell: bash
+        run: |
+          set -euo pipefail
+          clone() { git clone --quiet "https://github.com/FreeSynergy/$1" "../$2" && git -C "../$2" checkout --quiet "$3"; }
+          clone fs-forms fs-forms-lift cc5ce9a33da3d5207f531e2bdf9ed7ff7571491c
+          clone fs-interfaces fs-interfaces-r2 680084458221e9ef35923967b158de8ecaa2f5e7
+          clone fs-components fs-components 0f031bd978ec11818349bdfc411897a90536cc27
       - run: cargo fmt --check
       - run: cargo clippy --workspace --all-targets --all-features --locked -- -D warnings -W clippy::pedantic
       - run: cargo test --workspace --all-features --locked --no-fail-fast

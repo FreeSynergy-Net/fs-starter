@@ -1,17 +1,16 @@
 //! SQ-4, borders 1, 2, 3 and 6 on the library side: which modules are bound (bundled, or a system package that `SystemPackaged`
 //! accepts), the contract and version check, the program file, and a command of the own name space only.
 //! Mutants: the verifier accepts all; the version check off; the symlink check off; the own-namespace check off.
-
-#![cfg(unix)]
+//!
+//! Runs on unix and Windows. Only the part that is unix by nature has `cfg(unix)`: the owner and mode bits of the system places
+//! (`SystemPlaces` has no Windows form: it refuses every path there, `NotSupported`, which the first package test checks too).
 
 mod support;
-use std::os::unix::fs::MetadataExt;
 use std::path::Path;
 
-use fs_starter::SystemPlaces;
 use fs_starter_host::registry::SystemPackaged;
 use fs_starter_host::sources::{Limits, Modules, StarterSources};
-use support::install::{GOOD_FORMS, commands};
+use support::install::{GOOD_FORMS, commands, link};
 
 fn folder(root: &Path, name: &str, version: &str) {
     let catalog = root.join(name).join("catalog");
@@ -36,7 +35,7 @@ fn a_bundled_module_is_known_with_its_version_and_folder() {
 }
 
 #[test]
-fn a_package_is_bound_only_if_the_system_check_accepts_it() {
+fn a_package_is_not_bound_while_the_system_check_says_no() {
     let s = tempfile::tempdir().unwrap();
     folder(s.path(), "groups", "0.1");
     // the real check: a folder of this user is not root's: refused, so the module is not known at all
@@ -45,6 +44,17 @@ fn a_package_is_bound_only_if_the_system_check_accepts_it() {
         m.find("groups").is_none(),
         "a loaded module is refused until the system check says yes"
     );
+}
+
+/// The accepting half needs what only unix has: the owner (uid) and the mode bits of the folders, which `SystemPlaces::check` reads.
+/// On Windows the system check refuses every path (`NotSupported`), so no module can be bound as a package there; the test above is that case.
+#[cfg(unix)]
+#[test]
+fn a_package_is_bound_when_the_system_check_accepts_it() {
+    use fs_starter::SystemPlaces;
+    use std::os::unix::fs::MetadataExt;
+    let s = tempfile::tempdir().unwrap();
+    folder(s.path(), "groups", "0.1");
     // a check that accepts the test places: known, as packaged; its program file must still pass the REAL system places
     let uid = std::fs::metadata(s.path()).unwrap().uid();
     let ok = SystemPackaged::for_test(
@@ -74,7 +84,10 @@ fn the_program_file_is_a_plain_file_in_the_folder_and_nothing_else() {
         "no PATH lookup, no fallback"
     );
     let file = b.path().join("groups/service");
-    std::os::unix::fs::symlink("/bin/true", &file).unwrap();
+    // any real file as the target (a made-up link target is not a symlink test on Windows)
+    let target = b.path().join("target");
+    std::fs::write(&target, "x").unwrap();
+    link(&target, &file).unwrap();
     assert_eq!(k.service(), Err("symlink"));
     std::fs::remove_file(&file).unwrap();
     std::fs::create_dir(&file).unwrap();

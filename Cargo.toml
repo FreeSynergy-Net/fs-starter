@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 rust-version = "1.89"
 repository = "https://github.com/FreeSynergy/fs-starter"
 
-# Development against local heads (PLAN 4b, SQ-4 r2): fs-forms sq-forms-lift-r2 36e1209, fs-interfaces form-source-r2 6800844, fs-components sq2-forms-attr 0f031bd; no rev, no tag. Branch CI is red because of these paths, not because of the code. Removed at the lift to tags.
+# Development against local heads (PLAN 4b, SQ-4 r2): fs-forms sq-forms-lift-r3 cc5ce9a (the reviewed head), fs-interfaces form-source-r2 6800844, fs-components sq2-forms-attr 0f031bd; no rev, no tag. The workflow windows.yml clones the three siblings at exactly these heads next to the checkout, so the paths resolve there (the reusable check job cannot, it stays red). Removed at the lift to tags.
 [patch."https://github.com/FreeSynergy/fs-forms"]
 fs-forms-run = { path = "../fs-forms-lift/crates/fs-forms-run" }
 fs-forms-bind = { path = "../fs-forms-lift/crates/fs-forms-bind" }
