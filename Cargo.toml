@@ -10,13 +10,12 @@ license = "MIT OR Apache-2.0"
 rust-version = "1.89"
 repository = "https://github.com/FreeSynergy/fs-starter"
 
-# Development against local heads (PLAN-quelle-und-abgleich 4b, SQ-4): clones side by side; the branch CI is red because of this, not
-# because of the code. Removed at the lift to tags (fs-forms, fs-interfaces and fs-components get tags first).
+# Development against local heads (PLAN 4b, SQ-4 r1): fs-forms sq-forms-lift a7e958c, fs-interfaces form-source-r2 6800844, fs-components sq2-forms-attr 0f031bd; no rev, no tag. Branch CI is red because of these paths, not because of the code. Removed at the lift to tags.
 [patch."https://github.com/FreeSynergy/fs-forms"]
-fs-forms-run = { path = "../fs-forms/crates/fs-forms-run" }
-fs-forms-bind = { path = "../fs-forms/crates/fs-forms-bind" }
+fs-forms-run = { path = "../fs-forms-lift/crates/fs-forms-run" }
+fs-forms-bind = { path = "../fs-forms-lift/crates/fs-forms-bind" }
 [patch."https://github.com/FreeSynergy/fs-interfaces"]
-fs-interfaces = { path = "../fs-interfaces-r1/crates/fs-interfaces" }
+fs-interfaces = { path = "../fs-interfaces-r2/crates/fs-interfaces" }
 [patch."https://github.com/FreeSynergy/fs-components"]
 fs-components-app = { path = "../fs-components/crates/fs-components-app" }
 fs-components-catalog = { path = "../fs-components/crates/fs-components-catalog" }
