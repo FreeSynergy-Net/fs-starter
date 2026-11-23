@@ -39,10 +39,12 @@ tokio = { version = "1", features = ["rt", "sync", "time", "net"] }
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
 
-# Test support: a fake module service (`FormSource`, made-up groups data), see its first lines. Not installed by the package.
-[[bin]]
+# Test support: a fake module service (`FormSource`, made-up groups data), see its first lines. It is an EXAMPLE, not a `[[bin]]`: a release build
+# (`cargo build --release`, cargo-deb, cargo-generate-rpm, cargo-wix) never builds or lists it, `cargo test` builds it next to the test binaries
+# (`target/<profile>/examples/`, found by `tests/support/install.rs`). It is not a package asset.
+[[example]]
 name = "fs-starter-fake-module"
-path = "src/bin/fake_module.rs"
+path = "examples/fake_module.rs"
 
 # Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
 [dev-dependencies]

@@ -36,6 +36,11 @@ fn the_lifted_libraries_are_pinned_by_their_tags() {
         ("fs-interfaces", "v0.0.31"),
         ("fs-objects", "v0.0.8"),
         ("fs-settings", "v0.0.34"),
+        ("fs-components-commands", "v0.0.34"),
+        ("fs-forms-run", "v0.0.11"),
+        ("fs-forms-bind", "v0.0.11"),
+        ("fs-rpc", "v0.0.7"),
+        ("fs-components", "v0.0.34"),
     ] {
         let source = source_of(name);
         assert!(

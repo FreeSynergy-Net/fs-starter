@@ -40,6 +40,26 @@ pub fn link(target: &Path, file: &Path) -> std::io::Result<()> {
     std::os::windows::fs::symlink_file(target, file)
 }
 
+/// The fake module service: the EXAMPLE `fs-starter-fake-module` of this crate (not a `[[bin]]`, so no package format ever sees it). `cargo test`
+/// builds examples (without a target filter) into `<target>/<profile>/examples/`; the test binary sits in `deps/` (classic layout) or deeper in
+/// `build/<package>/<hash>/` (split build dir), so the folders above it are searched. Missing (a run with `--test <name>` builds no examples)
+/// is a loud failure, never a silently skipped service.
+pub fn fake_module() -> PathBuf {
+    let exe = std::env::current_exe().unwrap();
+    let file = format!("fs-starter-fake-module{}", std::env::consts::EXE_SUFFIX);
+    exe.ancestors()
+        .skip(1)
+        .take(6)
+        .map(|a| a.join("examples").join(&file))
+        .find(|p| p.is_file())
+        .unwrap_or_else(|| {
+            panic!(
+                "the fake module `{file}` is not built (searched above {}): run `cargo test -p fs-starter-host` (or `cargo build -p fs-starter-host --examples` first)",
+                exe.display()
+            )
+        })
+}
+
 pub struct Install {
     pub dir: TempDir,
     pub runtime: TempDir,
@@ -85,12 +105,13 @@ impl Install {
         std::fs::create_dir_all(&catalog).unwrap();
         std::fs::write(catalog.join("commands.json"), commands(name, version)).unwrap();
         std::fs::write(catalog.join("forms.json"), forms).unwrap();
-        let fake = env!("CARGO_BIN_EXE_fs-starter-fake-module");
+        let fake = fake_module();
+        let fake = fake.as_path();
         let file = self.folder(name).join("service");
         match service {
             Service::Fake => drop(std::fs::copy(fake, &file).unwrap()),
             Service::None => {}
-            Service::Link => link(Path::new(fake), &file).unwrap(),
+            Service::Link => link(fake, &file).unwrap(),
         }
         self
     }

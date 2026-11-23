@@ -2,7 +2,21 @@
 
 Version = tag.
 
-## 0.0.5
+## 0.0.6
+
+### English
+
+- Release fix, no change of the host: the made-up module service for the tests (`fs-starter-fake-module`) is no longer a `[[bin]]` of `fs-starter-host` but an `[[example]]` (`crates/fs-starter-host/examples/fake_module.rs`), so no package format (deb, rpm, msi, plan) lists or builds it; the tests find it in `target/<profile>/examples/` (`cargo test` builds it, a missing file fails loudly). `ignore-binaries` is removed from `release.yml` again. `tests/pins.rs` now also checks fs-components, fs-components-commands, fs-forms-run, fs-forms-bind and fs-rpc. Version 0.0.5 -> 0.0.6.
+- Known gap (unchanged, said plainly): Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
+
+### Deutsch
+
+- Release-Korrektur, keine Aenderung am Host: der erfundene Modul-Dienst fuer die Tests (`fs-starter-fake-module`) ist kein `[[bin]]` von `fs-starter-host` mehr, sondern ein `[[example]]` (`crates/fs-starter-host/examples/fake_module.rs`); kein Paketformat (deb, rpm, msi, plan) nennt oder baut ihn. Die Tests finden ihn in `target/<profil>/examples/` (`cargo test` baut ihn, eine fehlende Datei laesst den Test laut scheitern). `ignore-binaries` ist wieder aus `release.yml` entfernt. `tests/pins.rs` prueft jetzt auch fs-components, fs-components-commands, fs-forms-run, fs-forms-bind und fs-rpc. Version 0.0.5 -> 0.0.6.
+- Bekannte Luecke (unveraendert, offen gesagt): Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
+
+## 0.0.5: tagged, no release (package build red, see 0.0.6)
+
+The tag v0.0.5 stays; it has no release and no binary packages. / Der Tag v0.0.5 bleibt; es gibt dazu kein Release und keine Pakete.
 
 ### English
 

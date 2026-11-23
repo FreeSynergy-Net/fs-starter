@@ -1,0 +1,41 @@
+# Package probe: builds the same Linux (deb, rpm, tar.gz, arch) and Windows (zip, msi) packages as release.yml, with the same inputs and the same
+# pinned fs-release parts, but NEVER finalizes, signs, tags or publishes (no `finalize`/`publish`/`library` job, `contents: read` only).
+# Runs on a push of a `unreviewed/release-pins-*` branch and by hand. Keep `inputs` equal to release.yml (checked by eye in review).
+name: package-probe
+on:
+  push: { branches: ["unreviewed/release-pins-*"] }
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  plan:
+    runs-on: ubuntu-24.04
+    outputs:
+      plan: ${{ steps.plan.outputs.plan }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: plan
+        uses: FreeSynergy-Net/fs-release/actions/plan@e596ed65e56e5cdca1a9a453d0f12f7bc4b2edf7
+        with:
+          # the Cargo version of this branch as the tag name (no tag exists; tag-on-main does nothing on a branch)
+          tag: v0.0.6
+          binaries: fs-starter
+          cargo-package: fs-starter-host
+          name: fs-starter
+          kind: app
+          app-id: net.freesynergy.Starter
+          macos: "false"
+          windows-targets: x86_64
+  linux:
+    needs: plan
+    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-linux.yml@e596ed65e56e5cdca1a9a453d0f12f7bc4b2edf7
+    with:
+      plan: ${{ needs.plan.outputs.plan }}
+  windows:
+    needs: plan
+    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-windows.yml@e596ed65e56e5cdca1a9a453d0f12f7bc4b2edf7
+    with:
+      plan: ${{ needs.plan.outputs.plan }}
