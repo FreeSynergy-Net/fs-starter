@@ -172,13 +172,7 @@ fn check(c: &Config) -> ExitCode {
 fn list_commands(args: &[String]) -> ExitCode {
     // Only the default folder next to the binary may be missing; a folder that was named must be there (never silent).
     let (dir, named) = match args {
-        [_] => (
-            std::env::current_exe()
-                .ok()
-                .and_then(|p| p.parent().map(|d| d.join("modules")))
-                .unwrap_or_default(),
-            false,
-        ),
+        [_] => (fs_starter::bundled_modules_dir().unwrap_or_default(), false),
         [_, flag, dir] if flag == "--modules" => (dir.into(), true),
         _ => {
             eprintln!(
@@ -201,7 +195,7 @@ fn list_commands(args: &[String]) -> ExitCode {
     };
     // The modules of the package manager (system folder): only what `SystemPackaged` accepts; a missing folder is fine.
     match registry.load_packages(
-        std::path::Path::new(fs_starter::MODULES_DIR),
+        &fs_starter::system_modules_dir().unwrap_or_default(),
         &crate::registry::SystemPackaged::new(),
     ) {
         Ok(more) => refused.extend(more),
