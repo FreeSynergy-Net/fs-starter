@@ -172,7 +172,11 @@ impl Registry {
     /// # Errors
     /// The folder cannot be read (missing, no right): never silent; the caller decides if a missing default folder is fine.
     pub fn load_bundled(&mut self, dir: &Path) -> std::io::Result<Vec<(String, Vec<Refusal>)>> {
-        self.load_folders(dir, |r, set| r.add_bundled(Actor::Person, set))
+        self.load_folders(dir, |r, file, label| {
+            read::read_folder(file, label)
+                .map_err(|e| vec![e])
+                .and_then(|set| r.add_bundled(Actor::Person, set))
+        })
     }
 
     /// Like [`Registry::load_bundled`], but every set comes in as a package: only if `verifier` accepts it (the caller for
@@ -185,13 +189,23 @@ impl Registry {
         dir: &Path,
         verifier: &dyn Verifier,
     ) -> std::io::Result<Vec<(String, Vec<Refusal>)>> {
-        self.load_folders(dir, |r, set| r.add_package(Actor::Person, set, verifier))
+        // The file is opened once; the check looks at THAT file (path and handle), and the set is read from the same handle.
+        self.load_folders(dir, |r, file, label| {
+            let handle = read::open_plain(file)
+                .map_err(|_| vec![Refusal::Unreadable("read-failed".to_owned())])?;
+            let copy = handle
+                .try_clone()
+                .map_err(|_| vec![Refusal::Unreadable("read-failed".to_owned())])?;
+            let set = read::read_handle(handle, label).map_err(|e| vec![e])?;
+            let signature_ok = verifier.verify_file(&set, file, &copy);
+            r.add(Actor::Person, Origin::Package { signature_ok }, set)
+        })
     }
 
     fn load_folders(
         &mut self,
         dir: &Path,
-        add: impl Fn(&mut Self, ModuleSet) -> Result<(), Vec<Refusal>>,
+        add: impl Fn(&mut Self, &Path, &str) -> Result<(), Vec<Refusal>>,
     ) -> std::io::Result<Vec<(String, Vec<Refusal>)>> {
         let mut folders = Vec::new();
         let mut refused = Vec::new();
@@ -215,9 +229,7 @@ impl Registry {
             let file = folder.join("catalog").join("commands.json");
             let result = match read::check(&folder, &file) {
                 Ok(false) => continue,
-                Ok(true) => read::read_folder(&file, &label)
-                    .map_err(|r| vec![r])
-                    .and_then(|set| add(self, set)),
+                Ok(true) => add(self, &file, &label),
                 Err(r) => Err(vec![r]),
             };
             if let Err(why) = result {
