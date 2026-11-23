@@ -23,6 +23,8 @@ fs-starter = { path = "../fs-starter" }
 fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
 fs-forms-run = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.10" }
 toml = "0.8"
+# The command model (no dependencies of its own); the same tag as the one the scaffold settings come from (one source, lock check).
+fs-components-commands = { git = "https://github.com/FreeSynergy/fs-components", tag = "v0.0.33" }
 # Single instance (ADR 0097): the contract `Instance` of fs-interfaces, served and called through fs-rpc (the same pins as fs-forms-run).
 fs-interfaces = { git = "https://github.com/FreeSynergy/fs-interfaces", tag = "v0.0.30" }
 fs-rpc = { git = "https://github.com/FreeSynergy/fs-rpc", tag = "v0.0.6" }

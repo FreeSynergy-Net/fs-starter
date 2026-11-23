@@ -14,6 +14,8 @@ use crate::{package, pending, shell};
 /// The help text of the host (the words of the window host follow it).
 pub const HELP: &str = "fs-starter (--description PATH | PATH) [--frontend ID] [--style NAME] [--sample-data] [--picture FILE.png]\n\
     Opens the window of a program from its description, without building the program.\n\
+fs-starter --list-commands [--modules DIR]\n\
+    Lists the commands the host knows: the shared app.* and those of the bundled modules (id, module, version).\n\
     The words below are read by the window host (`fs-forms-run`), the one reader of them.\n";
 
 /// The line `--version` prints.
@@ -29,6 +31,9 @@ pub fn run(args: &[String]) -> ExitCode {
     if args.first().map(String::as_str) == Some("mcp") {
         let words: Vec<std::ffi::OsString> = args.iter().map(std::ffi::OsString::from).collect();
         return shell::run_library(&words, &mut std::io::stdout().lock());
+    }
+    if args.first().map(String::as_str) == Some("--list-commands") {
+        return list_commands(args);
     }
     match fs_forms_run::parse(args) {
         Err(message) => {
@@ -144,4 +149,41 @@ fn check(c: &Config) -> ExitCode {
             ExitCode::from(exit.code())
         }
     }
+}
+
+/// `--list-commands [--modules DIR]`: the registry (`app.*` plus the bundled modules' sets) as lines, one per command. The folder
+/// of the bundled modules is `--modules DIR`, else `modules/` next to the binary. A set that is refused is said on stderr and left
+/// out; the exit code is then 1.
+fn list_commands(args: &[String]) -> ExitCode {
+    let dir = match args {
+        [_] => std::env::current_exe()
+            .ok()
+            .and_then(|p| p.parent().map(|d| d.join("modules")))
+            .unwrap_or_default(),
+        [_, flag, dir] if flag == "--modules" => dir.into(),
+        _ => {
+            eprintln!(
+                "fs-starter: --list-commands takes only --modules DIR\nTry `fs-starter --help`."
+            );
+            return ExitCode::from(Exit::USAGE.code());
+        }
+    };
+    let mut registry = crate::registry::Registry::new();
+    let refused = registry.load_bundled(&dir);
+    for line in registry.lines() {
+        println!("{line}");
+    }
+    for (module, why) in &refused {
+        for r in why {
+            eprintln!("fs-starter: module {module}: {r}");
+        }
+    }
+    ExitCode::from(
+        if refused.is_empty() {
+            Exit::DONE
+        } else {
+            Exit::FAILED
+        }
+        .code(),
+    )
 }

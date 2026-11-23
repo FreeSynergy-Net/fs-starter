@@ -1781,6 +1781,7 @@ version = "0.0.4"
 dependencies = [
  "capnp",
  "capnp-rpc",
+ "fs-components-commands",
  "fs-forms-run",
  "fs-interfaces",
  "fs-rpc",

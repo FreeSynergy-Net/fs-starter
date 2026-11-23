@@ -16,6 +16,7 @@ mod host;
 pub mod instance;
 mod package;
 mod pending;
+pub mod registry;
 mod shell;
 
 pub use host::{HELP, run, version_line};
