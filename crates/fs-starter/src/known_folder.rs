@@ -10,7 +10,10 @@ use std::os::windows::ffi::OsStringExt;
 use std::path::PathBuf;
 
 use windows_sys::Win32::System::Com::CoTaskMemFree;
-use windows_sys::Win32::UI::Shell::{FOLDERID_ProgramFiles, KF_FLAG_DEFAULT, SHGetKnownFolderPath};
+use windows_sys::Win32::UI::Shell::{FOLDERID_ProgramFiles, SHGetKnownFolderPath};
+
+/// `KF_FLAG_DEFAULT` (the flags of `SHGetKnownFolderPath`, a `u32` here; the constant of the crate is an `i32`).
+const KF_FLAG_DEFAULT: u32 = 0;
 
 /// `<ProgramFiles>\FreeSynergy`; `None` when the shell does not tell (never a guess).
 pub(crate) fn anchor() -> Option<PathBuf> {
@@ -19,7 +22,7 @@ pub(crate) fn anchor() -> Option<PathBuf> {
     // (also on failure the call says to free it).
     let status = unsafe {
         SHGetKnownFolderPath(
-            &raw const FOLDERID_ProgramFiles,
+            &FOLDERID_ProgramFiles,
             KF_FLAG_DEFAULT,
             std::ptr::null_mut(),
             &raw mut raw,
