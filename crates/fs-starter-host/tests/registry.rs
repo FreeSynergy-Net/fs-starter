@@ -7,7 +7,9 @@
 mod support;
 use support::{host, text};
 
-use fs_starter_host::registry::{Access, Actor, ModuleSet, Origin, Refusal, Registry, parse};
+use fs_starter_host::registry::{
+    Access, Actor, ModuleSet, Refusal, Registry, Unbound, Verifier, parse,
+};
 
 /// The text of a set file with `module` and one command per id (all fields the format requires).
 fn json(module: &str, ids: &[&str]) -> String {
@@ -44,9 +46,8 @@ fn the_shell_commands_come_from_the_command_model_and_a_module_adds_its_own() {
         ids(&r),
         ["app.settings", "app.quit", "app.help", "app.about"]
     );
-    r.add(
+    r.add_bundled(
         Actor::Person,
-        Origin::Bundled,
         set("capture", &["capture.shot", "capture.list"]),
     )
     .unwrap();
@@ -63,18 +64,14 @@ fn the_shell_commands_come_from_the_command_model_and_a_module_adds_its_own() {
 fn a_module_may_not_take_the_app_prefix() {
     let mut r = Registry::new();
     let why = r
-        .add(
-            Actor::Person,
-            Origin::Bundled,
-            set("capture", &["app.undo"]),
-        )
+        .add_bundled(Actor::Person, set("capture", &["app.undo"]))
         .unwrap_err();
     assert!(
         matches!(&why[0], Refusal::ReservedPrefix(id) if id.as_str() == "app.undo"),
         "{why:?}"
     );
     let why = r
-        .add(Actor::Person, Origin::Bundled, set("app", &["app.undo"]))
+        .add_bundled(Actor::Person, set("app", &["app.undo"]))
         .unwrap_err();
     assert!(
         why.iter().any(|w| matches!(w, Refusal::ModuleName(_))),
@@ -87,11 +84,7 @@ fn a_module_may_not_take_the_app_prefix() {
 fn a_module_stays_in_its_own_name_space() {
     let mut r = Registry::new();
     let why = r
-        .add(
-            Actor::Person,
-            Origin::Bundled,
-            set("capture", &["tasks.move"]),
-        )
+        .add_bundled(Actor::Person, set("capture", &["tasks.move"]))
         .unwrap_err();
     assert!(matches!(&why[0], Refusal::OutsideNamespace(_)), "{why:?}");
 }
@@ -99,28 +92,19 @@ fn a_module_stays_in_its_own_name_space() {
 #[test]
 fn a_foreign_id_is_never_overwritten_and_the_whole_set_is_refused() {
     let mut r = Registry::new();
-    r.add(
-        Actor::Person,
-        Origin::Bundled,
-        set("capture", &["capture.shot"]),
-    )
-    .unwrap();
+    r.add_bundled(Actor::Person, set("capture", &["capture.shot"]))
+        .unwrap();
     // the same id again (another set of the same module), and a good one next to it
     let why = r
-        .add(
+        .add_bundled(
             Actor::Person,
-            Origin::Bundled,
             set("capture", &["capture.zip", "capture.shot"]),
         )
         .unwrap_err();
     assert_eq!(why, [Refusal::Conflict("capture.shot".into())]);
     // twice inside one set
     let why = r
-        .add(
-            Actor::Person,
-            Origin::Bundled,
-            set("zip", &["zip.a", "zip.a"]),
-        )
+        .add_bundled(Actor::Person, set("zip", &["zip.a", "zip.a"]))
         .unwrap_err();
     assert_eq!(why, [Refusal::Conflict("zip.a".into())]);
     assert_eq!(
@@ -135,36 +119,36 @@ fn a_foreign_id_is_never_overwritten_and_the_whole_set_is_refused() {
 fn a_bot_never_extends_the_command_set() {
     let mut r = Registry::new();
     let why = r
-        .add(
-            Actor::Bot,
-            Origin::Bundled,
-            set("capture", &["capture.shot"]),
-        )
+        .add_bundled(Actor::Bot, set("capture", &["capture.shot"]))
         .unwrap_err();
     assert_eq!(why, [Refusal::Bot]);
     assert_eq!(r.entries().len(), 4);
 }
 
+/// A test double of the signature check that accepts (the real one is `fs-update`, not bound yet).
+struct Accepting;
+impl Verifier for Accepting {
+    fn verify(&self, _set: &ModuleSet) -> bool {
+        true
+    }
+}
+
 #[test]
-fn only_a_bundled_module_or_a_signed_package_is_accepted() {
+fn a_package_is_refused_by_default_and_accepted_only_by_a_verifier_that_says_yes() {
     let mut r = Registry::new();
     let why = r
-        .add(
-            Actor::Person,
-            Origin::Package {
-                signature_ok: false,
-            },
-            set("capture", &["capture.shot"]),
-        )
+        .add_package(Actor::Person, set("capture", &["capture.shot"]), &Unbound)
         .unwrap_err();
     assert_eq!(why, [Refusal::NotTrusted]);
-    r.add(
-        Actor::Person,
-        Origin::Package { signature_ok: true },
-        set("capture", &["capture.shot"]),
-    )
-    .unwrap();
+    assert_eq!(r.entries().len(), 4);
+    r.add_package(Actor::Person, set("capture", &["capture.shot"]), &Accepting)
+        .unwrap();
     assert_eq!(r.entries().len(), 5);
+    // a verifier does not lift the other rules
+    let why = r
+        .add_package(Actor::Person, set("zip", &["app.x"]), &Accepting)
+        .unwrap_err();
+    assert!(matches!(&why[0], Refusal::ReservedPrefix(_)), "{why:?}");
 }
 
 /// A copy of `catalog/commands.json` of fs-capture @a9ca621.
@@ -183,7 +167,7 @@ fn the_real_file_of_fs_capture_is_read_with_help_and_access() {
     assert_eq!(set.items[0].help.topic, "capture-screens");
     assert!(set.items[0].help.de.starts_with("Listet"));
     let mut r = Registry::new();
-    r.add(Actor::Person, Origin::Bundled, set).unwrap();
+    r.add_bundled(Actor::Person, set).unwrap();
     let lines = r.lines();
     assert_eq!(
         lines

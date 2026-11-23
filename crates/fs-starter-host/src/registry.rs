@@ -28,16 +28,26 @@ pub enum Actor {
     Bot,
 }
 
-/// Where a set comes from. Only these two are accepted.
+/// The signature check of a package loaded later (`fs-update`, not bound yet). The default says no: nothing counts as signed until a
+/// real check is bound. There is no public flag a caller could set; only an implementation of this trait can accept.
+pub trait Verifier {
+    /// Is the package of this set signed by a key we trust? The default refuses.
+    fn verify(&self, _set: &ModuleSet) -> bool {
+        false
+    }
+}
+
+/// The check that is there until `fs-update` is bound: refuses every package.
+#[derive(Clone, Copy, Debug, Default)]
+pub struct Unbound;
+
+impl Verifier for Unbound {}
+
+/// Where a set comes from (private: the public ways in are [`Registry::add_bundled`] and [`Registry::add_package`]).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Origin {
-    /// A module that comes with the host (the folder of the bundled modules).
+enum Origin {
     Bundled,
-    /// A package loaded later; `signature_ok` is the verdict of the signature check (fs-update). `false` is refused.
-    Package {
-        /// Did the signature of the package check out?
-        signature_ok: bool,
-    },
+    Package { signature_ok: bool },
 }
 
 /// What a command may do with the data (the `access` of the exchange file).
@@ -177,16 +187,29 @@ impl Registry {
         &self.entries
     }
 
-    /// Add the set of a module; all or nothing.
+    /// Add the set of a module that comes with the host (the host's own folder of modules); all or nothing.
     ///
     /// # Errors
     /// Every [`Refusal`] that applies; the registry is unchanged then.
-    pub fn add(
+    pub fn add_bundled(&mut self, actor: Actor, set: ModuleSet) -> Result<(), Vec<Refusal>> {
+        self.add(actor, Origin::Bundled, set)
+    }
+
+    /// Add the set of a package loaded later: only if `verifier` accepts it (use [`Unbound`] until `fs-update` is bound: it refuses).
+    ///
+    /// # Errors
+    /// Every [`Refusal`] that applies, [`Refusal::NotTrusted`] among them when the check says no; the registry is unchanged then.
+    pub fn add_package(
         &mut self,
         actor: Actor,
-        origin: Origin,
         set: ModuleSet,
+        verifier: &dyn Verifier,
     ) -> Result<(), Vec<Refusal>> {
+        let signature_ok = verifier.verify(&set);
+        self.add(actor, Origin::Package { signature_ok }, set)
+    }
+
+    fn add(&mut self, actor: Actor, origin: Origin, set: ModuleSet) -> Result<(), Vec<Refusal>> {
         let mut bad = Vec::new();
         if actor == Actor::Bot {
             bad.push(Refusal::Bot);
@@ -250,7 +273,7 @@ impl Registry {
                 .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
             let result = read::read_folder(&folder, &label)
                 .map_err(|r| vec![r])
-                .and_then(|set| self.add(Actor::Person, Origin::Bundled, set));
+                .and_then(|set| self.add_bundled(Actor::Person, set));
             if let Err(why) = result {
                 refused.push((label, why));
             }
