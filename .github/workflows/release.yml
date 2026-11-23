@@ -13,6 +13,8 @@ jobs:
     with:
       # `fs-starter` is the host binary of the package `fs-starter-host` (the library `fs-starter` has none).
       binaries: fs-starter
+      # Test helper (a made-up module service for the tests), not packaged; card: move it into its own unpublished test crate.
+      ignore-binaries: fs-starter-fake-module
       cargo-package: fs-starter-host
       name: fs-starter
       kind: app
