@@ -72,14 +72,20 @@ impl Modules {
             Ok(refused) => {
                 for (module, why) in &refused {
                     for r in why {
-                        eprintln!("fs-starter: module {module:?} in {dir:?}: {r}");
+                        eprintln!(
+                            "fs-starter: module {module:?} in {:?}: {r}",
+                            dir.to_string_lossy()
+                        );
                     }
                 }
                 self.refused.extend(refused);
             }
             Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
             Err(e) => {
-                eprintln!("fs-starter: modules folder {dir:?}: {e}");
+                eprintln!(
+                    "fs-starter: modules folder {:?}: {e}",
+                    dir.to_string_lossy()
+                );
                 self.refused.push((
                     String::new(),
                     vec![Refusal::Unreadable(format!("folder: {e}"))],
