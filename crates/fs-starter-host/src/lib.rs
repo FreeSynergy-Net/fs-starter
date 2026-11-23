@@ -18,6 +18,7 @@ mod package;
 mod pending;
 pub mod registry;
 mod shell;
+pub mod sources;
 
 pub use host::{HELP, run, version_line};
 pub use package::{Package, line as package_line, read as read_package};

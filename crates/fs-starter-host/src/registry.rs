@@ -10,7 +10,7 @@
 
 mod model;
 mod names;
-mod read;
+pub(crate) mod read;
 mod verify;
 
 use std::fs;
