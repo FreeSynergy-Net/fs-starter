@@ -155,12 +155,16 @@ fn check(c: &Config) -> ExitCode {
 /// of the bundled modules is `--modules DIR`, else `modules/` next to the binary. A set that is refused is said on stderr and left
 /// out; the exit code is then 1.
 fn list_commands(args: &[String]) -> ExitCode {
-    let dir = match args {
-        [_] => std::env::current_exe()
-            .ok()
-            .and_then(|p| p.parent().map(|d| d.join("modules")))
-            .unwrap_or_default(),
-        [_, flag, dir] if flag == "--modules" => dir.into(),
+    // Only the default folder next to the binary may be missing; a folder that was named must be there (never silent).
+    let (dir, named) = match args {
+        [_] => (
+            std::env::current_exe()
+                .ok()
+                .and_then(|p| p.parent().map(|d| d.join("modules")))
+                .unwrap_or_default(),
+            false,
+        ),
+        [_, flag, dir] if flag == "--modules" => (dir.into(), true),
         _ => {
             eprintln!(
                 "fs-starter: --list-commands takes only --modules DIR\nTry `fs-starter --help`."
@@ -169,13 +173,23 @@ fn list_commands(args: &[String]) -> ExitCode {
         }
     };
     let mut registry = crate::registry::Registry::new();
-    let refused = registry.load_bundled(&dir);
+    let refused = match registry.load_bundled(&dir) {
+        Ok(refused) => refused,
+        Err(e) if !named && e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+        Err(e) => {
+            eprintln!(
+                "fs-starter: modules folder {:?}: {e}",
+                dir.to_string_lossy()
+            );
+            return ExitCode::from(Exit::FAILED.code());
+        }
+    };
     for line in registry.lines() {
         println!("{line}");
     }
     for (module, why) in &refused {
         for r in why {
-            eprintln!("fs-starter: module {module}: {r}");
+            eprintln!("fs-starter: module {module:?}: {r}");
         }
     }
     ExitCode::from(

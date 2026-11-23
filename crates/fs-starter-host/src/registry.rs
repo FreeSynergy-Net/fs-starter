@@ -266,29 +266,45 @@ impl Registry {
         Ok(())
     }
 
-    /// Read every `<dir>/<module>/catalog/commands.json` (sorted by module name; a missing folder is no modules) and add the sets as
-    /// bundled. A set that is refused is reported and left out; the others are added.
-    pub fn load_bundled(&mut self, dir: &Path) -> Vec<(String, Vec<Refusal>)> {
-        let mut folders: Vec<_> = fs::read_dir(dir)
-            .map(|d| d.filter_map(Result::ok).map(|e| e.path()).collect())
-            .unwrap_or_default();
-        folders.sort();
+    /// Read every `<dir>/<module>/catalog/commands.json` (sorted by module name) and add the sets as bundled. A set that is refused is
+    /// reported and left out; the others are added. Hidden folders are skipped; a symlink (folder or file) and a file over 256 KiB are
+    /// refused. This is for `--list-commands` and the folder next to the binary; a folder named by `--modules` never feeds the window.
+    ///
+    /// # Errors
+    /// The folder cannot be read (missing, no right): never silent; the caller decides if a missing default folder is fine.
+    pub fn load_bundled(&mut self, dir: &Path) -> std::io::Result<Vec<(String, Vec<Refusal>)>> {
+        let mut folders = Vec::new();
         let mut refused = Vec::new();
-        for folder in folders {
-            if !folder.join("catalog").join("commands.json").is_file() {
-                continue;
+        for entry in fs::read_dir(dir)? {
+            match entry {
+                Ok(e) => folders.push(e.path()),
+                Err(_) => refused.push((
+                    String::new(),
+                    vec![Refusal::Unreadable("entry-failed".to_owned())],
+                )),
             }
+        }
+        folders.sort();
+        for folder in folders {
             let label = folder
                 .file_name()
                 .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
-            let result = read::read_folder(&folder, &label)
-                .map_err(|r| vec![r])
-                .and_then(|set| self.add_bundled(Actor::Person, set));
+            if label.starts_with('.') {
+                continue;
+            }
+            let file = folder.join("catalog").join("commands.json");
+            let result = match read::check(&folder, &file) {
+                Ok(false) => continue,
+                Ok(true) => read::read_folder(&file, &label)
+                    .map_err(|r| vec![r])
+                    .and_then(|set| self.add_bundled(Actor::Person, set)),
+                Err(r) => Err(vec![r]),
+            };
             if let Err(why) = result {
                 refused.push((label, why));
             }
         }
-        refused
+        Ok(refused)
     }
 
     /// The lines of `--list-commands`: `id`, module, version and, for a command a module added, `new by module X`; separated by tabs.

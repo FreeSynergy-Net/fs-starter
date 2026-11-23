@@ -422,3 +422,81 @@ fn an_id_with_a_line_break_forges_no_line_in_list_commands() {
         "one line, no forged one"
     );
 }
+
+#[test]
+fn a_missing_or_unreadable_modules_folder_is_an_error_and_never_silent() {
+    let out = host(
+        &["--list-commands", "--modules", "/nonexistent-fs-modules"],
+        "light",
+    );
+    assert_eq!(out.status.code(), Some(1));
+    assert!(
+        text(&out.stderr).contains("modules folder"),
+        "{}",
+        text(&out.stderr)
+    );
+    // a file instead of a folder
+    let file = tempfile::NamedTempFile::new().unwrap();
+    let out = host(
+        &[
+            "--list-commands",
+            "--modules",
+            file.path().to_str().unwrap(),
+        ],
+        "light",
+    );
+    assert_eq!(out.status.code(), Some(1));
+    // the default folder next to the binary may be missing
+    assert_eq!(host(&["--list-commands"], "light").status.code(), Some(0));
+    let mut r = Registry::new();
+    assert!(
+        r.load_bundled(std::path::Path::new("/nonexistent-fs-modules"))
+            .is_err()
+    );
+}
+
+#[test]
+fn symlinks_big_files_and_hidden_folders_are_not_read() {
+    let dir = modules_dir(&[("capture", &capture())]);
+    // a symlink to a good module folder, a symlinked file, a file over the limit, a hidden folder
+    let root = dir.path();
+    std::os::unix::fs::symlink(root.join("capture"), root.join("linked")).unwrap();
+    let catalog = root.join("filelink").join("catalog");
+    std::fs::create_dir_all(&catalog).unwrap();
+    std::os::unix::fs::symlink(
+        root.join("capture/catalog/commands.json"),
+        catalog.join("commands.json"),
+    )
+    .unwrap();
+    let big = root.join("big").join("catalog");
+    std::fs::create_dir_all(&big).unwrap();
+    std::fs::write(big.join("commands.json"), vec![b' '; 300 * 1024]).unwrap();
+    let hidden = root.join(".git").join("catalog");
+    std::fs::create_dir_all(&hidden).unwrap();
+    std::fs::write(
+        hidden.join("commands.json"),
+        capture().replace("capture", "git"),
+    )
+    .unwrap();
+    let mut r = Registry::new();
+    let refused = r.load_bundled(root).unwrap();
+    let cause = |m: &str| refused.iter().find(|(n, _)| n == m).map(|(_, w)| w.clone());
+    assert_eq!(
+        cause("linked"),
+        Some(vec![Refusal::Unreadable("symlink".into())])
+    );
+    assert_eq!(
+        cause("filelink"),
+        Some(vec![Refusal::Unreadable("symlink".into())])
+    );
+    assert_eq!(
+        cause("big"),
+        Some(vec![Refusal::Unreadable("too-large".into())])
+    );
+    assert_eq!(
+        refused.len(),
+        3,
+        "{refused:?}: the hidden folder is skipped silently"
+    );
+    assert_eq!(ids(&r).len(), 5, "only capture.shot came in: {:?}", ids(&r));
+}

@@ -75,9 +75,38 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
     })
 }
 
-/// Read the file of one module folder.
-pub(super) fn read_folder(folder: &Path, name: &str) -> Result<ModuleSet, Refusal> {
-    let text = fs::read_to_string(folder.join("catalog").join("commands.json"))
-        .map_err(|_| bad("read-failed"))?;
+/// The biggest file read (a set is a few KiB).
+const MAX_BYTES: u64 = 256 * 1024;
+
+/// Is there a file to read in the module folder? `Ok(false)`: no (not a module folder). A symlink (the folder, `catalog` or the file),
+/// something that is not a plain file, or a file over [`MAX_BYTES`] is refused, never followed.
+pub(super) fn check(folder: &Path, file: &Path) -> Result<bool, Refusal> {
+    let link = |p: &Path| fs::symlink_metadata(p);
+    let meta = link(folder).map_err(|_| bad("read-failed"))?;
+    if meta.file_type().is_symlink() {
+        return Err(bad("symlink"));
+    }
+    if !meta.is_dir() {
+        return Ok(false);
+    }
+    if link(&folder.join("catalog")).is_ok_and(|m| m.file_type().is_symlink()) {
+        return Err(bad("symlink"));
+    }
+    let Ok(m) = link(file) else { return Ok(false) };
+    if m.file_type().is_symlink() {
+        return Err(bad("symlink"));
+    }
+    if !m.is_file() {
+        return Ok(false);
+    }
+    if m.len() > MAX_BYTES {
+        return Err(bad("too-large"));
+    }
+    Ok(true)
+}
+
+/// Read the file of one module (checked by [`check`]) as the set of the module `name` (the folder name).
+pub(super) fn read_folder(file: &Path, name: &str) -> Result<ModuleSet, Refusal> {
+    let text = fs::read_to_string(file).map_err(|_| bad("read-failed"))?;
     parse(&text, name)
 }
