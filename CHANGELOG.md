@@ -2,7 +2,19 @@
 
 Version = tag.
 
-## 0.0.6
+## 0.0.7
+
+### English
+
+- v0.0.6 was tagged but never published: the origin check of the publish step expected the old org name (FreeSynergy instead of FreeSynergy-Net). 0.0.7 = the same code + new workflow pins (fs-release references pinned to 485f747, org FreeSynergy-Net). No code change in the version commit. Version 0.0.6 -> 0.0.7; the `tag:` line of `package-probe.yml` follows. Everything listed under 0.0.6 ships with this release.
+- Known gap: RPM: the folders below /usr/share/freesynergy and /usr/libexec/freesynergy are not owned by any package yet (`rpm -qf`: not owned); empty folders stay behind after the uninstall.
+
+### Deutsch
+
+- v0.0.6 wurde getaggt, aber nie veröffentlicht: die Herkunftsprüfung des Veröffentlichungsschritts erwartete den alten Org-Namen (FreeSynergy statt FreeSynergy-Net). 0.0.7 = derselbe Code + neue Workflow-Pins (fs-release-Verweise auf 485f747, Org FreeSynergy-Net). Keine Code-Änderung im Versions-Commit. Version 0.0.6 -> 0.0.7; die Zeile `tag:` in `package-probe.yml` folgt. Alles unter 0.0.6 Genannte kommt mit diesem Release.
+- RPM: die Ordner unter /usr/share/freesynergy und /usr/libexec/freesynergy gehören noch keinem Paket (rpm -qf: not owned); leere Ordner bleiben nach der Deinstallation liegen.
+
+## 0.0.6: tagged, no release (publish check expected the old org name)
 
 ### English
 

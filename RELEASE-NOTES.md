@@ -1,6 +1,6 @@
-# fs-starter v0.0.6
+# fs-starter v0.0.7
 
-Release fix for 0.0.5 (0.0.5 is tagged but has no release: the package build was red because the test helper `fs-starter-fake-module` was a `[[bin]]`; it is an `[[example]]` now). Same pins (fs-forms v0.0.11, fs-interfaces v0.0.31, fs-rpc v0.0.7, fs-components v0.0.34). This is the first release since v0.0.4, so it carries the host changes of 0.0.5 as well: command registry, `SystemPackaged` verifier and system paths, sources adapter, RPM package renamed `fs-starter` (obsoletes `fs-starter-host`; the deb file is still named `fs-starter-host_...`). Details: CHANGELOG.md 0.0.6.
+v0.0.6 was tagged but never published: the origin check of the publish step expected the old org name (FreeSynergy instead of FreeSynergy-Net). 0.0.7 = the same code + new workflow pins. It is the first release since v0.0.4, so it carries everything of 0.0.5 and 0.0.6 (command registry, `SystemPackaged` verifier and system paths, sources adapter, RPM package renamed `fs-starter`, obsoletes `fs-starter-host`; the deb file is still named `fs-starter-host_...`). Details: CHANGELOG.md 0.0.7 and 0.0.6.
 
 Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
 
