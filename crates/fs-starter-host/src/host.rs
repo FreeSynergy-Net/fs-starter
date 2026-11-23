@@ -173,7 +173,7 @@ fn list_commands(args: &[String]) -> ExitCode {
         }
     };
     let mut registry = crate::registry::Registry::new();
-    let refused = match registry.load_bundled(&dir) {
+    let mut refused = match registry.load_bundled(&dir) {
         Ok(refused) => refused,
         Err(e) if !named && e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
         Err(e) => {
@@ -184,6 +184,18 @@ fn list_commands(args: &[String]) -> ExitCode {
             return ExitCode::from(Exit::FAILED.code());
         }
     };
+    // The modules of the package manager (system folder): only what `SystemPackaged` accepts; a missing folder is fine.
+    match registry.load_packages(
+        std::path::Path::new(fs_starter::MODULES_DIR),
+        &crate::registry::SystemPackaged::new(),
+    ) {
+        Ok(more) => refused.extend(more),
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Err(e) => {
+            eprintln!("fs-starter: system modules folder: {e}");
+            return ExitCode::from(Exit::FAILED.code());
+        }
+    }
     for line in registry.lines() {
         println!("{line}");
     }

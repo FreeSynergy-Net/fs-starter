@@ -164,6 +164,23 @@ fn k14_broken_fields() {
     assert_eq!(m.min_program, Some(Version3(0, 0, 2)));
 }
 
+/// The test folder plays the system place (its owner is the user running the test). Without unix nothing is packaged.
+fn places(root: &Path) -> fs_starter::SystemPlaces {
+    #[cfg(unix)]
+    let uid = std::os::unix::fs::MetadataExt::uid(&fs::metadata(root).expect("meta"));
+    #[cfg(not(unix))]
+    let uid = 0;
+    fs_starter::SystemPlaces::for_test(vec![root.to_path_buf()], uid)
+}
+
+fn packaged() -> Trust {
+    if cfg!(unix) {
+        Trust::Packaged
+    } else {
+        Trust::LocalUnchecked
+    }
+}
+
 fn put(dir: &Path, name: &str, body: &str) {
     fs::create_dir_all(dir).expect("mkdir");
     fs::write(dir.join(name), body).expect("write");
@@ -194,6 +211,7 @@ fn k15_xdg_levels() {
         max_bytes: MAX_MANIFEST_BYTES,
         user: Some(user.clone()),
         system: vec![system.clone()],
+        places: places(&system),
     };
     let l = src.frontends(&program);
     let simple = l
@@ -210,10 +228,7 @@ fn k15_xdg_levels() {
         .iter()
         .find(|f| f.manifest.id.as_str() == "classic")
         .expect("classic");
-    assert_eq!(
-        (classic.place, classic.trust),
-        (Place::System, Trust::Packaged)
-    );
+    assert_eq!((classic.place, classic.trust), (Place::System, packaged()));
     assert_eq!(l.found.len(), 2, "one per id");
     assert_eq!(l.refused.len(), 1);
     assert_eq!(text(&l.refused[0], "field").as_deref(), Some("xml"));
@@ -223,18 +238,20 @@ fn k15_xdg_levels() {
         max_bytes: MAX_MANIFEST_BYTES,
         user: None,
         system: vec![system.clone()],
+        places: places(&system),
     }
     .frontends(&program);
     assert!(
         only.found
             .iter()
-            .all(|f| f.trust == Trust::Packaged && f.place == Place::System)
+            .all(|f| f.trust == packaged() && f.place == Place::System)
     );
     // Missing folders: empty, no refusal.
     let none = XdgManifests {
         max_bytes: MAX_MANIFEST_BYTES,
         user: Some(tmp.path().join("nope")),
         system: vec![tmp.path().join("nada")],
+        places: places(tmp.path()),
     }
     .frontends(&program);
     assert!(none.found.is_empty() && none.refused.is_empty());

@@ -127,20 +127,20 @@ impl SystemPlaces {
             walk.push(part);
             // the places of a test start below the anchor: the anchor itself is checked too (index start - 1)
             if i + 1 >= start.max(1) {
-                self.check_one(&walk)?;
+                Self::check_one(self.owner, &walk)?;
             }
         }
         Ok(())
     }
 
     #[cfg(unix)]
-    fn check_one(&self, p: &Path) -> Result<(), SystemRefusal> {
+    fn check_one(owner: u32, p: &Path) -> Result<(), SystemRefusal> {
         use std::os::unix::fs::MetadataExt;
         let m = std::fs::symlink_metadata(p).map_err(|_| SystemRefusal::Unreadable)?;
         if m.file_type().is_symlink() {
             return Err(SystemRefusal::Symlink);
         }
-        if m.uid() != self.owner {
+        if m.uid() != owner {
             return Err(SystemRefusal::WrongOwner);
         }
         if m.mode() & 0o022 != 0 {
@@ -150,7 +150,7 @@ impl SystemPlaces {
     }
 
     #[cfg(not(unix))]
-    fn check_one(&self, _p: &Path) -> Result<(), SystemRefusal> {
+    fn check_one(_owner: u32, _p: &Path) -> Result<(), SystemRefusal> {
         Err(SystemRefusal::NotSupported)
     }
 }
