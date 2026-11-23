@@ -11,6 +11,7 @@ use fs_types::coded::Coded;
 use crate::codes::{StarterCode, keys};
 use crate::frontend::{Found, FrontendManifest, Listing, ManifestSource, Place, Trust};
 use crate::names::{ContractReq, FrontendId, ProgramName, Version3};
+use crate::system::SystemPlaces;
 
 fn refuse(file: &Path, field: &str) -> Coded<StarterCode> {
     Coded::new(StarterCode::ManifestInvalid)
@@ -122,6 +123,9 @@ pub struct XdgManifests {
     pub system: Vec<PathBuf>,
     /// The most bytes read from one manifest file; a bigger one is refused as `manifest-invalid{field=size}`.
     pub max_bytes: u64,
+    /// What counts as the package manager's (see [`SystemPlaces`]): a file of the system level gets [`Trust::Packaged`] only if it
+    /// passes this check. `XDG_DATA_DIRS` is set by the user and proves nothing alone.
+    pub places: SystemPlaces,
 }
 
 /// The default of [`XdgManifests::max_bytes`]: 64 KiB.
@@ -159,10 +163,12 @@ impl XdgManifests {
             user,
             system,
             max_bytes: MAX_MANIFEST_BYTES,
+            places: SystemPlaces::standard(),
         }
     }
 
-    fn read_level(dir: &Path, place: Place, max_bytes: u64, out: &mut Listing) {
+    fn read_level(&self, dir: &Path, place: Place, out: &mut Listing) {
+        let max_bytes = self.max_bytes;
         let Ok(entries) = std::fs::read_dir(dir) else {
             return;
         }; // a missing level is no failure
@@ -176,7 +182,9 @@ impl XdgManifests {
                 Ok(m) if out.get(&m.id).is_some() => {} // the user level has it already
                 Ok(manifest) => {
                     // Until fs-packages leaves a receipt, the user level cannot prove a package: stricter, never laxer (O4).
-                    let trust = if place == Place::System {
+                    // The system level too only after the check: below a system place, root's, no link, nobody else may write.
+                    // Else it stays shown as "local, not checked" (the place name alone is user input: `XDG_DATA_DIRS`).
+                    let trust = if place == Place::System && self.places.check(&file).is_ok() {
                         Trust::Packaged
                     } else {
                         Trust::LocalUnchecked
@@ -198,20 +206,10 @@ impl ManifestSource for XdgManifests {
     fn frontends(&self, program: &ProgramName) -> Listing {
         let mut out = Listing::default();
         if let Some(user) = &self.user {
-            Self::read_level(
-                &user.join(program.as_str()),
-                Place::User,
-                self.max_bytes,
-                &mut out,
-            );
+            self.read_level(&user.join(program.as_str()), Place::User, &mut out);
         }
         for system in &self.system {
-            Self::read_level(
-                &system.join(program.as_str()),
-                Place::System,
-                self.max_bytes,
-                &mut out,
-            );
+            self.read_level(&system.join(program.as_str()), Place::System, &mut out);
         }
         out
     }
