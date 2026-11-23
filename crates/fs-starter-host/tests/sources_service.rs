@@ -7,6 +7,8 @@
 //! command line is not used; (5) a start twice uses one service. Mutants: a border off = its test red (see the report).
 //! Set `FS_PICTURE_OUT=<dir>` to keep the pictures.
 
+#![cfg(unix)]
+
 mod support;
 use support::install::{GOOD_FORMS, Install, Service, groups};
 use support::{Picture, out_dir, text};
@@ -71,7 +73,14 @@ fn the_window_from_the_service_is_the_sample_window_and_not_the_empty_one() {
         i.started("groups"),
         "the host started the service of the module"
     );
-    let (sample, _) = draw(&i, &["--sample-data"], "light", "~sample.png", &[]).unwrap();
+    let (sample, _) = draw(
+        &i,
+        &["--sample-data"],
+        "light",
+        "groups-sample-light.png",
+        &[],
+    )
+    .unwrap();
     assert!(
         same(&live, &sample),
         "fake data = sample data: the window says \"Sample data\" and draws the sample groups"

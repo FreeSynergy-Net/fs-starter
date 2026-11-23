@@ -75,28 +75,28 @@ fn the_side_list_stands_beside_the_board_in_three_columns_light_and_dark() {
         ) else {
             return;
         };
-        // the shell's own navigation takes the left 200 px, the list the strip right of it (x 200..420)
+        // sample records make one page: the shell shows no navigation, the list is the strip at the left (x 0..220)
         assert!(
-            !uniform(&p, 240..300, 70..180),
+            !uniform(&p, 40..100, 70..180),
             "{scheme}: the list is drawn in the strip"
         );
         assert!(
-            uniform(&p, 230..410, 300..700),
+            uniform(&p, 30..210, 300..700),
             "{scheme}: the strip is empty below the list"
         );
         // the board starts right of the strip at the top of the main area, and is as tall as it
         assert!(
-            !uniform(&p, 440..680, 125..200),
+            !uniform(&p, 240..480, 125..200),
             "{scheme}: the board begins beside the list"
         );
         assert!(
-            !uniform(&p, 460..670, 700..712),
+            !uniform(&p, 260..470, 700..712),
             "{scheme}: the board fills the main area"
         );
-        // three columns: the cards of the sample data stand in three separate bands across the main area (x 440..1000)
+        // three columns: the cards of the sample data stand in three separate bands across the main area (x 240..1000)
         let band = |x0: u32, x1: u32| !uniform(&p, x0..x1, 150..400);
         assert!(
-            band(440, 600) && band(600, 800) && band(800, 990),
+            band(240, 440) && band(440, 720) && band(720, 990),
             "{scheme}: three columns are drawn"
         );
     }
@@ -125,15 +125,15 @@ fn in_a_wide_window_the_third_column_is_whole_and_the_gaps_between_columns_are_e
         return;
     };
     assert_eq!((p.w, p.h), (1300, 760));
-    // the three columns share the main area (x 444..716, 724..996, 1004..1276), the rows of the first cards
-    for (x0, x1) in [(444, 716), (724, 996), (1004, 1276)] {
+    // the three columns share the main area (x 245..581, 592..927, 938..1274), the rows of the first cards
+    for (x0, x1) in [(247, 580), (595, 926), (941, 1273)] {
         assert!(!uniform(&p, x0..x1, 150..300), "a column at x {x0}..{x1}");
     }
     // between the columns (8 px) and right of the third: the board's own background, one colour
-    assert!(uniform(&p, 718..722, 300..700), "the gap after column 1");
-    assert!(uniform(&p, 998..1002, 300..700), "the gap after column 2");
+    assert!(uniform(&p, 585..589, 300..700), "the gap after column 1");
+    assert!(uniform(&p, 931..935, 300..700), "the gap after column 2");
     assert!(
-        uniform(&p, 1280..1298, 300..700),
+        uniform(&p, 1278..1298, 300..700),
         "nothing right of column 3"
     );
 }
