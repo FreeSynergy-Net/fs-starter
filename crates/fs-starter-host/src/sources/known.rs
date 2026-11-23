@@ -7,7 +7,7 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
-use fs_starter::{MODULES_DIR, SystemPlaces};
+use fs_starter::{SERVICE_STEM, SystemPlaces, bundled_modules_dir, system_modules_dir};
 
 use super::range::{Version, version};
 use crate::registry::{Entry, Refusal, Registry, SystemPackaged};
@@ -58,11 +58,12 @@ impl Modules {
     /// The real places: `modules/` next to the binary and the system folder of the modules.
     #[must_use]
     pub fn standard() -> Self {
-        let bundled = std::env::current_exe()
-            .ok()
-            .and_then(|p| p.parent().map(|d| d.join("modules")))
-            .unwrap_or_default();
-        Self::load(&bundled, Path::new(MODULES_DIR), &SystemPackaged::new())
+        // A missing place is an empty path: nothing is read there (a missing folder is fine, see `report`).
+        Self::load(
+            &bundled_modules_dir().unwrap_or_default(),
+            &system_modules_dir().unwrap_or_default(),
+            &SystemPackaged::new(),
+        )
     }
 
     /// What the registry said about a folder: a missing folder is fine (nothing brought), every other error and every refused module
@@ -149,13 +150,28 @@ impl Modules {
 }
 
 impl Known {
-    /// The program file of the service: `<folder>/service`, never found through PATH or a word of a description. A plain file, no
+    /// The program file of the service: `<folder>/service[.exe]` (`program_file`), never found through PATH or a word of a description. A plain file, no
     /// link on the way; a packaged module also has to pass the system check (owner, not writable by others) for the file itself.
     ///
     /// # Errors
     /// A cause word: `no-service`, `symlink`, `not-a-file`, `not-system`.
     pub fn service(&self) -> Result<PathBuf, &'static str> {
-        let file = self.folder.join("service");
+        self.service_with(fs_starter::EXE_SUFFIX)
+    }
+
+    /// [`Self::service`] for a given ending of program files (tests run the Windows form under Linux, too).
+    ///
+    /// The file that is checked is the file that is started: only `program_file` counts. Where program files have an ending, a bare
+    /// `service` next to `service.exe` is a second candidate the system could start instead; the module is refused: `ambiguous-service`.
+    ///
+    /// # Errors
+    /// As [`Self::service`], plus `ambiguous-service`.
+    #[doc(hidden)]
+    pub fn service_with(&self, suffix: &str) -> Result<PathBuf, &'static str> {
+        if fs_starter::is_ambiguous(&self.folder, SERVICE_STEM, suffix) {
+            return Err("ambiguous-service");
+        }
+        let file = fs_starter::program_file_with(&self.folder, SERVICE_STEM, suffix);
         for p in [&self.folder, &file] {
             let m = std::fs::symlink_metadata(p).map_err(|_| "no-service")?;
             if m.file_type().is_symlink() {

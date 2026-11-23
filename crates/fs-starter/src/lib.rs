@@ -32,6 +32,7 @@ mod frontend;
 mod gate;
 mod hook;
 mod launch;
+mod layout;
 mod manifest_xml;
 mod mcp;
 mod names;
@@ -52,12 +53,19 @@ pub use frontend::{Found, FrontendManifest, Listing, ManifestSource, Place, Trus
 pub use gate::{ServerGate, SingleGate, TakenOverNote, Up, server_code};
 pub use hook::{Ended, HookOutcome, PROBATION, StartCx, StartHook};
 pub use launch::{CHECK_LIMIT, Launcher, ProcessLauncher};
+pub use layout::{
+    EXE_SUFFIX, SERVICE_STEM, bundled_modules_dir, has_suffix, is_ambiguous, program_file,
+    program_file_with, system_modules_dir,
+};
 pub use manifest_xml::{MAX_MANIFEST_BYTES, XdgManifests, read_manifest};
 pub use mcp::{McpOff, McpSwitch};
 pub use names::{ActorName, ContractReq, FrontendId, ProgramName, ResumeToken, Version3};
 pub use program::{Exit, Failure, McpEntry, NoPreference, Preference, Program};
 pub use run::{Parts, main_exit, run};
 pub use settings::{MCP_ENABLED, SINGLE_ASK, StarterSettings, TEXT_DE, TEXT_EN};
-pub use system::{MODULES_DIR, PROGRAMS_DIR, SHARE_DIR, STARTER_DIR, SystemPlaces, SystemRefusal};
+#[cfg(unix)]
+pub use system::{MODULES_DIR, PROGRAMS_DIR, SHARE_DIR, STARTER_DIR};
+pub use system::{SystemPlaces, SystemRefusal};
+
 pub use tell::{Level, Note, StderrTell, Tell};
 pub use words::{StartWords, Words, parse, synopsis};
