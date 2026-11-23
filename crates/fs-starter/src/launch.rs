@@ -55,28 +55,34 @@ impl ProcessLauncher {
         self
     }
 
-    /// The folder of the running program, then `/usr/bin`. The store's `current/<frontend package>/` comes in with
+    /// The folder of the running program, then (Unix) `/usr/bin`. The store's `current/<frontend package>/` comes in with
     /// fs-packages stage 2 (ADR 0094 O4).
     #[must_use]
     pub fn standard() -> Self {
         let beside = std::env::current_exe()
             .ok()
             .and_then(|me| me.parent().map(Path::to_path_buf));
-        Self::new(
-            beside
-                .into_iter()
-                .chain([PathBuf::from("/usr/bin")])
-                .collect(),
-        )
+        #[cfg(unix)]
+        let system = [PathBuf::from(crate::system::STARTER_DIR)];
+        #[cfg(not(unix))]
+        let system: [PathBuf; 0] = [];
+        Self::new(beside.into_iter().chain(system).collect())
     }
 }
 
 impl Launcher for ProcessLauncher {
     fn find(&self, exec: &str) -> Option<PathBuf> {
-        if exec.is_empty() || exec.contains(['/', '\\']) {
+        // a bare name: no folder part and no ending (the ending is set only by `program_file`)
+        if exec.is_empty()
+            || exec.contains(['/', '\\'])
+            || crate::layout::has_suffix(exec, crate::layout::EXE_SUFFIX)
+        {
             return None;
         }
-        self.dirs.iter().map(|d| d.join(exec)).find(|p| p.is_file())
+        self.dirs
+            .iter()
+            .map(|d| crate::layout::program_file(d, exec))
+            .find(|p| p.is_file())
     }
 
     fn check(&self, exe: &Path, words: &[OsString]) -> Option<i32> {

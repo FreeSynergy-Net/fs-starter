@@ -64,7 +64,11 @@ fn a_package_is_bound_when_the_system_check_accepts_it() {
     let m = load(Path::new("/nonexistent"), s.path(), &ok);
     let k = m.find("groups").expect("known");
     assert!(k.packaged);
-    std::fs::write(s.path().join("groups/service"), "x").unwrap();
+    std::fs::write(
+        fs_starter::program_file(&s.path().join("groups"), "service"),
+        "x",
+    )
+    .unwrap();
     assert_eq!(
         k.service(),
         Err("not-system"),
@@ -83,7 +87,7 @@ fn the_program_file_is_a_plain_file_in_the_folder_and_nothing_else() {
         Err("no-service"),
         "no PATH lookup, no fallback"
     );
-    let file = b.path().join("groups/service");
+    let file = fs_starter::program_file(&b.path().join("groups"), "service");
     // any real file as the target (a made-up link target is not a symlink test on Windows)
     let target = b.path().join("target");
     std::fs::write(&target, "x").unwrap();
@@ -203,4 +207,33 @@ fn a_folder_that_cannot_be_read_is_not_silently_empty() {
         &SystemPackaged::new(),
     );
     assert!(missing.refusal("").is_none(), "a missing folder is fine");
+}
+
+/// K5 (WH0 P2): where program files have an ending, `service` next to `service.exe` is a second file the system could start instead
+/// of the checked one. Such a module is refused with its own cause `ambiguous-service`; only the file with the ending counts.
+/// Runs with the Windows ending `.exe` on every system (the rule is the same, the real ending is `fs_starter::EXE_SUFFIX`).
+/// Mutant: the `is_ambiguous` check removed from `Known::service_with` makes the second assertion red.
+#[test]
+fn a_bare_service_next_to_service_exe_refuses_the_module_with_its_own_cause() {
+    let b = tempfile::tempdir().unwrap();
+    folder(b.path(), "groups", "0.1");
+    let m = load(b.path(), Path::new("/nonexistent"), &SystemPackaged::new());
+    let k = m.find("groups").unwrap();
+    let dir = b.path().join("groups");
+    // only `service.exe`: the file that is checked and started
+    std::fs::write(dir.join("service.exe"), "x").unwrap();
+    assert_eq!(k.service_with(".exe"), Ok(dir.join("service.exe")));
+    // a bare `service` next to it: never accepted, whatever it is (file, link target, folder)
+    std::fs::write(dir.join("service"), "y").unwrap();
+    assert_eq!(k.service_with(".exe"), Err("ambiguous-service"));
+    // only the bare `service`: not the program file where files have an ending, and refused as well (never started in its place)
+    std::fs::remove_file(dir.join("service.exe")).unwrap();
+    assert_eq!(
+        k.service_with(".exe"),
+        Err("ambiguous-service"),
+        "a file without the ending is never accepted"
+    );
+    // without an ending (Unix) the bare name IS the program file: nothing is ambiguous
+    std::fs::write(dir.join("service.exe"), "x").unwrap();
+    assert_eq!(k.service_with(""), Ok(dir.join("service")));
 }

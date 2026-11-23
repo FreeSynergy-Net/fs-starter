@@ -12,12 +12,16 @@ use std::fmt;
 use std::path::{Component, Path, PathBuf};
 
 /// The folder of the starter binary of the rpm.
+#[cfg(unix)]
 pub const STARTER_DIR: &str = "/usr/bin";
 /// The folder of the module binaries of the rpm (`fs-module-<x>`).
+#[cfg(unix)]
 pub const MODULES_DIR: &str = "/usr/libexec/freesynergy/modules";
 /// The folder of the data packages (`<PROGRAMS_DIR>/<name>/`: `scaffold.toml`, `forms/`, texts).
+#[cfg(unix)]
 pub const PROGRAMS_DIR: &str = "/usr/share/freesynergy/programs";
 /// The folder of the self descriptions and frontends of the system level (`metainfo`, `frontends/`).
+#[cfg(unix)]
 pub const SHARE_DIR: &str = "/usr/share/freesynergy";
 
 /// Why a path does not count as packaged (one border each; the first one hit is told).
@@ -65,16 +69,23 @@ pub struct SystemPlaces {
 }
 
 impl SystemPlaces {
-    /// The real places, owner root (uid 0), checked from `/`.
+    /// The real places, owner root (uid 0), checked from `/`. Only Unix has them; elsewhere there are none (every path is outside).
     #[must_use]
     pub fn standard() -> Self {
-        Self {
-            roots: [STARTER_DIR, MODULES_DIR, SHARE_DIR]
+        #[cfg(unix)]
+        let (roots, programs) = (
+            [STARTER_DIR, MODULES_DIR, SHARE_DIR]
                 .iter()
                 .map(PathBuf::from)
                 .collect(),
+            PathBuf::from(PROGRAMS_DIR),
+        );
+        #[cfg(not(unix))]
+        let (roots, programs) = (Vec::new(), PathBuf::new());
+        Self {
+            roots,
             owner: 0,
-            programs: PathBuf::from(PROGRAMS_DIR),
+            programs,
             from_fs_root: true,
         }
     }

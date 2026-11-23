@@ -1752,6 +1752,7 @@ dependencies = [
  "fs-types",
  "libc",
  "png 0.18.1",
+ "same-file",
  "serde_json",
  "tempfile",
  "tokio",
