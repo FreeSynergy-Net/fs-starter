@@ -69,10 +69,13 @@ fn an_id_with_a_line_break_forges_no_line_in_list_commands() {
     );
 }
 
+/// Symlink cases: unix only (`std::os::unix::fs::symlink`). On Windows the symlink refusal is only the check before the open (no
+/// `O_NOFOLLOW` there, documented in `registry/read.rs`), and creating a link needs a privilege, so no test builds one there.
+#[cfg(unix)]
 #[test]
-fn symlinks_big_files_and_hidden_folders_are_not_read() {
+fn symlinks_are_not_read() {
     let dir = modules_dir(&[("capture", &capture())]);
-    // a symlink to a good module folder, a symlinked file, a file over the limit, a hidden folder
+    // a symlink to a good module folder, a symlinked file
     let root = dir.path();
     std::os::unix::fs::symlink(root.join("capture"), root.join("linked")).unwrap();
     let catalog = root.join("filelink").join("catalog");
@@ -82,6 +85,26 @@ fn symlinks_big_files_and_hidden_folders_are_not_read() {
         catalog.join("commands.json"),
     )
     .unwrap();
+    let mut r = Registry::new();
+    let refused = r.load_bundled(root).unwrap();
+    let cause = |m: &str| refused.iter().find(|(n, _)| n == m).map(|(_, w)| w.clone());
+    assert_eq!(
+        cause("linked"),
+        Some(vec![Refusal::Unreadable("symlink".into())])
+    );
+    assert_eq!(
+        cause("filelink"),
+        Some(vec![Refusal::Unreadable("symlink".into())])
+    );
+    assert_eq!(refused.len(), 2, "{refused:?}");
+    assert_eq!(ids(&r).len(), 5, "only capture.shot came in: {:?}", ids(&r));
+}
+
+#[test]
+fn big_files_and_hidden_folders_are_not_read() {
+    let dir = modules_dir(&[("capture", &capture())]);
+    let root = dir.path();
+    // a file over the limit, a hidden folder
     let big = root.join("big").join("catalog");
     std::fs::create_dir_all(&big).unwrap();
     std::fs::write(big.join("commands.json"), vec![b' '; 300 * 1024]).unwrap();
@@ -96,20 +119,12 @@ fn symlinks_big_files_and_hidden_folders_are_not_read() {
     let refused = r.load_bundled(root).unwrap();
     let cause = |m: &str| refused.iter().find(|(n, _)| n == m).map(|(_, w)| w.clone());
     assert_eq!(
-        cause("linked"),
-        Some(vec![Refusal::Unreadable("symlink".into())])
-    );
-    assert_eq!(
-        cause("filelink"),
-        Some(vec![Refusal::Unreadable("symlink".into())])
-    );
-    assert_eq!(
         cause("big"),
         Some(vec![Refusal::Unreadable("too-large".into())])
     );
     assert_eq!(
         refused.len(),
-        3,
+        1,
         "{refused:?}: the hidden folder is skipped silently"
     );
     assert_eq!(ids(&r).len(), 5, "only capture.shot came in: {:?}", ids(&r));
