@@ -1,5 +1,7 @@
 //! The checks "is this package trusted": the trait [`Verifier`], the default [`Unbound`] (refuses all) and [`SystemPackaged`]
 //! (the package manager brought it). Split from `registry.rs` (file size rule); no logic changed.
+//!
+//! Pattern: Strategy (the check is a trait with replaceable implementations) + Specification (the system check).
 
 use std::path::PathBuf;
 
