@@ -2,6 +2,20 @@
 
 Version = tag.
 
+## Unreleased (branch unreviewed/semver-ranges)
+
+### English
+
+- Versions and ranges are read by the crate `semver` (direct dependency, 1.0.28; `Version` and `VersionReq`), no own Major.Minor reader any more. A module version in `commands.json` is three parts (`0.0.1`); a two part one (`0.1`) is refused with the cause `version`. The range after a contract name is the crate's notation: comparisons separated by a comma (`tasks >=0.0.1, <0.1`); a two part range (`0.1`) is a caret requirement (`^0.1` = `>=0.1.0, <0.2.0`). The blank separated notation of the description checker (`>=0.1 <0.2`, fs-forms-layout v0.0.11 refuses a comma) is read too until that checker follows; an unreadable range is an error with the cause `range` and the reason of the crate, never "any version". Form versions in `forms.json` stay `Major.Minor` (`FormRef` has two numbers).
+- No silent drop: a module whose version cannot be read is not bound, the refusal is kept (`version-unreadable`) and the host says so (`host-notice-module-version-unreadable`, with module, version and reason).
+- For the descriptions: write ranges as `>=0.0.1, <0.1`. The modules of other repos must write three part versions in `commands.json` (fs-capture: `0.1` -> `0.1.0`).
+
+### Deutsch
+
+- Versionen und Bereiche liest das Crate `semver` (direkte Abhaengigkeit, 1.0.28; `Version` und `VersionReq`), kein eigener Major.Minor-Leser mehr. Eine Modulversion in `commands.json` hat drei Teile (`0.0.1`); eine zweiteilige (`0.1`) wird mit der Ursache `version` abgelehnt. Der Bereich nach dem Vertragsnamen hat die Schreibweise des Crates: Vergleiche mit Komma (`tasks >=0.0.1, <0.1`); ein zweiteiliger Bereich (`0.1`) ist ein Caret (`^0.1` = `>=0.1.0, <0.2.0`). Die leerzeichengetrennte Schreibweise des Beschreibungs-Pruefers (`>=0.1 <0.2`, fs-forms-layout v0.0.11 lehnt ein Komma ab) wird bis dahin ebenfalls gelesen; ein unlesbarer Bereich ist ein Fehler mit der Ursache `range` und dem Grund des Crates, nie "jede Version". Formversionen in `forms.json` bleiben `Major.Minor` (`FormRef` hat zwei Zahlen).
+- Kein stilles Verwerfen: ein Modul, dessen Version nicht lesbar ist, wird nicht eingebunden, die Ablehnung bleibt erhalten (`version-unreadable`) und der Host sagt es (`host-notice-module-version-unreadable`, mit Modul, Version und Grund).
+- Fuer die Beschreibungen: Bereiche als `>=0.0.1, <0.1` schreiben. Module anderer Repos schreiben dreiteilige Versionen in `commands.json` (fs-capture: `0.1` -> `0.1.0`).
+
 ## 0.0.6
 
 ### English

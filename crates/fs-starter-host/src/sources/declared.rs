@@ -10,7 +10,6 @@ use std::path::Path;
 use fs_forms_bind::{Basic, FormRef, ModuleForm};
 use serde_json::Value;
 
-use super::range::version;
 use crate::registry::read::{MAX_BYTES, check, open_plain};
 
 fn basic(word: &str) -> Option<Basic> {
@@ -32,6 +31,13 @@ fn names(v: &Value) -> Option<Vec<String>> {
     }
 }
 
+/// The version of a FORM is `Major.Minor` (two numbers: `fs_forms_bind::FormRef` has no third); read through `semver` as `Major.Minor.0`,
+/// so a three part text is refused like any other unreadable one.
+fn form_version(text: &str) -> Option<(u32, u32)> {
+    let v = super::range::version(&format!("{}.0", text.trim())).ok()?;
+    Some((u32::try_from(v.major).ok()?, u32::try_from(v.minor).ok()?))
+}
+
 /// The forms of the text of a `forms.json`.
 ///
 /// # Errors
@@ -45,7 +51,7 @@ pub fn parse(text: &str) -> Result<Vec<ModuleForm>, &'static str> {
         let (major, minor) = f
             .get("version")
             .and_then(Value::as_str)
-            .and_then(version)
+            .and_then(form_version)
             .ok_or("version")?;
         let map = f
             .get("map")

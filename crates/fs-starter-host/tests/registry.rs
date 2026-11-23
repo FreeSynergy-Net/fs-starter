@@ -24,7 +24,7 @@ fn the_shell_commands_come_from_the_command_model_and_a_module_adds_its_own() {
     let lines = r.lines();
     assert_eq!(
         lines[4],
-        "capture.shot\tcapture\t0.1\tnew by module capture"
+        "capture.shot\tcapture\t0.1.0\tnew by module capture"
     );
     assert!(!lines[0].contains("new by"), "{}", lines[0]);
 }

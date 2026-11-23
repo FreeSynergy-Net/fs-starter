@@ -9,6 +9,7 @@ mod support;
 use std::path::Path;
 
 use fs_starter_host::registry::SystemPackaged;
+use fs_starter_host::sources::range::Version;
 use fs_starter_host::sources::{Limits, Modules, StarterSources};
 use support::install::{GOOD_FORMS, commands, link};
 
@@ -26,10 +27,13 @@ fn load(bundled: &Path, system: &Path, v: &SystemPackaged) -> Modules {
 #[test]
 fn a_bundled_module_is_known_with_its_version_and_folder() {
     let b = tempfile::tempdir().unwrap();
-    folder(b.path(), "groups", "0.1");
+    folder(b.path(), "groups", "0.1.0");
     let m = load(b.path(), Path::new("/nonexistent"), &SystemPackaged::new());
     let k = m.find("groups").expect("known");
-    assert_eq!((k.version, k.packaged), ((0, 1), false));
+    assert_eq!(
+        (k.version.clone(), k.packaged),
+        (Version::new(0, 1, 0), false)
+    );
     assert_eq!(k.folder, b.path().join("groups"));
     assert!(m.find("tasks").is_none());
 }
@@ -37,7 +41,7 @@ fn a_bundled_module_is_known_with_its_version_and_folder() {
 #[test]
 fn a_package_is_not_bound_while_the_system_check_says_no() {
     let s = tempfile::tempdir().unwrap();
-    folder(s.path(), "groups", "0.1");
+    folder(s.path(), "groups", "0.1.0");
     // the real check: a folder of this user is not root's: refused, so the module is not known at all
     let m = load(Path::new("/nonexistent"), s.path(), &SystemPackaged::new());
     assert!(
@@ -54,7 +58,7 @@ fn a_package_is_bound_when_the_system_check_accepts_it() {
     use fs_starter::SystemPlaces;
     use std::os::unix::fs::MetadataExt;
     let s = tempfile::tempdir().unwrap();
-    folder(s.path(), "groups", "0.1");
+    folder(s.path(), "groups", "0.1.0");
     // a check that accepts the test places: known, as packaged; its program file must still pass the REAL system places
     let uid = std::fs::metadata(s.path()).unwrap().uid();
     let ok = SystemPackaged::for_test(
@@ -75,7 +79,7 @@ fn a_package_is_bound_when_the_system_check_accepts_it() {
 #[test]
 fn the_program_file_is_a_plain_file_in_the_folder_and_nothing_else() {
     let b = tempfile::tempdir().unwrap();
-    folder(b.path(), "groups", "0.1");
+    folder(b.path(), "groups", "0.1.0");
     let m = load(b.path(), Path::new("/nonexistent"), &SystemPackaged::new());
     let k = m.find("groups").unwrap();
     assert_eq!(
@@ -110,14 +114,19 @@ fn code<T>(r: Result<T, fs_forms_run::Coded>) -> String {
 
 #[test]
 fn the_contract_and_its_range_are_compared_and_never_skipped() {
-    let (_b, s) = sources("0.1");
-    assert!(s.declared("groups >=0.1 <0.2").is_ok());
+    let (_b, s) = sources("0.1.0");
+    assert!(s.declared("groups >=0.1.0, <0.2.0").is_ok());
     assert!(s.declared("groups").is_ok(), "no range: any version");
     assert_eq!(
-        code(s.declared("tasks >=0.1")),
+        code(s.declared("tasks >=0.1.0")),
         "host-notice-source-unknown"
     );
-    for range in ["groups >=0.2", "groups <0.1", "groups >0.1", "groups =1.0"] {
+    for range in [
+        "groups >=0.2.0",
+        "groups <0.1.0",
+        "groups >0.1.0",
+        "groups =1.0.0",
+    ] {
         assert_eq!(
             code(s.declared(range)),
             "host-notice-data-contract",
@@ -133,7 +142,7 @@ fn the_contract_and_its_range_are_compared_and_never_skipped() {
 
 #[test]
 fn a_command_of_another_name_space_is_never_run() {
-    let (_b, s) = sources("0.1");
+    let (_b, s) = sources("0.1.0");
     for command in [
         "app.undo",
         "tasks.add",
@@ -161,10 +170,10 @@ fn a_command_of_another_name_space_is_never_run() {
     );
 }
 
-/// A module with a version of three parts (`0.1.0`) is refused by the registry: the window says THAT, not "unknown source".
+/// A module with a version of two parts (`0.1`) is not a version (crate `semver`): the registry refuses it: the window says THAT, not "unknown source".
 #[test]
 fn a_module_version_the_registry_cannot_read_is_named_not_called_unknown() {
-    let (_b, s) = sources("0.1.0");
+    let (_b, s) = sources("0.1");
     let c = s.declared("groups").err().unwrap();
     assert_eq!(c.code, "host-notice-data-contract");
     assert!(
@@ -180,8 +189,8 @@ fn a_module_version_the_registry_cannot_read_is_named_not_called_unknown() {
 #[test]
 fn a_refused_folder_is_kept_and_a_good_one_beside_it_is_bound() {
     let b = tempfile::tempdir().unwrap();
-    folder(b.path(), "groups", "0.1.0");
-    folder(b.path(), "tasks", "0.1");
+    folder(b.path(), "groups", "0.1");
+    folder(b.path(), "tasks", "0.1.0");
     let m = load(b.path(), Path::new("/nonexistent"), &SystemPackaged::new());
     assert!(m.find("groups").is_none());
     assert!(m.find("tasks").is_some());
@@ -203,4 +212,21 @@ fn a_folder_that_cannot_be_read_is_not_silently_empty() {
         &SystemPackaged::new(),
     );
     assert!(missing.refusal("").is_none(), "a missing folder is fine");
+}
+
+/// The notation of the tasks module (`commands.json` 0.0.1, range `>=0.0.1, <0.1`) is read: three part version, comma range.
+#[test]
+fn a_three_part_catalog_version_and_the_crates_range_are_read() {
+    let (_b, s) = sources("0.0.1");
+    assert!(s.declared("groups >=0.0.1, <0.1").is_ok());
+    assert_eq!(
+        code(s.declared("groups >=0.0.2, <0.1")),
+        "host-notice-data-contract"
+    );
+    // an unreadable range is an error with a cause, never "any version"
+    let c = s.declared("groups >=0.0.1, <").err().unwrap();
+    assert!(
+        c.params.contains(&("cause".into(), "range".into())),
+        "{c:?}"
+    );
 }

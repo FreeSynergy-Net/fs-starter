@@ -54,7 +54,7 @@ fn same(a: &Picture, b: &Picture) -> bool {
 
 fn good() -> Install {
     let i = Install::new();
-    i.module("groups", "0.1", GOOD_FORMS, &Service::Fake);
+    i.module("groups", "0.1.0", GOOD_FORMS, &Service::Fake);
     i
 }
 
@@ -173,7 +173,7 @@ fn every_border_says_its_code_and_draws_no_records() {
 fn only_the_program_file_in_the_module_folder_is_started() {
     for (service, cause) in [(Service::None, "no-service"), (Service::Link, "symlink")] {
         let i = Install::new();
-        i.module("groups", "0.1", GOOD_FORMS, &service);
+        i.module("groups", "0.1.0", GOOD_FORMS, &service);
         let Some((_, said)) = draw(&i, &[], "light", "groups-noservice.png", &[]) else {
             return;
         };
@@ -210,7 +210,7 @@ fn a_module_that_leaves_a_required_channel_out_is_locked_and_the_picture_run_end
     let i = Install::new();
     i.module(
         "groups",
-        "0.1",
+        "0.1.0",
         &GOOD_FORMS.replace(r#""label":"name","#, ""),
         &Service::Fake,
     );

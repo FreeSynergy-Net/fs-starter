@@ -28,8 +28,8 @@ pub(crate) fn check_sources(ranges: &[String], sources: &StarterSources) -> Exit
                     println!("fs-starter: {}", line(&f.code, f.red));
                 }
                 println!(
-                    "fs-starter: source {} {}.{} checked",
-                    known.name, known.version.0, known.version.1
+                    "fs-starter: source {} {} checked",
+                    known.name, known.version
                 );
             }
         }

@@ -64,15 +64,12 @@ impl StarterSources {
                 None => Coded::new("host-notice-source-unknown").with("contract", name),
             });
         };
-        match range::fits(range, known.version) {
-            Some(true) => {}
-            Some(false) => {
-                return Err(contract("version").with(
-                    "version",
-                    format!("{}.{}", known.version.0, known.version.1),
-                ));
+        match range::fits(range, &known.version) {
+            Ok(true) => {}
+            Ok(false) => {
+                return Err(contract("version").with("version", known.version.to_string()));
             }
-            None => return Err(contract("range")),
+            Err(e) => return Err(contract("range").with("reason", e.to_string())),
         }
         let forms = declared::read(&known.folder).map_err(contract)?;
         Ok((known, forms))

@@ -7,6 +7,7 @@
 use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 
+use fs_forms_run::Coded;
 use fs_starter::{MODULES_DIR, SystemPlaces};
 
 use super::range::{Version, version};
@@ -122,13 +123,40 @@ impl Modules {
     fn take(&mut self, before: &BTreeSet<String>, root: &Path, packaged: bool) {
         for name in self.names().difference(before) {
             let have = self.registry.entries().iter().find(|e| &e.module == name);
-            if let Some(v) = have.and_then(|e| version(&e.version)) {
+            if let Some(e) = have {
+                let text = e.version.clone();
+                if let Err(c) = self.admit(name, &text, root, packaged) {
+                    eprintln!("fs-starter: red {}", super::line(&c));
+                }
+            }
+        }
+    }
+
+    /// Take one module of the registry in with its version text.
+    ///
+    /// # Errors
+    /// `host-notice-module-version-unreadable`: the version text is not one (the module is not bound, the refusal is kept).
+    fn admit(&mut self, name: &str, text: &str, root: &Path, packaged: bool) -> Result<(), Coded> {
+        match version(text) {
+            Ok(v) => {
                 self.known.push(Known {
-                    name: name.clone(),
+                    name: name.to_owned(),
                     version: v,
                     folder: root.join(name),
                     packaged,
                 });
+                Ok(())
+            }
+            Err(e) => {
+                let reason = e.to_string();
+                self.refused.push((
+                    name.to_owned(),
+                    vec![Refusal::Unreadable("version".to_owned())],
+                ));
+                Err(Coded::new("host-notice-module-version-unreadable")
+                    .with("contract", name)
+                    .with("version", text)
+                    .with("reason", reason))
             }
         }
     }
@@ -169,5 +197,38 @@ impl Known {
             return Err("not-system");
         }
         Ok(file)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn empty() -> Modules {
+        Modules {
+            registry: Registry::new(),
+            known: Vec::new(),
+            refused: Vec::new(),
+        }
+    }
+
+    /// A version the host cannot read is never dropped without a word: the module is not bound, the refusal is kept and the caller
+    /// gets its own code (mutant: the message left out, the refusal not kept).
+    #[test]
+    fn a_dropped_version_is_said_with_its_own_code() {
+        let mut m = empty();
+        let c = m
+            .admit("groups", "0.1", Path::new("/x"), false)
+            .expect_err("a two part version is not one");
+        assert_eq!(c.code, "host-notice-module-version-unreadable");
+        assert!(m.find("groups").is_none());
+        assert_eq!(m.refusal("groups").map(|r| r.0), Some("version-unreadable"));
+    }
+
+    #[test]
+    fn a_three_part_version_of_the_catalog_is_taken_in() {
+        let mut m = empty();
+        m.admit("tasks", "0.0.1", Path::new("/x"), false).unwrap();
+        assert_eq!(m.find("tasks").unwrap().version, Version::new(0, 0, 1));
     }
 }

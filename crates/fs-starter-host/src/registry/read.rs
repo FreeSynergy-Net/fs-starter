@@ -1,5 +1,5 @@
 //! Reading the command set of a module: `<modules>/<module>/catalog/commands.json`, the file `fs-capture` ships (`catalog/commands.json`
-//! @a9ca621). Mandatory: `module` (= the folder name), `version` (`Major.Minor`), `contract` (= module), `scope` (`own-contract`) and a
+//! @a9ca621). Mandatory: `module` (= the folder name), `version` (`Major.Minor.Patch`, crate `semver`), `contract` (= module), `scope` (`own-contract`) and a
 //! non-empty `commands`; per command `id`, `capability` (in the name space of the module), `access` (`read`/`write`/`delete`) and
 //! `help` (`topic`, `text.en`, `text.de`). `call` is kept as text and never run.
 //!

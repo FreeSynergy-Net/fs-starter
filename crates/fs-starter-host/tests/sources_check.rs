@@ -18,10 +18,10 @@ fn check(i: &Install) -> (Option<i32>, String) {
 #[test]
 fn a_module_that_fits_is_green() {
     let i = Install::new();
-    i.module("groups", "0.1", GOOD_FORMS, &Service::None);
+    i.module("groups", "0.1.0", GOOD_FORMS, &Service::None);
     let (rc, out) = check(&i);
     assert_eq!(rc, Some(0), "{out}");
-    assert!(out.contains("source groups 0.1 checked"), "{out}");
+    assert!(out.contains("source groups 0.1.0 checked"), "{out}");
     assert!(!out.contains("red") && !out.contains("yellow"), "{out}");
     assert!(!i.started("groups"), "--check starts no service");
 }
@@ -30,7 +30,7 @@ fn a_module_that_fits_is_green() {
 fn a_required_channel_left_out_is_red_and_ends_with_3() {
     let i = Install::new();
     let forms = GOOD_FORMS.replace(r#""label":"name","#, "");
-    i.module("groups", "0.1", &forms, &Service::None);
+    i.module("groups", "0.1.0", &forms, &Service::None);
     let (rc, out) = check(&i);
     assert_eq!(rc, Some(3), "{out}");
     assert!(
@@ -41,7 +41,7 @@ fn a_required_channel_left_out_is_red_and_ends_with_3() {
 
 #[test]
 fn a_version_outside_the_range_is_red_with_the_contract_notice() {
-    for version in ["0.2", "0.0"] {
+    for version in ["0.2.0", "0.0.9"] {
         let i = Install::new();
         i.module("groups", version, GOOD_FORMS, &Service::None);
         let (rc, out) = check(&i);
@@ -67,7 +67,7 @@ fn a_form_no_component_draws_is_yellow_not_red() {
     let i = Install::new();
     let forms = r#"[{"name":"checklist","version":"1.0","type":"Group",
         "map":{"items":"Group","done":"closed","label":"name"},"fields":{"closed":"bool","name":"text"}}]"#;
-    i.module("groups", "0.1", forms, &Service::None);
+    i.module("groups", "0.1.0", forms, &Service::None);
     let (rc, out) = check(&i);
     assert_eq!(rc, Some(0), "{out}");
     assert!(out.contains("yellow form-no-component"), "{out}");
@@ -76,7 +76,7 @@ fn a_form_no_component_draws_is_yellow_not_red() {
 #[test]
 fn a_forms_file_that_cannot_be_read_is_red_never_skipped() {
     let i = Install::new();
-    i.module("groups", "0.1", "[{\"name\":", &Service::None);
+    i.module("groups", "0.1.0", "[{\"name\":", &Service::None);
     let (rc, out) = check(&i);
     assert_eq!(rc, Some(3), "{out}");
     assert!(
@@ -93,7 +93,7 @@ fn a_module_in_a_folder_the_command_line_names_is_never_bound() {
     std::fs::create_dir_all(other.path().join("groups/catalog")).unwrap();
     std::fs::write(
         other.path().join("groups/catalog/commands.json"),
-        support::install::commands("groups", "0.1"),
+        support::install::commands("groups", "0.1.0"),
     )
     .unwrap();
     std::fs::write(other.path().join("groups/catalog/forms.json"), GOOD_FORMS).unwrap();

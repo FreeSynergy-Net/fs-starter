@@ -57,7 +57,7 @@ pub struct Item {
 pub struct ModuleSet {
     /// The name of the module; every id starts with `<name>.`.
     pub module: String,
-    /// The version of the set (`Major.Minor`).
+    /// The version of the set (`Major.Minor.Patch`, crate `semver`).
     pub version: String,
     /// The commands.
     pub items: Vec<Item>,

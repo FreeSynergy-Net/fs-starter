@@ -12,7 +12,7 @@ fn the_real_file_of_fs_capture_is_read_with_help_and_access() {
     let set = parse(REAL, "capture").unwrap();
     assert_eq!(
         (set.module.as_str(), set.version.as_str()),
-        ("capture", "0.1")
+        ("capture", "0.1.0")
     );
     assert_eq!(set.items.len(), 6);
     assert_eq!(set.items[2].access, Access::Write);
@@ -30,7 +30,7 @@ fn the_real_file_of_fs_capture_is_read_with_help_and_access() {
         6
     );
     assert!(
-        lines[4].starts_with("capture.screens\tcapture\t0.1"),
+        lines[4].starts_with("capture.screens\tcapture\t0.1.0"),
         "{}",
         lines[4]
     );
@@ -50,10 +50,10 @@ fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
     };
     assert_eq!(cause("not json [".into(), "capture"), "json");
     assert_eq!(
-        cause(changed("\"version\": \"0.1\",", ""), "capture"),
+        cause(changed("\"version\": \"0.1.0\",", ""), "capture"),
         "version"
     );
-    assert_eq!(cause(changed("\"0.1\"", "\"0.x\""), "capture"), "version");
+    assert_eq!(cause(changed("\"0.1.0\"", "\"0.x\""), "capture"), "version");
     assert_eq!(
         cause(changed("\"contract\": \"capture\",", ""), "capture"),
         "contract"
@@ -109,10 +109,10 @@ fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
         cause(changed("\"id\": \"capture.screens\", ", ""), "capture"),
         "command-id"
     );
-    assert_eq!(cause(r#"{"module":"capture","version":"0.1","contract":"capture","scope":"own-contract","commands":[]}"#.into(), "capture"), "commands");
+    assert_eq!(cause(r#"{"module":"capture","version":"0.1.0","contract":"capture","scope":"own-contract","commands":[]}"#.into(), "capture"), "commands");
     assert_eq!(
         cause(
-            r#"{"module":"capture","version":"0.1","contract":"capture","scope":"own-contract"}"#
+            r#"{"module":"capture","version":"0.1.0","contract":"capture","scope":"own-contract"}"#
                 .into(),
             "capture"
         ),
