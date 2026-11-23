@@ -1,5 +1,5 @@
 //! The data sources of the host: the adapter `Sources` of `fs-forms-run` for the modules of the starter (plan `PLAN-quelle-und-abgleich`
-//! sections 2 to 4, order SQ-4). The window asks for the contract a description names (`groups >=0.1 <0.2`); the host
+//! sections 2 to 4, order SQ-4). The window asks for the contract a description names (`groups@>=0.1.0, <0.2.0`); the host
 //!
 //! 1. looks the module up in the registry (bundled, or loaded only through the verifier `SystemPackaged`; border 1),
 //! 2. compares the contract and the version of the module with the range (border 2: `host-notice-data-contract`, never silent),
@@ -51,7 +51,9 @@ impl StarterSources {
     /// `host-notice-source-unknown` (no such module), `host-notice-data-contract` (version outside the range, unreadable range or
     /// `forms.json` that cannot be read).
     pub fn declared(&self, range: &str) -> Result<(&Known, Vec<ModuleForm>), Coded> {
-        let name = name_of(range);
+        // the blank form (`groups >=0.1 <0.2`) has no `@`: its first word still names the module, so the refusal below says how a need is
+        // written instead of "unknown source"
+        let name = name_of(range).split_whitespace().next().unwrap_or("");
         let contract = |why: &str| {
             Coded::new("host-notice-data-contract")
                 .with("contract", name)
@@ -64,15 +66,12 @@ impl StarterSources {
                 None => Coded::new("host-notice-source-unknown").with("contract", name),
             });
         };
-        match range::fits(range, known.version) {
-            Some(true) => {}
-            Some(false) => {
-                return Err(contract("version").with(
-                    "version",
-                    format!("{}.{}", known.version.0, known.version.1),
-                ));
+        match range::fits(range, &known.version) {
+            Ok(true) => {}
+            Ok(false) => {
+                return Err(contract("version").with("version", known.version.to_string()));
             }
-            None => return Err(contract("range")),
+            Err(reason) => return Err(contract("range").with("reason", reason)),
         }
         let forms = declared::read(&known.folder).map_err(contract)?;
         Ok((known, forms))
@@ -134,10 +133,8 @@ pub fn bare(forms: Vec<ModuleForm>) -> FormRecords {
         provider: String::new(),
         forms: forms
             .into_iter()
-            .map(|declared| FormData {
-                declared,
-                rows: Vec::new(),
-            })
+            .map(|declared| FormData::read_only(declared, Vec::new()))
             .collect(),
+        ..FormRecords::default()
     }
 }

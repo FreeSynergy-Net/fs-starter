@@ -5,12 +5,12 @@ use std::fs;
 use std::path::Path;
 
 use fs_starter::{
-    ContractReq, MAX_MANIFEST_BYTES, ManifestSource, Place, ProgramName, Trust, Version3,
+    InterfaceReq, MAX_MANIFEST_BYTES, ManifestSource, Place, ProgramName, Trust, Version,
     XdgManifests, read_manifest,
 };
 use support::text;
 
-/// The real manifest of activities (`packaging/frontends/simple.metainfo.xml`, fs-activities da58ed4), unchanged.
+/// The real manifest of activities (`packaging/frontends/simple.metainfo.xml`, fs-activities da58ed4), except that `fs:contract` and `fs:requires` are written in the one form `name@<req>` (V-5).
 const ACTIVITIES_SIMPLE: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
 <!-- The manifest of the frontend `simple` (ADR 0094 draft, item 2: AppStream addon, minimal). Stage 1: same release package as the program. -->
 <component type="addon">
@@ -31,8 +31,8 @@ const ACTIVITIES_SIMPLE: &str = r#"<?xml version="1.0" encoding="UTF-8"?>
     <value key="fs:kind">frontend</value>
     <value key="fs:frontend-id">simple</value>
     <value key="fs:exec">fs-activities-simple</value>
-    <value key="fs:contract">history 0.1</value>
-    <value key="fs:requires">history 0.1</value>
+    <value key="fs:contract">history@0.1.0</value>
+    <value key="fs:requires">history@^0.1.0</value>
   </custom>
   <releases>
     <release version="0.0.2" date="2026-11-17"/>
@@ -61,7 +61,7 @@ fn good() -> String {
         "simple",
         "net.freesynergy.Demo",
         "fs-demo-simple",
-        r#"<value key="fs:requires">demo 1.0</value>"#,
+        r#"<value key="fs:requires">demo@^1.0.0</value>"#,
         "",
     )
 }
@@ -75,9 +75,9 @@ fn k13_real_manifest() {
     assert_eq!(m.exec, "fs-activities-simple");
     assert_eq!(
         m.requires,
-        vec![ContractReq::parse("history 0.1").expect("parses")]
+        vec!["history@^0.1.0".parse::<InterfaceReq>().expect("parses")]
     );
-    assert_eq!(m.min_program, Some(Version3(0, 0, 2)));
+    assert_eq!(m.min_program, Some(Version::new(0, 0, 2)));
 }
 
 fn field(xml: &str, file: &str) -> String {
@@ -127,10 +127,21 @@ fn k14_broken_fields() {
         field(&good().replace(">fs-demo-simple<", ">/bin/sh<"), f),
         "fs:exec"
     );
-    assert_eq!(
-        field(&good().replace(">demo 1.0<", ">demo<"), f),
-        "fs:requires"
-    );
+    // ONE way of writing a need (`name@<req>`): the bare name and the blank form of before are refused
+    for bad in [
+        "demo",
+        "demo 1.0",
+        "demo@^1.0",
+        "demo@*",
+        "demo@>=x",
+        "Demo@^1.0.0",
+    ] {
+        assert_eq!(
+            field(&good().replace(">demo@^1.0.0<", &format!(">{bad}<")), f),
+            "fs:requires",
+            "{bad}"
+        );
+    }
     let bad_cmp =
         r#"<requires><id version="0.0.2" compare="eq">net.freesynergy.Demo</id></requires>"#;
     assert_eq!(
@@ -161,7 +172,7 @@ fn k14_broken_fields() {
         Path::new(f),
     )
     .expect("reads");
-    assert_eq!(m.min_program, Some(Version3(0, 0, 2)));
+    assert_eq!(m.min_program, Some(Version::new(0, 0, 2)));
 }
 
 /// The test folder plays the system place (its owner is the user running the test). Without unix nothing is packaged.

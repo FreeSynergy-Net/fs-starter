@@ -31,21 +31,33 @@ fn source_of(name: &str) -> String {
 #[test]
 fn the_lifted_libraries_are_pinned_by_their_tags() {
     for (name, tag) in [
-        ("fs-types", "v0.0.4"),
-        ("fs-conformance", "v0.0.4"),
-        ("fs-interfaces", "v0.0.31"),
-        ("fs-objects", "v0.0.8"),
-        ("fs-settings", "v0.0.34"),
-        ("fs-components-commands", "v0.0.34"),
-        ("fs-forms-run", "v0.0.11"),
-        ("fs-forms-bind", "v0.0.11"),
-        ("fs-rpc", "v0.0.7"),
-        ("fs-components", "v0.0.34"),
+        ("fs-types", "v0.0.6"),
+        ("fs-conformance", "v0.0.6"),
+        ("fs-interfaces", "v0.0.34"),
+        ("fs-objects", "v0.0.10"),
+        ("fs-settings", "v0.0.35"),
+        ("fs-components-commands", "v0.0.35"),
+        ("fs-rpc", "v0.0.8"),
+        ("fs-components", "v0.0.35"),
     ] {
         let source = source_of(name);
         assert!(
             source.contains(&format!("?tag={tag}#")),
             "{name}: {source} is not the tag {tag}"
+        );
+    }
+}
+
+/// PROVISIONAL (V-5): fs-forms 0.0.12 is not tagged yet; the pin is the head of the branch `unreviewed/v4-sw3-sw4a-r2`. After the tag
+/// `fs-forms v0.0.12` this test goes back to the tag (`?tag=v0.0.12#`) in the list above.
+#[test]
+fn the_forms_crates_are_pinned_by_one_provisional_commit_until_their_tag() {
+    const REV: &str = "7c6d461dada5a6868619bbeadd2bf372b2ab04eb";
+    for name in ["fs-forms-run", "fs-forms-bind"] {
+        let source = source_of(name);
+        assert!(
+            source.contains(&format!("?rev={REV}#{REV}")),
+            "{name}: {source} is not the commit {REV}"
         );
     }
 }

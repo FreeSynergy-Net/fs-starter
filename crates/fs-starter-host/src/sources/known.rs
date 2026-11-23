@@ -122,7 +122,7 @@ impl Modules {
     fn take(&mut self, before: &BTreeSet<String>, root: &Path, packaged: bool) {
         for name in self.names().difference(before) {
             let have = self.registry.entries().iter().find(|e| &e.module == name);
-            if let Some(v) = have.and_then(|e| version(&e.version)) {
+            if let Some(v) = have.and_then(|e| version(&e.version).ok()) {
                 self.known.push(Known {
                     name: name.clone(),
                     version: v,

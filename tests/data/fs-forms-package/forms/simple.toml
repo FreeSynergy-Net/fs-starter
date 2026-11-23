@@ -7,7 +7,7 @@ exec = "fs-forms-run"
 title = "forms-title"
 
 [[requires]]
-contract = "forms >=0.1 <0.2"
+contract = "forms@>=0.1.0, <0.2.0"
 
 [[message]]
 key = "forms-title"

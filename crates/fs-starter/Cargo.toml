@@ -13,17 +13,19 @@ repository.workspace = true
 conformance = ["dep:fs-conformance", "dep:async-trait"]
 
 [dependencies]
-fs-rpc = { git = "https://github.com/FreeSynergy/fs-rpc", tag = "v0.0.7" }
+fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", tag = "v0.0.8" }
 # `coded` (error codes with typed parameters) comes from here (`fs_types::coded`).
-fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
+fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", tag = "v0.0.6" }
 # The scaffold declares its own settings (ADR 0100 item 3); the library comes from fs-components, one tag.
-fs-settings = { git = "https://github.com/FreeSynergy/fs-components", tag = "v0.0.34" }
+fs-settings = { git = "https://github.com/FreeSynergy-Net/fs-components", tag = "v0.0.35" }
 capnp = "0.27"
 tokio = { version = "1", features = ["rt"] }
 # New in this repo (already used by fs-packages-catalog); MIT OR Apache-2.0, no dependencies of its own.
 roxmltree = "0.20"
+# The one reader of versions (`Version`); `fs_types::interface` reads the needs (`name@<req>`). Already in the lock (fs-types).
+semver = "1.0.28"
 # fs-conformance lives in the repo fs-types; the same tag as fs-types in fs-rpc (one source per library, lock check).
-fs-conformance = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4", optional = true }
+fs-conformance = { git = "https://github.com/FreeSynergy-Net/fs-types", tag = "v0.0.6", optional = true }
 async-trait = { version = "0.1", optional = true }
 
 [dev-dependencies]

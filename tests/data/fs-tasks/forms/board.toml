@@ -34,12 +34,12 @@ message = [
 ]
 
 [[requires]]
-contract = "tasks >=0.2 <0.3"
+contract = "tasks@>=0.2.0, <0.3.0"
 
 # Source 1 = the tasks provider; "selected-list" = the list chosen in the sidebar (F-010).
 [[source]]
 n = 1
-contract = "tasks >=0.2 <0.3"
+contract = "tasks@>=0.2.0, <0.3.0"
 type = "Task"
 scope = "selected-list"
 

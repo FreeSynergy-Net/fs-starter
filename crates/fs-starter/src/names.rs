@@ -1,9 +1,11 @@
-//! Checked names: of a program, a frontend, an actor; the resume token; a contract requirement; a version.
+//! Checked names: of a program, a frontend, an actor; the resume token; a version.
 //!
 //! Pattern: Value objects (a value that exists is well formed; `parse` is the only way in from outside).
 
 use std::ffi::{OsStr, OsString};
 use std::fmt;
+
+use semver::Version;
 
 /// 1 to 64 bytes of `a-z`, `0-9`, `-`; starts with a letter, does not end with `-`, no `--`.
 fn is_name(s: &str) -> bool {
@@ -113,60 +115,10 @@ impl fmt::Debug for ResumeToken {
     }
 }
 
-/// `major.minor.patch`, numbers only (no `v`).
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Version3(pub u32, pub u32, pub u32);
-
-impl Version3 {
-    /// `"0.0.2"` → `Version3(0, 0, 2)`; anything else `None`.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        let mut it = s.split('.').map(|p| {
-            (!p.is_empty() && p.bytes().all(|c| c.is_ascii_digit()))
-                .then(|| p.parse::<u32>().ok())
-                .flatten()
-        });
-        let v = Self(it.next()??, it.next()??, it.next()??);
-        it.next().is_none().then_some(v)
-    }
-}
-
-/// A contract and its version as a manifest writes it (`fs:requires`, `fs:contract`: `history 0.1`).
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct ContractReq {
-    /// The capability name (`history`), ADR 0068.
-    pub name: String,
-    /// The main version: must be equal.
-    pub major: u16,
-    /// The minor version: the server's must be at least this.
-    pub minor: u16,
-}
-
-impl ContractReq {
-    /// `"history 0.1"`; `None` if the name is not a name or the version is not `major.minor`.
-    #[must_use]
-    pub fn parse(s: &str) -> Option<Self> {
-        let (name, version) = s.trim().split_once(' ')?;
-        let (major, minor) = version.trim().split_once('.')?;
-        if !is_name(name) {
-            return None;
-        }
-        Some(Self {
-            name: name.to_owned(),
-            major: major.parse().ok()?,
-            minor: minor.parse().ok()?,
-        })
-    }
-
-    /// Whether a server that offers `self` serves a frontend that requires `required`: same name, same major, minor at least.
-    #[must_use]
-    pub fn serves(&self, required: &ContractReq) -> bool {
-        self.name == required.name && self.major == required.major && self.minor >= required.minor
-    }
-}
-
-impl fmt::Display for ContractReq {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} {}.{}", self.name, self.major, self.minor)
-    }
+/// A version as the crate `semver` reads it: `major.minor.patch`, numbers only (no `v`, no pre-release, no build part), the one reader
+/// of the version of a program and of `<requires><id version>` (ADR 0064 no. 4, as `fs_types::interface`).
+#[must_use]
+pub fn parse_version(s: &str) -> Option<Version> {
+    let v = Version::parse(s).ok()?;
+    (v.pre.is_empty() && v.build.is_empty()).then_some(v)
 }

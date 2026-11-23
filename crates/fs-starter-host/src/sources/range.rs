@@ -1,62 +1,100 @@
-//! The range a description writes after the name of a contract (`groups >=0.1 <0.2`): the host compares the version of the module
-//! with it (ADR 0104 E3). No range after the name = any version of that contract.
+//! The need a description writes for a contract: `name@<req>` (`groups@>=0.1.0, <0.2.0`). The host compares the version of the module
+//! with it (ADR 0104 E3).
 //!
-//! Pattern: Specification (a pure predicate over two small values; unreadable text is refused, never read as "any").
+//! ONE way of writing, read by the types of `fs-types::interface` (`InterfaceReq`, the grammar of `semver::VersionReq`, a comma between
+//! comparisons) and the version of a module by `semver::Version` (three parts: `0.1` is refused with a cause, never guessed). The older blank
+//! form (`groups >=0.1 <0.2`, `groups 0.1`) and a bare name are NOT read: they are refused with a message that says how a need is written.
+//! There is no second notation and no bridge.
+//!
+//! Pattern: Specification (a pure predicate over two small values; unreadable text is an error, never read as "any" and never dropped).
 
-/// A version `Major.Minor` (a bare `Major` counts as `Major.0`).
-pub type Version = (u32, u32);
+use fs_types::interface::InterfaceReq;
+pub use semver::{Error, Version};
 
-/// Read `H.N` or `H`.
-#[must_use]
-pub fn version(text: &str) -> Option<Version> {
-    let (major, minor) = text.split_once('.').unwrap_or((text, "0"));
-    let digits = |s: &str| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit());
-    (digits(major) && digits(minor)).then_some((major.parse().ok()?, minor.parse().ok()?))
+/// Read a module version: `Major.Minor.Patch`, no pre-release and no build part (as `fs-types::interface`).
+///
+/// # Errors
+/// The text is not a version (a two part `0.1` is one of those).
+pub fn version(text: &str) -> Result<Version, String> {
+    let v = Version::parse(text.trim()).map_err(|e| e.to_string())?;
+    if v.pre.is_empty() && v.build.is_empty() {
+        Ok(v)
+    } else {
+        Err("pre-release and build parts are not allowed".to_owned())
+    }
 }
 
-/// Does `have` fit every comparison of `range` (the words after the name)? `None`: the range cannot be read.
+/// The need of a description (`name@<req>`), every comparison with all three numbers.
 ///
-/// A comparison is `>=`, `>`, `<=`, `<` or `=` (or nothing: equal) and a version.
-#[must_use]
-pub fn fits(range: &str, have: Version) -> Option<bool> {
-    let mut all = true;
-    for word in range.split_whitespace().skip(1) {
-        let (op, text) = ["<=", ">=", "<", ">", "="]
-            .iter()
-            .find_map(|op| word.strip_prefix(op).map(|rest| (*op, rest)))
-            .unwrap_or(("=", word));
-        let want = version(text)?;
-        all &= match op {
-            ">=" => have >= want,
-            ">" => have > want,
-            "<=" => have <= want,
-            "<" => have < want,
-            _ => have == want,
-        };
+/// # Errors
+/// The text says why it is not a need; a text without `@` (the blank form, a bare name) names the way a need is written.
+pub fn need(text: &str) -> Result<InterfaceReq, String> {
+    let req: InterfaceReq = text.trim().parse().map_err(|e| {
+        format!("{e}; a need is written `name@<req>`, e.g. `groups@>=0.1.0, <0.2.0`")
+    })?;
+    if req.is_full() {
+        Ok(req)
+    } else {
+        Err("every comparison needs major.minor.patch, e.g. `groups@>=0.1.0, <0.2.0`".to_owned())
     }
-    Some(all)
+}
+
+/// Does `have` meet the need `text` (`name@<req>`)?
+///
+/// # Errors
+/// The need cannot be read (see [`need`]).
+pub fn fits(text: &str, have: &Version) -> Result<bool, String> {
+    Ok(need(text)?.req().matches(have))
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn a_version_must_be_inside_every_comparison() {
-        assert_eq!(fits("groups >=0.1 <0.2", (0, 1)), Some(true));
-        assert_eq!(fits("groups >=0.1 <0.2", (0, 2)), Some(false));
-        assert_eq!(fits("groups >=0.1 <0.2", (0, 0)), Some(false));
-        assert_eq!(fits("groups >0.1", (0, 1)), Some(false));
-        assert_eq!(fits("groups <=0.1", (0, 1)), Some(true));
-        assert_eq!(fits("groups 0.1", (0, 1)), Some(true));
-        assert_eq!(fits("groups =1", (1, 0)), Some(true));
+    fn v(t: &str) -> Version {
+        version(t).unwrap()
     }
 
     #[test]
-    fn no_range_means_any_and_an_unreadable_one_is_refused() {
-        assert_eq!(fits("groups", (9, 9)), Some(true));
-        assert_eq!(fits("groups >=x", (0, 1)), None);
-        assert_eq!(fits("groups >=0.1.2", (0, 1)), None);
-        assert_eq!(fits("groups >=", (0, 1)), None);
+    fn a_version_must_be_inside_every_comparison() {
+        let r = "groups@>=0.0.1, <0.1.0";
+        assert_eq!(fits(r, &v("0.0.1")), Ok(true));
+        assert_eq!(fits(r, &v("0.0.9")), Ok(true));
+        assert_eq!(fits(r, &v("0.1.0")), Ok(false));
+        assert_eq!(fits(r, &v("0.0.0")), Ok(false));
+        assert_eq!(fits("groups@>0.1.0", &v("0.1.0")), Ok(false));
+        assert_eq!(fits("groups@<=0.1.0", &v("0.1.0")), Ok(true));
+        assert_eq!(fits("groups@=1.0.0", &v("1.0.0")), Ok(true));
+    }
+
+    #[test]
+    fn a_module_version_has_three_parts() {
+        assert_eq!(v("0.0.1"), Version::new(0, 0, 1));
+        assert!(version("0.1").is_err());
+        assert!(version("1").is_err());
+        assert!(version("0.1.0-rc.1").is_err());
+        assert!(version("0.1.0+b").is_err());
+    }
+
+    #[test]
+    fn the_blank_form_and_a_bare_name_are_refused_and_say_how_to_write_it() {
+        for old in [
+            "groups >=0.1 <0.2",
+            "groups >=0.0.1, <0.1.0",
+            "groups 0.1",
+            "groups",
+        ] {
+            let why = fits(old, &v("0.1.5")).expect_err(old);
+            assert!(why.contains("name@<req>"), "{old}: {why}");
+        }
+    }
+
+    #[test]
+    fn a_need_that_is_not_full_or_not_readable_is_an_error() {
+        assert!(fits("groups@>=x", &v("0.1.0")).is_err());
+        assert!(fits("groups@>=", &v("0.1.0")).is_err());
+        assert!(fits("groups@0.1", &v("0.1.0")).is_err(), "partial version");
+        assert!(fits("groups@*", &v("0.1.0")).is_err());
+        assert!(fits("Groups@>=0.1.0", &v("0.1.0")).is_err());
     }
 }

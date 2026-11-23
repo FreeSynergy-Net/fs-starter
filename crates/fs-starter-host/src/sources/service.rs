@@ -110,6 +110,8 @@ fn rows(
         out.push(FormRow {
             key,
             values: by_channel,
+            // `may` is read from the page by SW-5; no statement = nothing may be written (the controls stay locked).
+            may: Vec::new(),
         });
     }
     Ok(out)
@@ -163,14 +165,12 @@ async fn read_all(
             .map_err(|_| cause(ANSWER, &known.name, "page"))?;
         let rows = rows(page, form, limits, &mut bytes)
             .map_err(|()| cause(ANSWER, &known.name, "limit"))?;
-        out.push(FormData {
-            declared: form.clone(),
-            rows,
-        });
+        out.push(FormData::read_only(form.clone(), rows));
     }
     Ok(FormRecords {
         provider,
         forms: out,
+        ..FormRecords::default()
     })
 }
 

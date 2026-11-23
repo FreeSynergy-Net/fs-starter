@@ -11,7 +11,9 @@ use super::fakes::{FakeGate, FakeLauncher, FakeManifests, FakeMcp, RecordingTell
 use super::fixture::{Arrange, Outcome, StarterFixture};
 use crate::frontend::{Found, FrontendManifest, Listing, Place, Trust};
 use crate::mcp::McpSwitch;
-use crate::names::{ContractReq, FrontendId, ProgramName};
+use fs_types::interface::InterfaceVersion;
+
+use crate::names::{FrontendId, ProgramName};
 use crate::program::{Exit, Failure, NoPreference, Program};
 use crate::run::{Parts, run};
 
@@ -113,7 +115,7 @@ impl Bench {
             let manifest = FrontendManifest {
                 exec: format!("fs-{}-{id}", p.name()),
                 extends: p.app_id().to_owned(),
-                requires: vec![p.contract().clone()],
+                requires: vec![p.contract().default_req()],
                 min_program: None,
                 default: self.has(&Arrange::DefaultFrontend(id.clone()))
                     && !self.is(BenchMutation::DefaultIgnored),
@@ -144,7 +146,7 @@ impl Program for VPrefixed<'_> {
     fn app_id(&self) -> &str {
         self.0.app_id()
     }
-    fn contract(&self) -> &ContractReq {
+    fn contract(&self) -> &InterfaceVersion {
         self.0.contract()
     }
     fn standard_frontend(&self) -> &FrontendId {

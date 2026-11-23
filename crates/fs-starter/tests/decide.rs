@@ -1,7 +1,7 @@
 //! K10-K12 of ENTWURF section 5: pick, decide, precheck.
 mod support;
 
-use fs_starter::{Chosen, ContractReq, Next, StarterCode, Trust, Version3, decide, pick, precheck};
+use fs_starter::{Chosen, InterfaceReq, Next, StarterCode, Trust, Version, decide, pick, precheck};
 use fs_types::coded::Coded;
 use support::{Demo, fid, found};
 
@@ -90,9 +90,9 @@ fn k12_precheck() {
     assert_eq!(field_of(precheck(&f, &demo)).as_deref(), Some("extends"));
 
     let mut f = ok.clone();
-    f.manifest.min_program = Some(Version3(0, 0, 2));
+    f.manifest.min_program = Some(Version::new(0, 0, 2));
     assert_eq!(field_of(precheck(&f, &demo)).as_deref(), Some("requires"));
-    f.manifest.min_program = Some(Version3(0, 0, 1));
+    f.manifest.min_program = Some(Version::new(0, 0, 1));
     assert_eq!(precheck(&f, &demo), Ok(()));
 
     let unreadable = Demo {
@@ -105,13 +105,13 @@ fn k12_precheck() {
     );
 
     for (req, want) in [
-        ("demo 2.0", Some("fs:requires")),
-        ("demo 1.3", Some("fs:requires")),
-        ("other 1.0", Some("fs:requires")),
-        ("demo 1.2", None),
+        ("demo@^2.0.0", Some("fs:requires")),
+        ("demo@^1.3.0", Some("fs:requires")),
+        ("other@^1.0.0", Some("fs:requires")),
+        ("demo@^1.2.0", None),
     ] {
         let mut f = ok.clone();
-        f.manifest.requires = vec![ContractReq::parse(req).expect("parses")];
+        f.manifest.requires = vec![req.parse::<InterfaceReq>().expect("parses")];
         assert_eq!(field_of(precheck(&f, &demo)).as_deref(), want, "{req}");
     }
 }

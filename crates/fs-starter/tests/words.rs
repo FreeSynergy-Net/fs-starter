@@ -4,8 +4,8 @@ mod support;
 use std::ffi::OsString;
 
 use fs_starter::{
-    ActorName, ContractReq, FrontendId, ProgramName, ResumeToken, StartWords, StarterCode,
-    Version3, Words, parse,
+    ActorName, FrontendId, InterfaceReq, InterfaceVersion, ProgramName, ResumeToken, StartWords,
+    StarterCode, Version, Words, parse, parse_version,
 };
 use fs_types::coded::Coded;
 use support::{fid, os, text};
@@ -141,25 +141,38 @@ fn k7_names() {
     assert!(ProgramName::parse("activities").is_some());
 }
 
-/// K8: contract requirements and who serves whom.
+/// K8: contract requirements and who serves whom (`name@<req>`, one way of writing).
 #[test]
 fn k8_contract_req() {
-    let offered = ContractReq::parse("history 0.1").expect("parses");
-    let wants = |s: &str| offered.serves(&ContractReq::parse(s).expect("parses"));
-    assert!(wants("history 0.1") && wants("history 0.0"));
-    assert!(!wants("history 0.2") && !wants("history 1.0") && !wants("people 0.1"));
-    for bad in ["history", "History 0.1", "history 0.x"] {
-        assert!(ContractReq::parse(bad).is_none(), "{bad}");
+    let offered: InterfaceVersion = "history@0.1.0".parse().expect("parses");
+    let wants = |s: &str| s.parse::<InterfaceReq>().expect("parses").matches(&offered);
+    assert!(wants("history@^0.1.0") && wants("history@>=0.0.1, <0.2.0"));
+    assert!(!wants("history@^0.2.0") && !wants("history@^1.0.0") && !wants("people@^0.1.0"));
+    // the blank form of before is no need at all
+    for bad in ["history", "history 0.1", "History@^0.1.0"] {
+        assert!(bad.parse::<InterfaceReq>().is_err(), "{bad}");
     }
-    assert_eq!(offered.to_string(), "history 0.1");
+    // read by the grammar, but not a full need (the manifest reader refuses it: three numbers in every comparison)
+    for partial in ["history@0.1", "history@0.x", "history@*"] {
+        assert!(!partial.parse::<InterfaceReq>().expect("grammar").is_full());
+    }
+    assert_eq!(offered.to_string(), "history@0.1.0");
 }
 
-/// K9: `Version3`.
+/// K9: the version of a program, three numbers.
 #[test]
-fn k9_version3() {
-    assert_eq!(Version3::parse("0.0.2"), Some(Version3(0, 0, 2)));
-    for bad in ["v0.0.2", "0.0", "0.0.2.1", "0..2", ""] {
-        assert_eq!(Version3::parse(bad), None, "{bad}");
+fn k9_version() {
+    assert_eq!(parse_version("0.0.2"), Some(Version::new(0, 0, 2)));
+    for bad in [
+        "v0.0.2",
+        "0.0",
+        "0.0.2.1",
+        "0..2",
+        "",
+        "0.0.2-rc.1",
+        "0.0.2+b",
+    ] {
+        assert_eq!(parse_version(bad), None, "{bad}");
     }
-    assert!(Version3(0, 0, 2) < Version3(0, 1, 0));
+    assert!(Version::new(0, 0, 2) < Version::new(0, 1, 0));
 }
