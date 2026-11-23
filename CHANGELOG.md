@@ -2,6 +2,18 @@
 
 Version = tag.
 
+## 0.0.5
+
+### English
+
+- Pin lift to the tagged libraries, no code change: fs-forms-run and fs-forms-bind v0.0.11, fs-interfaces v0.0.31, fs-rpc v0.0.7, fs-components (fs-settings, fs-components-commands) v0.0.34. The temporary `[patch]` section with relative paths to three sibling repositories is removed from `Cargo.toml`, and so are the clone steps for them (and their comment) in `windows.yml`; the Lock holds only git tags. `tests/pins.rs` names the new tags. Version 0.0.4 -> 0.0.5.
+- Known gap (said plainly, no Windows parity is claimed): Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
+
+### Deutsch
+
+- Pin-Lift auf die getaggten Bibliotheken, keine Code-Aenderung: fs-forms-run und fs-forms-bind v0.0.11, fs-interfaces v0.0.31, fs-rpc v0.0.7, fs-components (fs-settings, fs-components-commands) v0.0.34. Der vorlaeufige `[patch]`-Abschnitt mit relativen Pfaden zu drei Nachbar-Repos ist aus `Cargo.toml` entfernt, ebenso deren Klon-Schritte (und der Kommentar dazu) in `windows.yml`; der Lock enthaelt nur Git-Tags. `tests/pins.rs` nennt die neuen Tags. Version 0.0.4 -> 0.0.5.
+- Bekannte Luecke (offen gesagt, kein Windows-Gleichstand behauptet): Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
+
 ## 0.0.4
 
 ### English

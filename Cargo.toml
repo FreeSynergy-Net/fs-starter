@@ -3,34 +3,9 @@ resolver = "2"
 members = ["crates/fs-starter", "crates/fs-starter-host"]
 
 [workspace.package]
-version = "0.0.4"
+version = "0.0.5"
 authors = ["FreeSynergy <support@freesynergy.net>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.89"
 repository = "https://github.com/FreeSynergy/fs-starter"
-
-# Development against local heads (PLAN 4b, SQ-4 r2): fs-forms sq-forms-lift-r3 cc5ce9a (the reviewed head), fs-interfaces form-source-r2 6800844, fs-components sq2-forms-attr 0f031bd; no rev, no tag. The workflow windows.yml clones the three siblings at exactly these heads next to the checkout, so the paths resolve there (the reusable check job cannot, it stays red). Removed at the lift to tags.
-[patch."https://github.com/FreeSynergy/fs-forms"]
-fs-forms-run = { path = "../fs-forms-lift/crates/fs-forms-run" }
-fs-forms-bind = { path = "../fs-forms-lift/crates/fs-forms-bind" }
-[patch."https://github.com/FreeSynergy/fs-interfaces"]
-fs-interfaces = { path = "../fs-interfaces-r2/crates/fs-interfaces" }
-[patch."https://github.com/FreeSynergy/fs-components"]
-fs-components-app = { path = "../fs-components/crates/fs-components-app" }
-fs-components-catalog = { path = "../fs-components/crates/fs-components-catalog" }
-fs-components-commands = { path = "../fs-components/crates/fs-components-commands" }
-fs-components-core = { path = "../fs-components/crates/fs-components-core" }
-fs-components-fields = { path = "../fs-components/crates/fs-components-fields" }
-fs-components-kanban = { path = "../fs-components/crates/fs-components-kanban" }
-fs-components-lists = { path = "../fs-components/crates/fs-components-lists" }
-fs-components-measures = { path = "../fs-components/crates/fs-components-measures" }
-fs-components-mf2 = { path = "../fs-components/crates/fs-components-mf2" }
-fs-components-overlays = { path = "../fs-components/crates/fs-components-overlays" }
-fs-components-primitives = { path = "../fs-components/crates/fs-components-primitives" }
-fs-components-render = { path = "../fs-components/crates/fs-components-render" }
-fs-components-styles = { path = "../fs-components/crates/fs-components-styles" }
-fs-components-widgets = { path = "../fs-components/crates/fs-components-widgets" }
-fs-components-words = { path = "../fs-components/crates/fs-components-words" }
-fs-components = { path = "../fs-components/crates/fs-components" }
-fs-settings = { path = "../fs-components/crates/fs-settings" }
