@@ -7,11 +7,13 @@ Version = tag.
 ### English
 
 - Release fix, no change of the host: the made-up module service for the tests (`fs-starter-fake-module`) is no longer a `[[bin]]` of `fs-starter-host` but an `[[example]]` (`crates/fs-starter-host/examples/fake_module.rs`), so no package format (deb, rpm, msi, plan) lists or builds it; the tests find it in `target/<profile>/examples/` (`cargo test` builds it, a missing file fails loudly). `ignore-binaries` is removed from `release.yml` again. `tests/pins.rs` now also checks fs-components, fs-components-commands, fs-forms-run, fs-forms-bind and fs-rpc. Version 0.0.5 -> 0.0.6.
+- Known gap: RPM: the folders below /usr/share/freesynergy and /usr/libexec/freesynergy are not owned by any package yet (`rpm -qf`: not owned); empty folders stay behind after the uninstall. Cause: cargo-generate-rpm 0.21.1 cannot build `dir = true` assets (ENOENT); the five lines stay out until an upstream fix is released. Obsoletes (`fs-starter-host`) and the binary asset are unchanged.
 - Known gap (unchanged, said plainly): Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
 
 ### Deutsch
 
 - Release-Korrektur, keine Aenderung am Host: der erfundene Modul-Dienst fuer die Tests (`fs-starter-fake-module`) ist kein `[[bin]]` von `fs-starter-host` mehr, sondern ein `[[example]]` (`crates/fs-starter-host/examples/fake_module.rs`); kein Paketformat (deb, rpm, msi, plan) nennt oder baut ihn. Die Tests finden ihn in `target/<profil>/examples/` (`cargo test` baut ihn, eine fehlende Datei laesst den Test laut scheitern). `ignore-binaries` ist wieder aus `release.yml` entfernt. `tests/pins.rs` prueft jetzt auch fs-components, fs-components-commands, fs-forms-run, fs-forms-bind und fs-rpc. Version 0.0.5 -> 0.0.6.
+- RPM: die Ordner unter /usr/share/freesynergy und /usr/libexec/freesynergy gehören noch keinem Paket (rpm -qf: not owned); leere Ordner bleiben nach der Deinstallation liegen. Ursache: cargo-generate-rpm 0.21.1 kann `dir = true`-Assets nicht bauen (ENOENT); die fuenf Zeilen bleiben draussen, bis ein Upstream-Fix erschienen ist. Obsoletes (`fs-starter-host`) und das Binary-Asset bleiben.
 - Bekannte Luecke (unveraendert, offen gesagt): Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
 
 ## 0.0.5: tagged, no release (package build red, see 0.0.6)

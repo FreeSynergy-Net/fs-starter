@@ -53,17 +53,14 @@ png = "0.18"
 
 # RPM (cargo-generate-rpm, built by the release CI only). The package is called `fs-starter` (the host crate keeps its name) and replaces the
 # earlier `fs-starter-host` package; nothing requires the old name (checked: fs-tasks 0.0.10 and fs-blueprint require only `fs-starter`).
-# The host owns the system folders every program and module package puts files in (paths = fs_starter::SHARE_DIR, PROGRAMS_DIR, MODULES_DIR; frontends/ is read by fs-starter from the same system level),
-# so no other package leaves them unowned. Owner root, mode 755: fs-starter trusts the system level only for root-owned, not world-writable files.
+# Known gap (0.0.6): the package does NOT own the system folders every program and module package puts files in (paths = fs_starter::SHARE_DIR, PROGRAMS_DIR,
+# MODULES_DIR; frontends/). Directory ownership follows as soon as cargo-generate-rpm can build `dir = true` assets (0.21.1 fails with ENOENT: it passes an
+# empty source path to `PackageBuilder::with_file`); upstream PR <link follows>. rpm creates the parent folders implicitly (root, 755); fs-starter trusts the
+# system level only for root-owned, not world-writable folders and files, not for the package owner.
 [package.metadata.generate-rpm]
 name = "fs-starter"
 assets = [
   { source = "target/release/fs-starter", dest = "/usr/bin/fs-starter", mode = "755" },
-  { dir = true, dest = "/usr/share/freesynergy/", mode = "755" },
-  { dir = true, dest = "/usr/share/freesynergy/programs/", mode = "755" },
-  { dir = true, dest = "/usr/share/freesynergy/frontends/", mode = "755" },
-  { dir = true, dest = "/usr/libexec/freesynergy/", mode = "755" },
-  { dir = true, dest = "/usr/libexec/freesynergy/modules/", mode = "755" },
 ]
 
 [package.metadata.generate-rpm.obsoletes]
