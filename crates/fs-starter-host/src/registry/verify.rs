@@ -39,7 +39,8 @@ impl Verifier for Unbound {}
 #[derive(Clone, Debug)]
 pub struct SystemPackaged {
     places: SystemPlaces,
-    modules: PathBuf,
+    /// `None` where the system has no such folder: nothing is then accepted by `verify` (no empty path stands for "none").
+    modules: Option<PathBuf>,
 }
 
 impl SystemPackaged {
@@ -48,7 +49,7 @@ impl SystemPackaged {
     pub fn new() -> Self {
         Self {
             places: SystemPlaces::standard(),
-            modules: system_modules_dir().unwrap_or_default(),
+            modules: system_modules_dir(),
         }
     }
 
@@ -56,7 +57,10 @@ impl SystemPackaged {
     #[doc(hidden)]
     #[must_use]
     pub fn for_test(places: SystemPlaces, modules: PathBuf) -> Self {
-        Self { places, modules }
+        Self {
+            places,
+            modules: Some(modules),
+        }
     }
 }
 
@@ -77,12 +81,14 @@ impl Verifier for SystemPackaged {
 
     fn verify(&self, set: &ModuleSet) -> bool {
         // the name is a folder name of the modules folder: no way out of it
+        let Some(modules) = &self.modules else {
+            return false;
+        };
         word(&set.module)
             && self
                 .places
                 .check(
-                    &self
-                        .modules
+                    &modules
                         .join(&set.module)
                         .join("catalog")
                         .join("commands.json"),
@@ -105,4 +111,11 @@ fn same_file(path: &Path, file: &File) -> bool {
                 _ => false,
             }
         })
+}
+
+/// Are `a` and `b` the same folder (after links)? On Windows the folder `modules\` next to the starter IS the system folder of the
+/// modules once the installer put it there: that folder is read once and as a package (checked), never also as "bundled" (unchecked).
+/// A folder that is not there is not the same.
+pub(crate) fn is_same_folder(a: &Path, b: &Path) -> bool {
+    same_file::is_same_file(a, b).unwrap_or(false)
 }

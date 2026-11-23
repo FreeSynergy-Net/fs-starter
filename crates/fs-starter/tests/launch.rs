@@ -18,6 +18,8 @@ fn find_is_strict() {
     fs::write(b.join("first"), "b").expect("write");
     fs::write(b.join("second"), "b").expect("write");
     fs::write(tmp.path().join("outside"), "x").expect("write");
+    // a `:` in the word is an alternative data stream on Windows (S-b2): never a word, also where the file exists (Unix allows the name)
+    fs::write(a.join("tool:x"), "x").expect("write");
     let l = ProcessLauncher::new(vec![a.clone(), b.clone()]);
     assert_eq!(
         l.find("first"),
@@ -33,6 +35,8 @@ fn find_is_strict() {
         "../outside",
         "/usr/bin/sh",
         "a\\b",
+        "tool:x",
+        "C:tool",
         "missing",
     ] {
         assert_eq!(l.find(bad), None, "{bad:?}");

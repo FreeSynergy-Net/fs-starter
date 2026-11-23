@@ -9,11 +9,15 @@ rust-version.workspace = true
 repository.workspace = true
 
 [features]
+# `SystemPlaces::for_test` (an own circle of trust). Only dev-dependencies switch it on, never a program.
+test-support = ["fs-trusted-path/test-support"]
 # The suite `starter` (rules + bench + mutants). Never in `default`: fs-conformance stays out of the normal graph (review A4).
 conformance = ["dep:fs-conformance", "dep:async-trait"]
 
 [dependencies]
 fs-rpc = { git = "https://github.com/FreeSynergy/fs-rpc", tag = "v0.0.7" }
+# The check of one part of a way "is this the system's" (Unix and Windows), one module for all programs (WIN-HOST WH3). Same repo as fs-rpc, tag v0.0.8.
+fs-trusted-path = { git = "https://github.com/FreeSynergy-Net/fs-rpc", tag = "v0.0.8" }
 # `coded` (error codes with typed parameters) comes from here (`fs_types::coded`).
 fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
 # The scaffold declares its own settings (ADR 0100 item 3); the library comes from fs-components, one tag.
@@ -26,6 +30,12 @@ roxmltree = "0.20"
 fs-conformance = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4", optional = true }
 async-trait = { version = "0.1", optional = true }
 
+[target.'cfg(windows)'.dependencies]
+# The anchor of the system places: the known folder `FOLDERID_ProgramFiles` (never the environment variable). Already in the lock (fs-trusted-path).
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_Com", "Win32_UI_Shell"] }
+
 [dev-dependencies]
+# Its own tests use `SystemPlaces::for_test`.
+fs-starter = { path = ".", features = ["test-support"] }
 tokio = { version = "1", features = ["rt", "macros"] }
 tempfile = "3"

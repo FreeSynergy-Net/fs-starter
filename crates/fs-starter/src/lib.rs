@@ -31,6 +31,8 @@ mod decide;
 mod frontend;
 mod gate;
 mod hook;
+#[cfg(windows)]
+mod known_folder;
 mod launch;
 mod layout;
 mod manifest_xml;

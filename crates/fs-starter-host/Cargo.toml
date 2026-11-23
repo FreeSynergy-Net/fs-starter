@@ -50,6 +50,8 @@ path = "examples/fake_module.rs"
 
 # Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
 [dev-dependencies]
+# The tests use `SystemPlaces::for_test` (the feature only here: a program never builds its own circle of trust).
+fs-starter = { path = "../fs-starter", features = ["test-support"] }
 tempfile = "3"
 png = "0.18"
 

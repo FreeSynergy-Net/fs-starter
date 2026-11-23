@@ -1731,10 +1731,13 @@ dependencies = [
  "fs-conformance",
  "fs-rpc",
  "fs-settings",
+ "fs-starter",
+ "fs-trusted-path",
  "fs-types",
  "roxmltree",
  "tempfile",
  "tokio",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1757,6 +1760,14 @@ dependencies = [
  "tempfile",
  "tokio",
  "toml",
+]
+
+[[package]]
+name = "fs-trusted-path"
+version = "0.0.8"
+source = "git+https://github.com/FreeSynergy-Net/fs-rpc?tag=v0.0.8#36390975a085f2372ea03a6101852afbfbcb6d55"
+dependencies = [
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

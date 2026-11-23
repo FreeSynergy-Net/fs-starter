@@ -39,29 +39,49 @@ impl Modules {
     /// A folder that is missing or refused leaves its modules out; the window says "unknown source" for them, never silently binds.
     #[must_use]
     pub fn load(bundled: &Path, system: &Path, verifier: &SystemPackaged) -> Self {
+        Self::load_places(Some(bundled), Some(system), verifier)
+    }
+
+    /// [`Self::load`] where a place may be missing: `None` reads nothing (no empty path stands for "none").
+    fn load_places(
+        bundled: Option<&Path>,
+        system: Option<&Path>,
+        verifier: &SystemPackaged,
+    ) -> Self {
         let mut me = Self {
             registry: Registry::new(),
             known: Vec::new(),
             refused: Vec::new(),
         };
-        let before = me.names();
-        let got = me.registry.load_bundled(bundled);
-        me.report(bundled, got);
-        me.take(&before, bundled, false);
-        let before = me.names();
-        let got = me.registry.load_packages(system, verifier);
-        me.report(system, got);
-        me.take(&before, system, true);
+        if let Some(bundled) = bundled {
+            let before = me.names();
+            let got = me.registry.load_bundled(bundled);
+            me.report(bundled, got);
+            me.take(&before, bundled, false);
+        }
+        if let Some(system) = system {
+            let before = me.names();
+            let got = me.registry.load_packages(system, verifier);
+            me.report(system, got);
+            me.take(&before, system, true);
+        }
         me
     }
 
     /// The real places: `modules/` next to the binary and the system folder of the modules.
     #[must_use]
     pub fn standard() -> Self {
-        // A missing place is an empty path: nothing is read there (a missing folder is fine, see `report`).
-        Self::load(
-            &bundled_modules_dir().unwrap_or_default(),
-            &system_modules_dir().unwrap_or_default(),
+        // A place the system does not have is `None`: nothing is read there (a missing folder is fine, see `report`).
+        let system = system_modules_dir();
+        // Windows: `modules\` next to the starter is the system folder after the install: read once, as a package (WH3).
+        let bundled = bundled_modules_dir().filter(|b| {
+            !system
+                .as_deref()
+                .is_some_and(|s| crate::registry::is_same_folder(b, s))
+        });
+        Self::load_places(
+            bundled.as_deref(),
+            system.as_deref(),
             &SystemPackaged::new(),
         )
     }

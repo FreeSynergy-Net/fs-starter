@@ -108,9 +108,10 @@ pub(crate) fn check(folder: &Path, file: &Path) -> Result<bool, Refusal> {
     Ok(true)
 }
 
-/// Open the file without following a symlink: on unix `O_NOFOLLOW` makes the open itself fail if the last part was swapped for a link
-/// after [`check`]. Windows has no such flag for this call: there only the check before applies (documented limit; the folder belongs
-/// to the installer).
+/// Open the file without following a link: on unix `O_NOFOLLOW` makes the open itself fail if the last part was swapped for a link
+/// after [`check`]. On Windows `FILE_FLAG_OPEN_REPARSE_POINT` does the same: a symlink or junction is opened as the link itself and not
+/// as its target, so the target of a swapped link is never opened here; the handle comparison in `SystemPackaged`
+/// (`same_file`, refuses a link at the path) and the place check hold the rest.
 pub(crate) fn open_plain(file: &Path) -> std::io::Result<fs::File> {
     let mut options = fs::OpenOptions::new();
     options.read(true);
@@ -118,6 +119,13 @@ pub(crate) fn open_plain(file: &Path) -> std::io::Result<fs::File> {
     {
         use std::os::unix::fs::OpenOptionsExt;
         options.custom_flags(libc::O_NOFOLLOW);
+    }
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::OpenOptionsExt;
+        // `FILE_FLAG_OPEN_REPARSE_POINT` (winbase.h): open the link itself, never follow it.
+        const FILE_FLAG_OPEN_REPARSE_POINT: u32 = 0x0020_0000;
+        options.custom_flags(FILE_FLAG_OPEN_REPARSE_POINT);
     }
     options.open(file)
 }

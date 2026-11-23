@@ -22,6 +22,7 @@ use fs_components_commands::{Command, Commands, standard_commands};
 pub use model::{Access, Help, Item, ModuleSet, Refusal};
 use names::{valid_id, valid_version, word};
 pub use read::parse;
+pub(crate) use verify::is_same_folder;
 pub use verify::{SystemPackaged, Unbound, Verifier};
 
 /// Who asks to extend the set.

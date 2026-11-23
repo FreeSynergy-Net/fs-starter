@@ -54,16 +54,9 @@ pub fn bundled_modules_dir() -> Option<PathBuf> {
         .and_then(|p| p.parent().map(|d| d.join("modules")))
 }
 
-/// The system folder of the modules brought by the package manager. Only Unix has one (the rpm world); the Windows form comes with the
-/// Windows places.
+/// The system folder of the modules brought by the package manager or the installer: Unix `/usr/libexec/freesynergy/modules`, Windows
+/// `<anchor>\modules` (`system::modules_dir`); `None` where there is none.
 #[must_use]
 pub fn system_modules_dir() -> Option<PathBuf> {
-    #[cfg(unix)]
-    {
-        Some(PathBuf::from(crate::system::MODULES_DIR))
-    }
-    #[cfg(not(unix))]
-    {
-        None
-    }
+    crate::system::modules_dir()
 }

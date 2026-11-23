@@ -3,7 +3,7 @@
 //! Mutants: the verifier accepts all; the version check off; the symlink check off; the own-namespace check off.
 //!
 //! Runs on unix and Windows. Only the part that is unix by nature has `cfg(unix)`: the owner and mode bits of the system places
-//! (`SystemPlaces` has no Windows form: it refuses every path there, `NotSupported`, which the first package test checks too).
+//! (the test places need the owner (uid) of a folder; the Windows acceptance has its own test, `fs-starter/tests/system_windows.rs`).
 
 mod support;
 use std::path::Path;
@@ -47,7 +47,7 @@ fn a_package_is_not_bound_while_the_system_check_says_no() {
 }
 
 /// The accepting half needs what only unix has: the owner (uid) and the mode bits of the folders, which `SystemPlaces::check` reads.
-/// On Windows the system check refuses every path (`NotSupported`), so no module can be bound as a package there; the test above is that case.
+/// On Windows a folder of a test is outside the real place (the anchor), so no module is bound as a package there; the test above is that case.
 #[cfg(unix)]
 #[test]
 fn a_package_is_bound_when_the_system_check_accepts_it() {

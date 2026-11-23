@@ -164,13 +164,19 @@ fn k14_broken_fields() {
     assert_eq!(m.min_program, Some(Version3(0, 0, 2)));
 }
 
-/// The test folder plays the system place (its owner is the user running the test). Without unix nothing is packaged.
+/// The test folder plays the system place (its owner is the user running the test). Without unix the real places are used: a test
+/// folder is outside them, so nothing is packaged (the Windows acceptance has its own test, `system_windows.rs`).
 fn places(root: &Path) -> fs_starter::SystemPlaces {
     #[cfg(unix)]
-    let uid = std::os::unix::fs::MetadataExt::uid(&fs::metadata(root).expect("meta"));
+    {
+        let uid = std::os::unix::fs::MetadataExt::uid(&fs::metadata(root).expect("meta"));
+        fs_starter::SystemPlaces::for_test(vec![root.to_path_buf()], uid)
+    }
     #[cfg(not(unix))]
-    let uid = 0;
-    fs_starter::SystemPlaces::for_test(vec![root.to_path_buf()], uid)
+    {
+        let _ = root;
+        fs_starter::SystemPlaces::standard()
+    }
 }
 
 fn packaged() -> Trust {

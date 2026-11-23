@@ -74,7 +74,7 @@ impl Launcher for ProcessLauncher {
     fn find(&self, exec: &str) -> Option<PathBuf> {
         // a bare name: no folder part and no ending (the ending is set only by `program_file`)
         if exec.is_empty()
-            || exec.contains(['/', '\\'])
+            || exec.contains(['/', '\\', ':'])
             || crate::layout::has_suffix(exec, crate::layout::EXE_SUFFIX)
         {
             return None;
