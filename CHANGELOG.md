@@ -2,6 +2,20 @@
 
 Version = tag.
 
+## 0.0.8 (not released yet; the version bump and the pins come with the 0.0.8 bundle)
+
+### English
+
+- One package name: the deb is now called `fs-starter` (like the rpm), no longer `fs-starter-host` (cargo-deb had taken the crate name). `[package.metadata.deb]` sets `name = "fs-starter"` and `replaces`, `conflicts`, `provides` = `fs-starter-host`, so `apt install ./fs-starter_<version>_<arch>.deb` removes the earlier `fs-starter-host` package and takes over its files (upgrade from 0.0.4 and 0.0.7). The file is now called `fs-starter_<version>_<arch>.deb`.
+- Correction to 0.0.7 (0.0.7 is tagged and stays as it is; this is the honest note): the 0.0.7 release carries TWO package names. dnf/rpm: `fs-starter` (obsoletes `fs-starter-host`); apt/deb: `fs-starter-host` (file `fs-starter-host_0.0.7-1_<arch>.deb`). Only for the apt side this is a one-time difference: from 0.0.8 on both are `fs-starter`. Whoever installed 0.0.4 or 0.0.7 with apt gets the new name through the upgrade (the old package is removed by Conflicts/Replaces).
+- Gate so the names never drift again: `tests/package_names.rs` (the tables of deb and rpm and the `name:` of `release.yml` carry one name) and the job `names` of `package-probe.yml` (reads the name and the replaced package out of the BUILT deb and rpm, both architectures).
+
+### Deutsch
+
+- Ein Paketname: das deb heisst jetzt `fs-starter` (wie das rpm), nicht mehr `fs-starter-host` (cargo-deb hatte den Crate-Namen genommen). `[package.metadata.deb]` setzt `name = "fs-starter"` und `replaces`, `conflicts`, `provides` = `fs-starter-host`; `apt install ./fs-starter_<Version>_<Arch>.deb` entfernt damit das fruehere Paket `fs-starter-host` und uebernimmt seine Dateien (Upgrade von 0.0.4 und 0.0.7). Die Datei heisst jetzt `fs-starter_<Version>_<Arch>.deb`.
+- Nachtrag zu 0.0.7 (0.0.7 ist getaggt und bleibt unveraendert; das ist der ehrliche Hinweis): das Release 0.0.7 traegt ZWEI Paketnamen. dnf/rpm: `fs-starter` (ersetzt `fs-starter-host`); apt/deb: `fs-starter-host` (Datei `fs-starter-host_0.0.7-1_<Arch>.deb`). Nur auf der apt-Seite ist das ein einmaliger Unterschied: ab 0.0.8 heissen beide `fs-starter`. Wer 0.0.4 oder 0.0.7 mit apt installiert hat, bekommt den neuen Namen beim Upgrade (das alte Paket entfaellt durch Conflicts/Replaces).
+- Pruefung, damit die Namen nie wieder auseinanderlaufen: `tests/package_names.rs` (die Tabellen von deb und rpm und das `name:` der `release.yml` tragen einen Namen) und der Job `names` in `package-probe.yml` (liest Name und ersetztes Paket aus dem GEBAUTEN deb und rpm, beide Architekturen).
+
 ## 0.0.7
 
 ### English

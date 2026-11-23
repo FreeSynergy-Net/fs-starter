@@ -1,9 +1,9 @@
 # Package probe: builds the same Linux (deb, rpm, tar.gz, arch) and Windows (zip, msi) packages as release.yml, with the same inputs and the same
 # pinned fs-release parts, but NEVER finalizes, signs, tags or publishes (no `finalize`/`publish`/`library` job, `contents: read` only).
-# Runs on a push of a `unreviewed/release-pins-*` branch and by hand. Keep `inputs` equal to release.yml (checked by eye in review).
+# Runs on a push of a `unreviewed/release-pins-*` branch (and `unreviewed/deb-name`) and by hand. The job `names` checks the BUILT deb and rpm: both must be called like the program (`fs-starter`) and take over `fs-starter-host`. Keep `inputs` equal to release.yml (checked by eye in review).
 name: package-probe
 on:
-  push: { branches: ["unreviewed/release-pins-*"] }
+  push: { branches: ["unreviewed/release-pins-*", "unreviewed/deb-name"] }
   workflow_dispatch:
 permissions:
   contents: read
@@ -39,3 +39,35 @@ jobs:
     uses: FreeSynergy-Net/fs-release/.github/workflows/_release-windows.yml@485f74732ddb90965fafcfa37b6a4f6b473dcc6b
     with:
       plan: ${{ needs.plan.outputs.plan }}
+  # Gate: the names inside the built packages (not the manifest) are the same for deb and rpm, and both take over the earlier `fs-starter-host`.
+  names:
+    needs: linux
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [x86_64, aarch64]
+    steps:
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: dist-linux-${{ matrix.arch }}
+          path: dist
+      - name: deb and rpm carry one name
+        env:
+          PROGRAM: fs-starter
+          OLD: fs-starter-host
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y -qq --no-install-recommends rpm >/dev/null
+          debs=(dist/*.deb); rpms=(dist/*.rpm)
+          [[ ${#debs[@]} -eq 1 && -e ${debs[0]} ]] || { echo "::error::expected exactly one .deb in dist: ${debs[*]}"; exit 1; }
+          [[ ${#rpms[@]} -eq 1 && -e ${rpms[0]} ]] || { echo "::error::expected exactly one .rpm in dist: ${rpms[*]}"; exit 1; }
+          deb=$(dpkg-deb -f "${debs[0]}" Package); rpm=$(rpm -qp --qf '%{NAME}' "${rpms[0]}")
+          echo "deb: $deb ($(basename "${debs[0]}"))  rpm: $rpm ($(basename "${rpms[0]}"))"
+          [[ $deb == "$PROGRAM" ]] || { echo "::error::deb is called $deb, not $PROGRAM"; exit 1; }
+          [[ $rpm == "$PROGRAM" ]] || { echo "::error::rpm is called $rpm, not $PROGRAM"; exit 1; }
+          for f in Replaces Conflicts Provides; do
+            dpkg-deb -f "${debs[0]}" "$f" | tr ',' '\n' | grep -qx "[[:space:]]*$OLD[[:space:]]*" || { echo "::error::deb $f does not name $OLD"; exit 1; }
+          done
+          rpm -qp --obsoletes "${rpms[0]}" | grep -q "^$OLD\b" || { echo "::error::rpm does not obsolete $OLD"; exit 1; }
+          echo "ok: deb and rpm are both $PROGRAM and take over $OLD"
