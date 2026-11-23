@@ -147,3 +147,47 @@ fn a_command_of_another_name_space_is_never_run() {
         "host-notice-invoke-foreign"
     );
 }
+
+/// A module with a version of three parts (`0.1.0`) is refused by the registry: the window says THAT, not "unknown source".
+#[test]
+fn a_module_version_the_registry_cannot_read_is_named_not_called_unknown() {
+    let (_b, s) = sources("0.1.0");
+    let c = s.declared("groups").err().unwrap();
+    assert_eq!(c.code, "host-notice-data-contract");
+    assert!(
+        c.params
+            .contains(&("cause".into(), "version-unreadable".into())),
+        "{c:?}"
+    );
+    // a module that is not there at all stays unknown
+    assert_eq!(code(s.declared("tasks")), "host-notice-source-unknown");
+}
+
+/// The refusal of a folder is kept, not thrown away (`Modules::refusal`), and a good module beside it is still bound.
+#[test]
+fn a_refused_folder_is_kept_and_a_good_one_beside_it_is_bound() {
+    let b = tempfile::tempdir().unwrap();
+    folder(b.path(), "groups", "0.1.0");
+    folder(b.path(), "tasks", "0.1");
+    let m = load(b.path(), Path::new("/nonexistent"), &SystemPackaged::new());
+    assert!(m.find("groups").is_none());
+    assert!(m.find("tasks").is_some());
+    assert_eq!(m.refusal("groups").map(|r| r.0), Some("version-unreadable"));
+    assert!(m.refusal("tasks").is_none());
+}
+
+/// A folder that exists but cannot be read is a refusal too (only a MISSING folder is fine).
+#[test]
+fn a_folder_that_cannot_be_read_is_not_silently_empty() {
+    let b = tempfile::tempdir().unwrap();
+    let file = b.path().join("not-a-folder");
+    std::fs::write(&file, "x").unwrap();
+    let m = load(&file, Path::new("/nonexistent"), &SystemPackaged::new());
+    assert!(m.refusal("").is_some(), "the error of the folder is kept");
+    let missing = load(
+        Path::new("/nonexistent"),
+        Path::new("/nonexistent"),
+        &SystemPackaged::new(),
+    );
+    assert!(missing.refusal("").is_none(), "a missing folder is fine");
+}
