@@ -1,5 +1,7 @@
 //! The borders of an answer (plan section 4, border 5) at the place where the records of a page are turned into rows by channel:
 //! the count, the bytes of one text, the values of one channel, the bytes of everything, and the masking of control characters.
+//!
+//! Pattern: Table of cases (each border one test, a mutant that removes it must turn one red).
 
 use fs_forms_bind::{Basic, FormRef, ModuleForm};
 use fs_interfaces::formsource_capnp::record_page;

@@ -2,6 +2,7 @@
 
 #![allow(dead_code)] // each test file uses a part
 
+#[cfg(unix)]
 pub mod install;
 pub mod sets;
 

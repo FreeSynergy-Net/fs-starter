@@ -2,6 +2,8 @@
 //! accepts), the contract and version check, the program file, and a command of the own name space only.
 //! Mutants: the verifier accepts all; the version check off; the symlink check off; the own-namespace check off.
 
+#![cfg(unix)]
+
 mod support;
 use std::os::unix::fs::MetadataExt;
 use std::path::Path;

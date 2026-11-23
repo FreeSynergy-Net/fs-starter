@@ -90,7 +90,7 @@ fn rows(
         for (channel, fields) in &form.map {
             let mut got: Vec<String> = Vec::new();
             for field in fields {
-                for v in values.iter() {
+                for v in values {
                     if v.get_path().map_err(|_| ())?.to_str().map_err(|_| ())? == field {
                         got.push(text(v.get_text(), limits.text)?);
                     }
@@ -157,8 +157,8 @@ async fn read_all(
             .map_err(|_| cause(UNREACHABLE, &known.name, "page"))?;
         let page = answer
             .get()
-            .and_then(|a| a.get_page())
-            .and_then(|p| p.get_records())
+            .and_then(form_source::page_results::Reader::get_page)
+            .and_then(fs_interfaces::formsource_capnp::record_page::Reader::get_records)
             .map_err(|_| cause(ANSWER, &known.name, "page"))?;
         let rows = rows(page, form, limits, &mut bytes)
             .map_err(|()| cause(ANSWER, &known.name, "limit"))?;

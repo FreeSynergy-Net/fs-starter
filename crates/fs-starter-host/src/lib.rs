@@ -12,10 +12,12 @@
 #![deny(missing_docs)]
 #![warn(clippy::pedantic)]
 
+mod check_sources;
 mod host;
 pub mod instance;
 mod package;
 mod pending;
+mod program_arg;
 pub mod registry;
 mod shell;
 pub mod sources;
