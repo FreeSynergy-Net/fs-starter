@@ -13,7 +13,9 @@ mod names;
 mod read;
 
 use std::fs;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+
+use fs_starter::{MODULES_DIR, SystemPlaces};
 
 use fs_components_commands::standard::PREFIX;
 use fs_components_commands::{Command, Commands, standard_commands};
@@ -45,6 +47,57 @@ pub trait Verifier {
 pub struct Unbound;
 
 impl Verifier for Unbound {}
+
+/// The check "the package manager brought this": the commands file of the module lies in the system folder of the modules
+/// (`/usr/libexec/freesynergy/modules/<module>/catalog/commands.json`), and every part of the way is root's, no symlink, not writable
+/// by anyone else (see [`SystemPlaces`]). dnf checked the signature of the package; there is no second check. Everything else stays
+/// refused: a module on user level, a folder a user can write, a link, a folder outside the system places.
+#[derive(Clone, Debug)]
+pub struct SystemPackaged {
+    places: SystemPlaces,
+    modules: PathBuf,
+}
+
+impl SystemPackaged {
+    /// The real system places (owner root) and the folder `/usr/libexec/freesynergy/modules`.
+    #[must_use]
+    pub fn new() -> Self {
+        Self {
+            places: SystemPlaces::standard(),
+            modules: PathBuf::from(MODULES_DIR),
+        }
+    }
+
+    /// Other places and modules folder (tests only; see [`SystemPlaces::for_test`]).
+    #[doc(hidden)]
+    #[must_use]
+    pub fn for_test(places: SystemPlaces, modules: PathBuf) -> Self {
+        Self { places, modules }
+    }
+}
+
+impl Default for SystemPackaged {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Verifier for SystemPackaged {
+    fn verify(&self, set: &ModuleSet) -> bool {
+        // the name is a folder name of the modules folder: no way out of it
+        word(&set.module)
+            && self
+                .places
+                .check(
+                    &self
+                        .modules
+                        .join(&set.module)
+                        .join("catalog")
+                        .join("commands.json"),
+                )
+                .is_ok()
+    }
+}
 
 /// Where a set comes from (private: the public ways in are [`Registry::add_bundled`] and [`Registry::add_package`]).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

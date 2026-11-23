@@ -39,6 +39,7 @@ mod open;
 mod program;
 mod run;
 mod settings;
+mod system;
 mod tell;
 mod words;
 
@@ -57,5 +58,6 @@ pub use names::{ActorName, ContractReq, FrontendId, ProgramName, ResumeToken, Ve
 pub use program::{Exit, Failure, McpEntry, NoPreference, Preference, Program};
 pub use run::{Parts, main_exit, run};
 pub use settings::{MCP_ENABLED, SINGLE_ASK, StarterSettings, TEXT_DE, TEXT_EN};
+pub use system::{MODULES_DIR, PROGRAMS_DIR, SHARE_DIR, STARTER_DIR, SystemPlaces, SystemRefusal};
 pub use tell::{Level, Note, StderrTell, Tell};
 pub use words::{StartWords, Words, parse, synopsis};
