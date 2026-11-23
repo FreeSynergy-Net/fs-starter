@@ -1,0 +1,49 @@
+# forms description of a groups frontend: the group tree beside the member list. IMPORT FORM ONLY (ADR 0096 point 6), like board.toml.
+# Used by the tests of the forms `tree` and `members` (blocks `tree` and `table`, drawn by channel, `--sample-data`).
+schema = 1
+kind = "frontend"
+id = "groups"
+extends = "net.freesynergy.Groups"
+exec = "fs-forms-run"
+title = "groups-title"
+style = "default"
+message = [
+  { key = "groups-title", lang = "en", text = "Groups" },
+  { key = "groups-title", lang = "de", text = "Gruppen" },
+  { key = "groups-tree-title", lang = "en", text = "Groups" },
+  { key = "groups-tree-title", lang = "de", text = "Gruppen" },
+  { key = "groups-members-title", lang = "en", text = "Members" },
+  { key = "groups-members-title", lang = "de", text = "Mitglieder" },
+]
+
+[[requires]]
+contract = "groups >=0.1 <0.2"
+
+[[source]]
+n = 1
+contract = "groups >=0.1 <0.2"
+type = "Group"
+scope = "all"
+
+[[menu]]
+kind = "standard-program"
+
+[[menu]]
+kind = "standard-help"
+
+[[page]]
+page = "groups"
+frame = "workbench"
+navigation = "list-detail"
+
+[[page.block]]
+place = "side"
+block = "tree"
+source = 1
+title = "groups-tree-title"
+
+[[page.block]]
+place = "main"
+block = "table"
+source = 1
+title = "groups-members-title"

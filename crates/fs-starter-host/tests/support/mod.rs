@@ -2,6 +2,7 @@
 
 #![allow(dead_code)] // each test file uses a part
 
+pub mod install;
 pub mod sets;
 
 use std::path::{Path, PathBuf};
@@ -71,6 +72,11 @@ pub fn draw_code(args: &[&str], scheme: &str, path: &Path, code: i32) -> Option<
         eprintln!("skipped: no graphics adapter ({err})");
         return None;
     }
+    Some(read_png(path))
+}
+
+/// The pixels of a PNG the host wrote.
+pub fn read_png(path: &Path) -> Picture {
     let decoder = png::Decoder::new(std::io::BufReader::new(std::fs::File::open(path).unwrap()));
     let mut reader = decoder.read_info().unwrap();
     let mut buf = vec![0; reader.output_buffer_size().unwrap()];
@@ -80,11 +86,11 @@ pub fn draw_code(args: &[&str], scheme: &str, path: &Path, code: i32) -> Option<
         .chunks(step)
         .flat_map(|p| p[..3].to_vec())
         .collect();
-    Some(Picture {
+    Picture {
         w: info.width,
         h: info.height,
         rgb,
-    })
+    }
 }
 
 #[allow(clippy::cast_precision_loss)] // a picture has far fewer than 2^52 samples

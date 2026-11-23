@@ -22,6 +22,7 @@ path = "src/main.rs"
 fs-starter = { path = "../fs-starter" }
 fs-types = { git = "https://github.com/FreeSynergy/fs-types", tag = "v0.0.4" }
 fs-forms-run = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.10" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy/fs-forms", tag = "v0.0.10" }
 toml = "0.8"
 # The exchange file of a module (`catalog/commands.json` of fs-capture); already in the lock.
 serde_json = "1"
@@ -37,6 +38,11 @@ tokio = { version = "1", features = ["rt", "sync", "time", "net"] }
 # O_NOFOLLOW for opening the file of a set (unix only; already in the lock).
 [target.'cfg(unix)'.dependencies]
 libc = "0.2"
+
+# Test support: a fake module service (`FormSource`, made-up groups data), see its first lines. Not installed by the package.
+[[bin]]
+name = "fs-starter-fake-module"
+path = "src/bin/fake_module.rs"
 
 # Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
 [dev-dependencies]

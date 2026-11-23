@@ -58,6 +58,8 @@ impl fmt::Display for SystemRefusal {
 pub struct SystemPlaces {
     roots: Vec<PathBuf>,
     owner: u32,
+    /// The folder of the data packages (`PROGRAMS_DIR`; below the first place in tests).
+    programs: PathBuf,
     /// Check every folder from `/` down (real system); else from the place itself down (a test folder under a user's home).
     from_fs_root: bool,
 }
@@ -72,6 +74,7 @@ impl SystemPlaces {
                 .map(PathBuf::from)
                 .collect(),
             owner: 0,
+            programs: PathBuf::from(PROGRAMS_DIR),
             from_fs_root: true,
         }
     }
@@ -81,6 +84,9 @@ impl SystemPlaces {
     #[must_use]
     pub fn for_test(roots: Vec<PathBuf>, owner: u32) -> Self {
         Self {
+            programs: roots
+                .first()
+                .map_or_else(PathBuf::new, |r| r.join("programs")),
             roots,
             owner,
             from_fs_root: false,
@@ -95,7 +101,7 @@ impl SystemPlaces {
         if !plain_name(name) {
             return Err(SystemRefusal::NotAbsolute);
         }
-        let dir = Path::new(PROGRAMS_DIR).join(name);
+        let dir = self.programs.join(name);
         self.check(&dir).map(|()| dir)
     }
 
