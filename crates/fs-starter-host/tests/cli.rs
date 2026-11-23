@@ -64,9 +64,10 @@ fn a_description_is_checked_without_a_window_and_the_pending_parts_are_named_onc
         Some(i32::from(Exit::DONE.code())),
         "{err}"
     );
+    // the description names the source `tasks`; this host has no such module: said (yellow, the window shows "unknown source"), rc 0
     assert_eq!(
         text(&out.stdout).trim(),
-        "fs-starter: the description of the frontend board is there"
+        "fs-starter: the description of the frontend board is there\nfs-starter: yellow host-notice-source-unknown contract=tasks"
     );
     assert_eq!(err.matches("skeleton-part-pending").count(), 1, "{err}");
     for part in ["session", "update", "help", "mcp"] {
