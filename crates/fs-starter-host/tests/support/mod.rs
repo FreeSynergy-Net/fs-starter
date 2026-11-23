@@ -53,12 +53,17 @@ pub fn text(bytes: &[u8]) -> String {
 
 /// The window drawn to `path`; `None` (a message) where the machine has no graphics adapter.
 pub fn draw(args: &[&str], scheme: &str, path: &Path) -> Option<Picture> {
+    draw_code(args, scheme, path, 0)
+}
+
+/// Like `draw`, for a run that ends with the exit code `code` (the picture is written anyway).
+pub fn draw_code(args: &[&str], scheme: &str, path: &Path, code: i32) -> Option<Picture> {
     let mut all: Vec<&str> = args.to_vec();
     let file = path.to_str().unwrap();
     all.extend(["--picture", file]);
     let out = host(&all, scheme);
     let err = text(&out.stderr);
-    if out.status.code() != Some(0) {
+    if out.status.code() != Some(code) {
         assert!(
             err.to_lowercase().contains("graphics") || err.to_lowercase().contains("adapter"),
             "failed for another reason: {err}"

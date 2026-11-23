@@ -1619,7 +1619,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.0.10"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?branch=unreviewed%2Fsq1a-exit-code#5850e3768f61091046a855f12382e298e78a3b29"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1631,7 +1631,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.0.10"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?branch=unreviewed%2Fsq1a-exit-code#5850e3768f61091046a855f12382e298e78a3b29"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1640,7 +1640,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.0.10"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?branch=unreviewed%2Fsq1a-exit-code#5850e3768f61091046a855f12382e298e78a3b29"
 dependencies = [
  "sha2 0.10.9",
 ]
@@ -1648,7 +1648,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.0.10"
-source = "git+https://github.com/FreeSynergy/fs-forms?tag=v0.0.10#0b66c015dd2e90ee7a77bfa622f87fcd48e92e9d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?branch=unreviewed%2Fsq1a-exit-code#5850e3768f61091046a855f12382e298e78a3b29"
 dependencies = [
  "fs-components",
  "fs-components-app",
