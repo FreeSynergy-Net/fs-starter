@@ -1,0 +1,50 @@
+{
+  "module": "capture",
+  "version": "0.1",
+  "contract": "capture",
+  "scope": "own-contract",
+  "commands": [
+    {
+      "id": "capture.screens", "call": "fs-capture screens", "capability": "capture.screens",
+      "access": "read",
+      "help": { "topic": "capture-screens", "text": {
+        "en": "Lists the screens (number, name, size, scale, primary).",
+        "de": "Listet die Bildschirme (Nummer, Name, Groesse, Skalierung, Hauptbildschirm)." } }
+    },
+    {
+      "id": "capture.windows", "call": "fs-capture windows", "capability": "capture.windows",
+      "access": "read",
+      "help": { "topic": "capture-windows", "text": {
+        "en": "Lists the open windows (number, title, program, size, minimized).",
+        "de": "Listet die offenen Fenster (Nummer, Titel, Programm, Groesse, minimiert)." } }
+    },
+    {
+      "id": "capture.shot", "call": "fs-capture shot", "capability": "capture.shot",
+      "access": "write",
+      "help": { "topic": "capture-shot", "text": {
+        "en": "Takes a screenshot of the primary screen, a screen, a window or the one window with a title, into the session folder.",
+        "de": "Macht einen Screenshot vom Hauptbildschirm, einem Bildschirm, einem Fenster oder dem einen Fenster mit einem Titel in den Sitzungsordner." } }
+    },
+    {
+      "id": "capture.list", "call": "fs-capture list", "capability": "capture.list",
+      "access": "read",
+      "help": { "topic": "capture-list", "text": {
+        "en": "Lists the screenshots of the session folder.",
+        "de": "Listet die Screenshots des Sitzungsordners." } }
+    },
+    {
+      "id": "capture.delete", "call": "fs-capture delete", "capability": "capture.delete",
+      "access": "delete",
+      "help": { "topic": "capture-delete", "text": {
+        "en": "Deletes one screenshot of the session folder by its number.",
+        "de": "Loescht einen Screenshot des Sitzungsordners anhand seiner Nummer." } }
+    },
+    {
+      "id": "capture.zip", "call": "fs-capture zip", "capability": "capture.zip",
+      "access": "write",
+      "help": { "topic": "capture-zip", "text": {
+        "en": "Bundles the screenshots of the session as one ZIP file; never overwrites an existing file.",
+        "de": "Buendelt die Screenshots der Sitzung in eine ZIP-Datei; ueberschreibt nie eine vorhandene Datei." } }
+    }
+  ]
+}

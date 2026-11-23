@@ -3,11 +3,12 @@
 //! never takes `app.`, never overwrites an id that is there (a conflict is a refusal of the whole set), and a bot never extends the
 //! set. Every command a module brought is shown as "new by module X".
 //!
-//! The set of a module is an exchange file `<modules>/<module>/commands.toml` (the format is a stand-in until the one of
-//! `fs-capture` is final): `[module] name, version` and `[[command]] id, label, icon`. The command itself is the one of
-//! `fs-components-commands` (one model, no second one).
+//! The set of a module is the file `<modules>/<module>/catalog/commands.json` of the module itself (the format of `fs-capture`, see
+//! `read.rs`). The command is the one of `fs-components-commands` (one model, no second one).
 //!
 //! Pattern: Registry (one place that knows every command and who brought it) + Value objects; adding is all or nothing.
+
+mod read;
 
 use std::fmt;
 use std::fs;
@@ -15,6 +16,8 @@ use std::path::Path;
 
 use fs_components_commands::standard::PREFIX;
 use fs_components_commands::{Command, CommandId, Commands, standard_commands};
+
+pub use read::parse;
 
 /// Who asks to extend the set.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -37,15 +40,61 @@ pub enum Origin {
     },
 }
 
+/// What a command may do with the data (the `access` of the exchange file).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Access {
+    /// Only reads.
+    Read,
+    /// Changes data.
+    Write,
+    /// Deletes data.
+    Delete,
+}
+
+impl Access {
+    fn parse(word: &str) -> Option<Self> {
+        match word {
+            "read" => Some(Self::Read),
+            "write" => Some(Self::Write),
+            "delete" => Some(Self::Delete),
+            _ => None,
+        }
+    }
+}
+
+/// The help of a command: a topic and the text in both languages.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Help {
+    /// The help topic (also the label of the command).
+    pub topic: String,
+    /// English text.
+    pub en: String,
+    /// German text.
+    pub de: String,
+}
+
+/// One command of a module with what the file says about it.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Item {
+    /// The command (its label is the help topic).
+    pub command: Command,
+    /// What it may do.
+    pub access: Access,
+    /// Its help.
+    pub help: Help,
+    /// The call as written in the file; kept, never run.
+    pub call: Option<String>,
+}
+
 /// The command set of one module.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct ModuleSet {
     /// The name of the module; every id starts with `<name>.`.
     pub module: String,
-    /// The version of the set.
+    /// The version of the set (`Major.Minor`).
     pub version: String,
     /// The commands.
-    pub commands: Vec<Command>,
+    pub items: Vec<Item>,
 }
 
 /// Why a set was refused (all reasons are given at once; nothing is added then).
@@ -55,7 +104,7 @@ pub enum Refusal {
     Bot,
     /// The set is not from a bundled module and has no good signature.
     NotTrusted,
-    /// The module has no name, or the name `app` (the name space of the shell).
+    /// The module has no name, the name `app` (the name space of the shell), or not the name of its folder.
     ModuleName(String),
     /// A command with the prefix `app.`.
     ReservedPrefix(CommandId),
@@ -92,6 +141,10 @@ pub struct Entry {
     pub version: String,
     /// `Some(module)` for a command a module added: shown as "new by module X".
     pub new_by: Option<String>,
+    /// What the command may do (`None` for the shell's own).
+    pub access: Option<Access>,
+    /// The help of the module's command (`None` for the shell's own).
+    pub help: Option<Help>,
 }
 
 /// All commands the host knows.
@@ -111,6 +164,8 @@ impl Registry {
                 module: "app".to_owned(),
                 version: env!("CARGO_PKG_VERSION").to_owned(),
                 new_by: None,
+                access: None,
+                help: None,
             })
             .collect();
         Self { entries }
@@ -153,7 +208,8 @@ impl Registry {
             .iter()
             .fold(Commands::new(), |all, e| all.with(e.command.clone()));
         let space = format!("{name}.");
-        for c in &set.commands {
+        for i in &set.items {
+            let c = &i.command;
             if c.id.as_str().starts_with(PREFIX) {
                 bad.push(Refusal::ReservedPrefix(c.id.clone()));
             } else if !c.id.as_str().starts_with(&space) {
@@ -166,18 +222,19 @@ impl Registry {
         if !bad.is_empty() {
             return Err(bad);
         }
-        self.entries
-            .extend(set.commands.into_iter().map(|command| Entry {
-                command,
-                module: set.module.clone(),
-                version: set.version.clone(),
-                new_by: Some(set.module.clone()),
-            }));
+        self.entries.extend(set.items.into_iter().map(|i| Entry {
+            command: i.command,
+            module: set.module.clone(),
+            version: set.version.clone(),
+            new_by: Some(set.module.clone()),
+            access: Some(i.access),
+            help: Some(i.help),
+        }));
         Ok(())
     }
 
-    /// Read every `<dir>/<module>/commands.toml` (sorted by module name; a missing folder is no modules) and add the sets as bundled.
-    /// A set that is refused is reported and left out; the others are added.
+    /// Read every `<dir>/<module>/catalog/commands.json` (sorted by module name; a missing folder is no modules) and add the sets as
+    /// bundled. A set that is refused is reported and left out; the others are added.
     pub fn load_bundled(&mut self, dir: &Path) -> Vec<(String, Vec<Refusal>)> {
         let mut folders: Vec<_> = fs::read_dir(dir)
             .map(|d| d.filter_map(Result::ok).map(|e| e.path()).collect())
@@ -185,16 +242,14 @@ impl Registry {
         folders.sort();
         let mut refused = Vec::new();
         for folder in folders {
-            let file = folder.join("commands.toml");
-            if !file.is_file() {
+            if !folder.join("catalog").join("commands.json").is_file() {
                 continue;
             }
             let label = folder
                 .file_name()
                 .map_or_else(String::new, |n| n.to_string_lossy().into_owned());
-            let result = fs::read_to_string(&file)
-                .map_err(|_| vec![Refusal::Unreadable("read-failed".to_owned())])
-                .and_then(|text| parse(&text).map_err(|r| vec![r]))
+            let result = read::read_folder(&folder, &label)
+                .map_err(|r| vec![r])
                 .and_then(|set| self.add(Actor::Person, Origin::Bundled, set));
             if let Err(why) = result {
                 refused.push((label, why));
@@ -228,39 +283,4 @@ impl Default for Registry {
     fn default() -> Self {
         Self::new()
     }
-}
-
-/// Read the exchange file of a set.
-///
-/// # Errors
-/// [`Refusal::Unreadable`] with the cause (`toml`, `module-missing`, `command-id-missing`, `command-label-missing`).
-pub fn parse(text: &str) -> Result<ModuleSet, Refusal> {
-    let bad = |c: &str| Refusal::Unreadable(c.to_owned());
-    let doc: toml::Table = text.parse().map_err(|_| bad("toml"))?;
-    let module = doc
-        .get("module")
-        .and_then(toml::Value::as_table)
-        .ok_or_else(|| bad("module-missing"))?;
-    let word = |t: &toml::Table, k: &str| t.get(k).and_then(toml::Value::as_str).map(str::to_owned);
-    let mut commands = Vec::new();
-    for item in doc
-        .get("command")
-        .and_then(toml::Value::as_array)
-        .into_iter()
-        .flatten()
-    {
-        let t = item.as_table().ok_or_else(|| bad("command-id-missing"))?;
-        let id = word(t, "id").ok_or_else(|| bad("command-id-missing"))?;
-        let label = word(t, "label").ok_or_else(|| bad("command-label-missing"))?;
-        let mut c = Command::new(id.as_str(), label.as_str());
-        if let Some(icon) = word(t, "icon") {
-            c = c.icon(icon);
-        }
-        commands.push(c);
-    }
-    Ok(ModuleSet {
-        module: word(module, "name").unwrap_or_default(),
-        version: word(module, "version").unwrap_or_default(),
-        commands,
-    })
 }

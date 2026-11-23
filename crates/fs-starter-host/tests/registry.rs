@@ -7,22 +7,27 @@
 mod support;
 use support::{host, text};
 
-use fs_starter_host::registry::{Actor, ModuleSet, Origin, Refusal, Registry, parse};
+use fs_starter_host::registry::{Access, Actor, ModuleSet, Origin, Refusal, Registry, parse};
 
-fn set(module: &str, ids: &[&str]) -> ModuleSet {
-    let commands: String = ids
+/// The text of a set file with `module` and one command per id (all fields the format requires).
+fn json(module: &str, ids: &[&str]) -> String {
+    let commands: Vec<String> = ids
         .iter()
         .map(|id| {
             format!(
-                "[[command]]\nid = \"{id}\"\nlabel = \"{}\"\n",
+                r#"{{"id":{id:?},"call":"x","capability":"{module}.cap","access":"read","help":{{"topic":{:?},"text":{{"en":"e","de":"d"}}}}}}"#,
                 id.replace('.', "-")
             )
         })
         .collect();
-    parse(&format!(
-        "[module]\nname = \"{module}\"\nversion = \"0.1\"\n{commands}"
-    ))
-    .unwrap()
+    format!(
+        r#"{{"module":"{module}","version":"0.1","contract":"{module}","scope":"own-contract","commands":[{}]}}"#,
+        commands.join(",")
+    )
+}
+
+fn set(module: &str, ids: &[&str]) -> ModuleSet {
+    parse(&json(module, ids), module).unwrap()
 }
 
 fn ids(r: &Registry) -> Vec<String> {
@@ -162,28 +167,148 @@ fn only_a_bundled_module_or_a_signed_package_is_accepted() {
     assert_eq!(r.entries().len(), 5);
 }
 
+/// A copy of `catalog/commands.json` of fs-capture @a9ca621.
+const REAL: &str = include_str!("data/fs-capture-catalog/capture/catalog/commands.json");
+
 #[test]
-fn a_set_file_that_is_not_a_set_is_unreadable() {
-    assert!(matches!(parse("not toml ["), Err(Refusal::Unreadable(c)) if c == "toml"));
-    assert!(
-        matches!(parse("[[command]]\nid = \"a.b\"\nlabel = \"x\"\n"), Err(Refusal::Unreadable(c)) if c == "module-missing")
+fn the_real_file_of_fs_capture_is_read_with_help_and_access() {
+    let set = parse(REAL, "capture").unwrap();
+    assert_eq!(
+        (set.module.as_str(), set.version.as_str()),
+        ("capture", "0.1")
     );
+    assert_eq!(set.items.len(), 6);
+    assert_eq!(set.items[2].access, Access::Write);
+    assert_eq!(set.items[4].access, Access::Delete);
+    assert_eq!(set.items[0].help.topic, "capture-screens");
+    assert!(set.items[0].help.de.starts_with("Listet"));
+    let mut r = Registry::new();
+    r.add(Actor::Person, Origin::Bundled, set).unwrap();
+    let lines = r.lines();
+    assert_eq!(
+        lines
+            .iter()
+            .filter(|l| l.contains("\tnew by module capture"))
+            .count(),
+        6
+    );
+    assert!(
+        lines[4].starts_with("capture.screens\tcapture\t0.1"),
+        "{}",
+        lines[4]
+    );
+}
+
+/// The real file with one change; every mandatory field and every rule must turn the test red when it is not kept.
+fn changed(from: &str, to: &str) -> String {
+    assert!(REAL.contains(from), "{from}");
+    REAL.replacen(from, to, 1)
+}
+
+#[test]
+fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
+    let cause = |text: String, folder: &str| match parse(&text, folder) {
+        Err(Refusal::Unreadable(c)) => c,
+        other => format!("{other:?}"),
+    };
+    assert_eq!(cause("not json [".into(), "capture"), "json");
+    assert_eq!(
+        cause(changed("\"version\": \"0.1\",", ""), "capture"),
+        "version"
+    );
+    assert_eq!(cause(changed("\"0.1\"", "\"0.x\""), "capture"), "version");
+    assert_eq!(
+        cause(changed("\"contract\": \"capture\",", ""), "capture"),
+        "contract"
+    );
+    assert_eq!(
+        cause(
+            changed("\"contract\": \"capture\"", "\"contract\": \"zip\""),
+            "capture"
+        ),
+        "contract"
+    );
+    assert_eq!(
+        cause(changed("\"scope\": \"own-contract\",", ""), "capture"),
+        "scope"
+    );
+    assert_eq!(cause(changed("own-contract", "all"), "capture"), "scope");
+    assert_eq!(
+        cause(
+            changed("\"access\": \"read\"", "\"access\": \"admin\""),
+            "capture"
+        ),
+        "command-access"
+    );
+    assert_eq!(
+        cause(changed("\"access\": \"read\",", ""), "capture"),
+        "command-access"
+    );
+    assert_eq!(
+        cause(
+            changed(
+                "\"capability\": \"capture.screens\"",
+                "\"capability\": \"tasks.screens\""
+            ),
+            "capture"
+        ),
+        "command-capability"
+    );
+    assert_eq!(
+        cause(
+            changed(
+                "\"de\": \"Listet die Bildschirme (Nummer, Name, Groesse, Skalierung, Hauptbildschirm).\"",
+                "\"x\": \"y\""
+            ),
+            "capture"
+        ),
+        "command-help"
+    );
+    assert_eq!(
+        cause(changed("\"topic\": \"capture-screens\", ", ""), "capture"),
+        "command-help"
+    );
+    assert_eq!(
+        cause(changed("\"id\": \"capture.screens\", ", ""), "capture"),
+        "command-id"
+    );
+    assert_eq!(cause(r#"{"module":"capture","version":"0.1","contract":"capture","scope":"own-contract","commands":[]}"#.into(), "capture"), "commands");
+    assert_eq!(
+        cause(
+            r#"{"module":"capture","version":"0.1","contract":"capture","scope":"own-contract"}"#
+                .into(),
+            "capture"
+        ),
+        "commands"
+    );
+    assert_eq!(
+        cause(changed("\"module\": \"capture\",", ""), "capture"),
+        "module"
+    );
+}
+
+#[test]
+fn the_module_name_must_be_the_name_of_the_folder() {
+    assert!(matches!(parse(REAL, "other"), Err(Refusal::ModuleName(n)) if n == "capture"));
 }
 
 fn modules_dir(files: &[(&str, &str)]) -> tempfile::TempDir {
     let dir = tempfile::tempdir().unwrap();
     for (module, body) in files {
-        std::fs::create_dir_all(dir.path().join(module)).unwrap();
-        std::fs::write(dir.path().join(module).join("commands.toml"), body).unwrap();
+        let catalog = dir.path().join(module).join("catalog");
+        std::fs::create_dir_all(&catalog).unwrap();
+        std::fs::write(catalog.join("commands.json"), body).unwrap();
     }
     dir
 }
 
-const CAPTURE: &str = "[module]\nname = \"capture\"\nversion = \"0.1\"\n[[command]]\nid = \"capture.shot\"\nlabel = \"capture-shot\"\n";
+fn capture() -> String {
+    json("capture", &["capture.shot"])
+}
 
 #[test]
 fn list_commands_reads_the_bundled_modules_at_run_time() {
-    let dir = modules_dir(&[("capture", CAPTURE)]);
+    let dir = modules_dir(&[("capture", &capture())]);
     let out = host(
         &["--list-commands", "--modules", dir.path().to_str().unwrap()],
         "light",
@@ -197,8 +322,8 @@ fn list_commands_reads_the_bundled_modules_at_run_time() {
     );
     // a second module appears without a change of the host
     let more = modules_dir(&[
-        ("capture", CAPTURE),
-        ("zip", &CAPTURE.replace("capture", "zip")),
+        ("capture", &capture()),
+        ("zip", &json("zip", &["zip.shot"])),
     ]);
     let out = host(
         &[
@@ -217,7 +342,7 @@ fn list_commands_reads_the_bundled_modules_at_run_time() {
 
 #[test]
 fn list_commands_refuses_a_module_that_takes_app_and_names_it() {
-    let evil = CAPTURE.replace("capture.shot", "app.quit");
+    let evil = json("capture", &["app.quit"]);
     let dir = modules_dir(&[("capture", &evil)]);
     let out = host(
         &["--list-commands", "--modules", dir.path().to_str().unwrap()],
