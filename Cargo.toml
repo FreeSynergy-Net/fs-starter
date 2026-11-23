@@ -9,3 +9,7 @@ edition = "2024"
 license = "MIT OR Apache-2.0"
 rust-version = "1.89"
 repository = "https://github.com/FreeSynergy/fs-starter"
+
+# sq1a: local head of fs-forms (until the bundled release)
+[patch."https://github.com/FreeSynergy/fs-forms"]
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", branch = "unreviewed/sq1a-exit-code" }

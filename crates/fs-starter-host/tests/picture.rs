@@ -8,7 +8,7 @@
 //! Set `FS_PICTURE_OUT=<dir>` to keep the pictures (`starter-host-board-light.png`, `-dark.png`, `starter-host-error-light.png`).
 
 mod support;
-use support::{Picture, draw, host, mean, out_dir, tasks, text, uniform};
+use support::{Picture, draw, draw_code, host, mean, out_dir, tasks, text, uniform};
 
 fn colours(p: &Picture) -> usize {
     p.rgb
@@ -175,20 +175,45 @@ fn a_missing_description_is_an_error_window_not_a_blank_or_the_board() {
         return;
     };
     let gone = format!("{tasks}/no-such-description");
-    let light = draw(
+    let light = draw_code(
         &["--description", &gone],
         "light",
         &dir.join("starter-host-error-light.png"),
+        3,
     )
     .unwrap();
-    let dark = draw(
+    let dark = draw_code(
         &["--description", &gone],
         "dark",
         &dir.join("starter-host-error-dark.png"),
+        3,
     )
     .unwrap();
     assert!(light.rgb.iter().any(|b| *b != light.rgb[0]), "not blank");
     assert_ne!(light.rgb, board.rgb, "not the board window");
     assert_ne!(light.rgb, dark.rgb);
     assert!(mean(&dark) + 20.0 < mean(&light));
+}
+
+#[test]
+#[cfg_attr(
+    windows,
+    ignore = "wgpu Validation Error on windows-2022 without a GPU adapter"
+)]
+fn a_picture_of_a_missing_description_is_written_and_the_run_ends_with_code_3() {
+    let (_keep, dir) = out_dir();
+    let file = dir.join("starter-host-error-code.png");
+    let _ = std::fs::remove_file(&file);
+    let gone = format!("{}/no-such-description", tasks());
+    let out = host(
+        &["--description", &gone, "--picture", file.to_str().unwrap()],
+        "light",
+    );
+    let err = text(&out.stderr);
+    if err.to_lowercase().contains("adapter") || err.to_lowercase().contains("graphics") {
+        return;
+    }
+    assert!(err.contains("host-error-layout-missing"), "{err}");
+    assert_eq!(out.status.code(), Some(3), "{err}");
+    assert!(file.exists(), "the picture is written all the same");
 }
