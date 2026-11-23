@@ -1,8 +1,8 @@
 //! SQ-4, `--check`: the match of the forms a module declares against the form catalog and the components, WITHOUT starting a service.
 //! Green = rc 0; yellow (a form no component draws, a module that is not there) = a message and rc 0; red (a required channel not
 //! mapped, a version outside the range) = the contract code 3. Mutants: the match off (no red), the range off (no red).
-
-#![cfg(unix)]
+//!
+//! Runs on unix and Windows: no service is started here (`Service::None`), so nothing in these tests needs a unix socket.
 
 mod support;
 use support::install::{GOOD_FORMS, Install, Service, groups};

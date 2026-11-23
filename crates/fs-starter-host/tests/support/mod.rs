@@ -2,8 +2,7 @@
 
 #![allow(dead_code)] // each test file uses a part
 
-#[cfg(unix)]
-pub mod install;
+pub mod install; // portable: the symlink is made by `install::link`, the fake service is unix only (see `Service::Fake`)
 pub mod sets;
 
 use std::path::{Path, PathBuf};
