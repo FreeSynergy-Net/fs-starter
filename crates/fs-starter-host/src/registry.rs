@@ -122,6 +122,8 @@ pub enum Refusal {
     OutsideNamespace(CommandId),
     /// The id is there already (the shell's, another module's, or twice in this set).
     Conflict(CommandId),
+    /// An id with a character outside `[a-z0-9_-]` (segments split by dots) or not `<module>.<name>`: the whole set is refused.
+    BadId(String),
     /// The file cannot be read as a set (the cause is a short word).
     Unreadable(String),
 }
@@ -132,9 +134,10 @@ impl fmt::Display for Refusal {
             Self::Bot => write!(f, "bot-may-not-extend-commands"),
             Self::NotTrusted => write!(f, "command-set-not-trusted"),
             Self::ModuleName(n) => write!(f, "command-set-module-name: {n:?}"),
-            Self::ReservedPrefix(id) => write!(f, "command-reserved-prefix: {}", id.as_str()),
-            Self::OutsideNamespace(id) => write!(f, "command-outside-namespace: {}", id.as_str()),
-            Self::Conflict(id) => write!(f, "command-conflict: {}", id.as_str()),
+            Self::ReservedPrefix(id) => write!(f, "command-reserved-prefix: {:?}", id.as_str()),
+            Self::OutsideNamespace(id) => write!(f, "command-outside-namespace: {:?}", id.as_str()),
+            Self::Conflict(id) => write!(f, "command-conflict: {:?}", id.as_str()),
+            Self::BadId(id) => write!(f, "command-bad-id: {id:?}"),
             Self::Unreadable(c) => write!(f, "command-set-unreadable: {c}"),
         }
     }
@@ -223,8 +226,11 @@ impl Registry {
             bad.push(Refusal::NotTrusted);
         }
         let name = set.module.as_str();
-        if name.is_empty() || name == PREFIX.trim_end_matches('.') || name.contains('.') {
+        if !word(name) || name == PREFIX.trim_end_matches('.') {
             bad.push(Refusal::ModuleName(set.module.clone()));
+        }
+        if !valid_version(&set.version) {
+            bad.push(Refusal::Unreadable("version".to_owned()));
         }
         let mut seen: Commands = self
             .entries
@@ -233,6 +239,10 @@ impl Registry {
         let space = format!("{name}.");
         for i in &set.items {
             let c = &i.command;
+            if !valid_id(c.id.as_str()) {
+                bad.push(Refusal::BadId(c.id.as_str().to_owned()));
+                continue;
+            }
             if c.id.as_str().starts_with(PREFIX) {
                 bad.push(Refusal::ReservedPrefix(c.id.clone()));
             } else if !c.id.as_str().starts_with(&space) {
@@ -300,6 +310,26 @@ impl Registry {
             })
             .collect()
     }
+}
+
+/// A name of a module or a segment of an id: `[a-z0-9_-]+` (ADR 0097 rule of names; no dot, no space, no control character).
+fn word(s: &str) -> bool {
+    !s.is_empty()
+        && s.bytes()
+            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-' || b == b'_')
+}
+
+/// An id: segments of [`word`] split by dots, at least two (`<module>.<name>`).
+fn valid_id(id: &str) -> bool {
+    id.split('.').count() >= 2 && id.split('.').all(word)
+}
+
+/// A version: `Major.Minor`, digits only.
+fn valid_version(v: &str) -> bool {
+    let mut p = v.split('.');
+    let digits =
+        |s: Option<&str>| s.is_some_and(|s| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()));
+    digits(p.next()) && digits(p.next()) && p.next().is_none()
 }
 
 impl Default for Registry {

@@ -31,10 +31,7 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
         return Err(Refusal::ModuleName(module.to_owned()));
     }
     let version = text(&doc, "version", "version")?;
-    let mut parts = version.split('.');
-    let digits =
-        |p: Option<&str>| p.is_some_and(|s| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()));
-    if !(digits(parts.next()) && digits(parts.next()) && parts.next().is_none()) {
+    if !super::valid_version(version) {
         return Err(bad("version"));
     }
     if text(&doc, "contract", "contract")? != module {

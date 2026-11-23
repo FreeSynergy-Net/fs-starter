@@ -334,7 +334,7 @@ fn list_commands_refuses_a_module_that_takes_app_and_names_it() {
     );
     assert_eq!(out.status.code(), Some(1));
     assert!(
-        text(&out.stderr).contains("command-reserved-prefix: app.quit"),
+        text(&out.stderr).contains("command-reserved-prefix: \"app.quit\""),
         "{}",
         text(&out.stderr)
     );
@@ -357,5 +357,68 @@ fn list_commands_without_modules_lists_the_shell_only_and_wrong_words_are_usage(
     assert_eq!(
         host(&["--list-commands", "--bogus"], "light").status.code(),
         Some(2)
+    );
+}
+
+#[test]
+fn an_id_or_module_with_a_bad_character_refuses_the_whole_set() {
+    for bad in [
+        "capture.x\ny",
+        "capture.x\ty",
+        "capture.x y",
+        "capture.X",
+        "capture.",
+        "capture..x",
+        "capture",
+        "capture.é",
+    ] {
+        let mut r = Registry::new();
+        let why = r
+            .add_bundled(Actor::Person, set("capture", &["capture.ok", bad]))
+            .unwrap_err();
+        assert!(
+            why.iter()
+                .any(|w| matches!(w, Refusal::BadId(id) if id == bad)),
+            "{bad:?}: {why:?}"
+        );
+        assert_eq!(r.entries().len(), 4, "{bad:?}: nothing is added");
+    }
+    for module in ["Capture", "cap ture", "cap\nture", "cap.ture", ""] {
+        let mut r = Registry::new();
+        let mut s = set("capture", &["capture.ok"]);
+        s.module = module.to_owned();
+        let why = r.add_bundled(Actor::Person, s).unwrap_err();
+        assert!(
+            why.iter().any(|w| matches!(w, Refusal::ModuleName(_))),
+            "{module:?}: {why:?}"
+        );
+    }
+    let mut r = Registry::new();
+    let mut s = set("capture", &["capture.ok"]);
+    s.version = "0.1\n9.9".to_owned();
+    assert!(r.add_bundled(Actor::Person, s).is_err());
+}
+
+#[test]
+fn an_id_with_a_line_break_forges_no_line_in_list_commands() {
+    let evil = "capture.x\nfake.cmd\tapp\t0.0.4\ncapture.y";
+    let dir = modules_dir(&[("capture", &json("capture", &[evil]))]);
+    let out = host(
+        &["--list-commands", "--modules", dir.path().to_str().unwrap()],
+        "light",
+    );
+    assert_eq!(out.status.code(), Some(1), "{}", text(&out.stderr));
+    let lines = text(&out.stdout);
+    assert_eq!(lines.lines().count(), 4, "{lines}");
+    assert!(!lines.contains("fake.cmd"), "{lines}");
+    assert!(
+        text(&out.stderr).contains("command-bad-id:"),
+        "{}",
+        text(&out.stderr)
+    );
+    assert_eq!(
+        text(&out.stderr).lines().count(),
+        1,
+        "one line, no forged one"
     );
 }
