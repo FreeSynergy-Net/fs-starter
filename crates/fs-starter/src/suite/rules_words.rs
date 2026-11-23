@@ -15,16 +15,23 @@ const ACTOR: &str = "claude-strategie";
 
 rule!(
     /// `--version` writes `fs-<name> <major.minor.patch>` and nothing else, exit 0, no server, no frontend.
-    Version, "starter.version", |f, _cx| {
+    Version,
+    "starter.version",
+    |f, _cx| {
         let (want, form) = {
             let p = f.program();
-            (format!("fs-{} {}\n", p.name(), p.version()), Version3::parse(p.version()).is_some())
+            (
+                format!("fs-{} {}\n", p.name(), p.version()),
+                Version3::parse(p.version()).is_some(),
+            )
         };
         let o = f.start(&["--version"]);
         exit(&o, Exit::DONE)?;
         stdout(&o, &want)?;
         if !form {
-            return Err(fs_conformance::Coded::new(SuiteCode::WrongOutput).with_text(keys::STREAM, "version").into());
+            return Err(fs_conformance::Coded::new(SuiteCode::WrongOutput)
+                .with_text(keys::STREAM, "version")
+                .into());
         }
         gate(&o, 0)?;
         nothing_opened(&o)?;
@@ -34,7 +41,9 @@ rule!(
 
 rule!(
     /// `--help` writes the synopsis, exit 0, no server, no frontend.
-    Help, "starter.help", |f, _cx| {
+    Help,
+    "starter.help",
+    |f, _cx| {
         let want = synopsis(f.program().name());
         let o = f.start(&["--help"]);
         exit(&o, Exit::DONE)?;
@@ -47,7 +56,9 @@ rule!(
 
 rule!(
     /// A wrong word: exit 2, `usage` with the word, told as an error; no server, no frontend.
-    Usage, "starter.usage", |f, _cx| {
+    Usage,
+    "starter.usage",
+    |f, _cx| {
         let o = f.start(&["--no-such-word"]);
         exit(&o, Exit::USAGE)?;
         let note = told(&o, Level::Error, StarterCode::Usage)?;
@@ -60,12 +71,16 @@ rule!(
 
 rule!(
     /// `mcp` without `--as`: exit 2, `actor-missing`; the MCP entry is not called, nothing else runs.
-    McpNeedsActor, "starter.mcp-needs-actor", |f, _cx| {
+    McpNeedsActor,
+    "starter.mcp-needs-actor",
+    |f, _cx| {
         let o = f.start(&["mcp"]);
         exit(&o, Exit::USAGE)?;
         told(&o, Level::Error, StarterCode::ActorMissing)?;
         if !o.mcp_actors.is_empty() {
-            return Err(fs_conformance::Coded::new(SuiteCode::Launched).with_text(keys::WHAT, "mcp").into());
+            return Err(fs_conformance::Coded::new(SuiteCode::Launched)
+                .with_text(keys::WHAT, "mcp")
+                .into());
         }
         gate(&o, 0)?;
         nothing_opened(&o)?;
@@ -75,7 +90,9 @@ rule!(
 
 rule!(
     /// `mcp --as <actor>`: the entry is called once, with exactly that actor (never one taken from the session).
-    McpActor, "starter.mcp-actor", |f, _cx| {
+    McpActor,
+    "starter.mcp-actor",
+    |f, _cx| {
         let o = f.start(&["mcp", "--as", ACTOR]);
         exit(&o, Exit::DONE)?;
         if o.mcp_actors != [ACTOR] {

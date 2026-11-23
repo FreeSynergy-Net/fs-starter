@@ -79,11 +79,11 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
 }
 
 /// The biggest file read (a set is a few KiB).
-const MAX_BYTES: u64 = 256 * 1024;
+pub(crate) const MAX_BYTES: u64 = 256 * 1024;
 
 /// Is there a file to read in the module folder? `Ok(false)`: no (not a module folder). A symlink (the folder, `catalog` or the file),
 /// something that is not a plain file, or a file over [`MAX_BYTES`] is refused, never followed.
-pub(super) fn check(folder: &Path, file: &Path) -> Result<bool, Refusal> {
+pub(crate) fn check(folder: &Path, file: &Path) -> Result<bool, Refusal> {
     let link = |p: &Path| fs::symlink_metadata(p);
     let meta = link(folder).map_err(|_| bad("read-failed"))?;
     if meta.file_type().is_symlink() {
@@ -111,7 +111,7 @@ pub(super) fn check(folder: &Path, file: &Path) -> Result<bool, Refusal> {
 /// Open the file without following a symlink: on unix `O_NOFOLLOW` makes the open itself fail if the last part was swapped for a link
 /// after [`check`]. Windows has no such flag for this call: there only the check before applies (documented limit; the folder belongs
 /// to the installer).
-fn open_plain(file: &Path) -> std::io::Result<fs::File> {
+pub(crate) fn open_plain(file: &Path) -> std::io::Result<fs::File> {
     let mut options = fs::OpenOptions::new();
     options.read(true);
     #[cfg(unix)]
