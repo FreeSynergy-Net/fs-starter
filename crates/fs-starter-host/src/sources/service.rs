@@ -64,6 +64,7 @@ async fn beat(known: &Known, socket: &Path) -> Result<(), Coded> {
 }
 
 #[cfg(not(unix))]
+#[allow(clippy::unused_async)] // same signature as the unix one (the caller awaits it); the heartbeat of fs-rpc is unix only, so nothing to await here
 async fn beat(_: &Known, _: &Path) -> Result<(), Coded> {
     Ok(())
 }
