@@ -2,11 +2,55 @@
 
 FreeSynergy starter: the host that starts a program from its blueprint package (`scaffold.toml` + `forms/` + texts) without compiling it. The host owns the parts that are the same in every program (session, update, appearance, help, the MCP switch, SCIM/OAuth); the modules are built once and run as services. Built with help from Claude (AI). Licensed under MIT OR Apache-2.0.
 
+## Installation
+
+Linux packages from the FreeSynergy repository, signed with the project key. Releases: https://github.com/FreeSynergy-Net/fs-starter/releases
+
+Tested in containers only (run 45272124612): Fedora 45 (dnf5), Debian 13 and Ubuntu 24.04 (apt). Not tested: arm64, Windows, real hardware.
+
+Package names up to v0.0.7: dnf `fs-starter`, apt `fs-starter-host`. From v0.0.8 both are `fs-starter` (not yet tested). The apt channel has only the suite `testing` (pre-releases); `stable` does not exist yet.
+
+Check the key fingerprint before you import it: it must be `16A4 A3EE 563A EF51 FCF0  C55D ED7B 57C4 A190 4342`.
+
+Fedora (dnf):
+
+```
+curl -fsSL https://freesynergy-net.github.io/Repository/rpm/RPM-GPG-KEY-freesynergy -o fs-key.asc
+gpg --show-keys --with-fingerprint fs-key.asc
+sudo rpm --import fs-key.asc
+sudo dnf install -y --setopt=localpkg_gpgcheck=1 https://freesynergy-net.github.io/Repository/rpm/freesynergy-release.noarch.rpm
+sudo dnf install -y fs-starter
+fs-starter --version
+```
+
+Without `--setopt=localpkg_gpgcheck=1` dnf does not check the signature of a URL. Keep `-y`: without it, dnf5 asks for the key a second time on the first metadata fetch ("Signing key not found", cause still open).
+
+Debian / Ubuntu (apt), needs `curl`, `gpg` and `ca-certificates`, as root or with `sudo`:
+
+```
+install -d -m 0755 /etc/apt/keyrings
+curl -fsSL https://freesynergy-net.github.io/Repository/apt/freesynergy-archive-keyring.asc -o /tmp/fs-key.asc
+gpg --show-keys --with-fingerprint /tmp/fs-key.asc
+gpg --dearmor < /tmp/fs-key.asc > /etc/apt/keyrings/freesynergy-archive-keyring.pgp
+cat > /etc/apt/sources.list.d/freesynergy.sources <<EOS
+Types: deb
+URIs: https://freesynergy-net.github.io/Repository/apt/
+Suites: testing
+Components: main
+Signed-By: /etc/apt/keyrings/freesynergy-archive-keyring.pgp
+EOS
+apt-get update
+apt-get install -y fs-starter-host
+fs-starter --version
+```
+
 Status (0.0.7; 0.0.5 and 0.0.6 are tagged without a release): the library `crates/fs-starter` (words, server gate, frontend pick, exit codes) and the host binary `fs-starter` (`crates/fs-starter-host`). The host opens the window of a program from its description: `fs-starter --description PATH` (PATH is the data package `fs-blueprint new` wrote, a blueprint folder, a `forms/` folder or one file; a bare PATH works too: `fs-starter <package-path>`; the package line names program, skeleton and layout). The host builds the library `Parts` itself: the MCP switch is built and MCP is off (`fs-starter mcp --as ACTOR` ends with `mcp-disabled`, exit 1; the MCP entry itself is not built), and the start hooks run around the window. Single instance is built, per program (`crates/fs-starter-host/src/instance.rs`, ADR 0097): the first start of a program serves the interface `Instance` (`schema/instance.capnp` of fs-interfaces) on `$XDG_RUNTIME_DIR/freesynergy/<name>.window.sock`; on Windows the endpoint is a named pipe per user SID (built, not tested at run time); a second start of the same program hands its words to it, prints `instance-handed-over` and ends with 0 (it is checked with the normal word parser, unknown words are refused with `instance-words-refused`; a hung first instance ends the second with `instance-not-answering`, an unreachable one with `instance-unreachable`; never a second window, nothing is killed). The name is checked as a program name first (`instance-name-invalid`); without `XDG_RUNTIME_DIR` there is no fallback below `/tmp`: one line `single-instance-off` and the program starts anyway. Left out for now: bringing the window to the front, opening the handed-over path in the running window (a start is only received and noted as `instance-start-received`), `--new-instance`, macOS, killing a hung instance, several windows per program; a `--picture` start hands over to a running window too (and then draws nothing). Session (the host does not call `resume_token` and `fresh` is always false, even with `--fresh`), update, help and the MCP entry are not built yet and are named once on stderr (`skeleton-part-pending`); where the host binds `fs-update` (update probation) is an open point (ADR 0105 open point 9), so the update hook is a no-op, named on stderr (`update-binding-pending`). Plan: ADR draft "Program without build".
 
 **Known gap:** RPM: the folders below /usr/share/freesynergy and /usr/libexec/freesynergy are not owned by any package yet (`rpm -qf`: not owned; cargo-generate-rpm cannot build directory assets yet). Windows: der Host findet und startet noch keinen Dienst; Programme mit Modulen laufen unter Windows noch nicht. Sockets/Herzschlag-Grenzen 4, 5-e2e, 7 ungeprüft.
 
 ## Auf Deutsch
+
+Installation: siehe Abschnitt „Installation“ oben (dnf: `fs-starter`, apt: `fs-starter-host` bis v0.0.7; Fingerabdruck vorher prüfen; nur im Container getestet, arm64 und Windows nicht).
 
 FreeSynergy starter: der Host, der ein Programm aus seinem Bauplan-Paket (`scaffold.toml` + `forms/` + Texte) startet, ohne es zu kompilieren. Der Host haelt die Teile, die in jedem Programm gleich sind (Sitzung, Update, Darstellung, Hilfe, MCP-Schalter, SCIM/OAuth); die Module werden einmal gebaut und laufen als Dienste. Entstanden mit Hilfe von Claude (KI). Lizenz: MIT OR Apache-2.0.
 
