@@ -52,14 +52,17 @@ impl StarterSources {
     /// `forms.json` that cannot be read).
     pub fn declared(&self, range: &str) -> Result<(&Known, Vec<ModuleForm>), Coded> {
         let name = name_of(range);
-        let known = self
-            .modules
-            .find(name)
-            .ok_or_else(|| Coded::new("host-notice-source-unknown").with("contract", name))?;
         let contract = |why: &str| {
             Coded::new("host-notice-data-contract")
                 .with("contract", name)
                 .with("cause", why)
+        };
+        let Some(known) = self.modules.find(name) else {
+            // the folder is there but the registry refused it (a version like `0.1.0`, a bad name ...): say THAT, not "unknown"
+            return Err(match self.modules.refusal(name) {
+                Some((cause, reason)) => contract(cause).with("reason", reason),
+                None => Coded::new("host-notice-source-unknown").with("contract", name),
+            });
         };
         match range::fits(range, known.version) {
             Some(true) => {}

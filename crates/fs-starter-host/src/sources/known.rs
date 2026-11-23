@@ -10,7 +10,7 @@ use std::path::{Path, PathBuf};
 use fs_starter::{MODULES_DIR, SystemPlaces};
 
 use super::range::{Version, version};
-use crate::registry::{Entry, Registry, SystemPackaged};
+use crate::registry::{Entry, Refusal, Registry, SystemPackaged};
 
 /// A module the registry knows.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -30,6 +30,8 @@ pub struct Known {
 pub struct Modules {
     registry: Registry,
     known: Vec<Known>,
+    /// Folders the registry refused, with the reasons (the window names the cause, not "unknown source").
+    refused: Vec<(String, Vec<Refusal>)>,
 }
 
 impl Modules {
@@ -40,12 +42,15 @@ impl Modules {
         let mut me = Self {
             registry: Registry::new(),
             known: Vec::new(),
+            refused: Vec::new(),
         };
         let before = me.names();
-        let _ = me.registry.load_bundled(bundled);
+        let got = me.registry.load_bundled(bundled);
+        me.report(bundled, got);
         me.take(&before, bundled, false);
         let before = me.names();
-        let _ = me.registry.load_packages(system, verifier);
+        let got = me.registry.load_packages(system, verifier);
+        me.report(system, got);
         me.take(&before, system, true);
         me
     }
@@ -58,6 +63,46 @@ impl Modules {
             .and_then(|p| p.parent().map(|d| d.join("modules")))
             .unwrap_or_default();
         Self::load(&bundled, Path::new(MODULES_DIR), &SystemPackaged::new())
+    }
+
+    /// What the registry said about a folder: a missing folder is fine (nothing brought), every other error and every refused module
+    /// is kept and written to stderr, never thrown away.
+    fn report(&mut self, dir: &Path, got: std::io::Result<Vec<(String, Vec<Refusal>)>>) {
+        match got {
+            Ok(refused) => {
+                for (module, why) in &refused {
+                    for r in why {
+                        eprintln!("fs-starter: module {module:?} in {dir:?}: {r}");
+                    }
+                }
+                self.refused.extend(refused);
+            }
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
+            Err(e) => {
+                eprintln!("fs-starter: modules folder {dir:?}: {e}");
+                self.refused.push((
+                    String::new(),
+                    vec![Refusal::Unreadable(format!("folder: {e}"))],
+                ));
+            }
+        }
+    }
+
+    /// Why the registry refused the module folder `name`, as a cause word and a reason text; `None` when it was not refused.
+    #[must_use]
+    pub fn refusal(&self, name: &str) -> Option<(&'static str, String)> {
+        let (_, why) = self.refused.iter().find(|(m, _)| m == name)?;
+        let text = why
+            .iter()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("; ");
+        let cause = if why.contains(&Refusal::Unreadable("version".to_owned())) {
+            "version-unreadable"
+        } else {
+            "refused"
+        };
+        Some((cause, text))
     }
 
     fn names(&self) -> BTreeSet<String> {
