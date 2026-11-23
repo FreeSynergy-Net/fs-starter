@@ -30,7 +30,10 @@ pub(crate) fn anchor() -> Option<PathBuf> {
     };
     let path = if status >= 0 && !raw.is_null() {
         // SAFETY: the string is NUL terminated (see above), `len` stops at the terminator, and the memory is still alive here.
-        let len = (0..).take_while(|&i| unsafe { *raw.add(i) } != 0).count();
+        let mut len = 0;
+        while unsafe { *raw.add(len) } != 0 {
+            len += 1;
+        }
         let wide = unsafe { std::slice::from_raw_parts(raw, len) };
         Some(PathBuf::from(OsString::from_wide(wide)))
     } else {
