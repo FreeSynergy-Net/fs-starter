@@ -2,6 +2,8 @@
 
 #![allow(dead_code)] // each test file uses a part
 
+pub mod sets;
+
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 

@@ -2,14 +2,17 @@
 //! @a9ca621). Mandatory: `module` (= the folder name), `version` (`Major.Minor`), `contract` (= module), `scope` (`own-contract`) and a
 //! non-empty `commands`; per command `id`, `capability` (in the name space of the module), `access` (`read`/`write`/`delete`) and
 //! `help` (`topic`, `text.en`, `text.de`). `call` is kept as text and never run.
+//!
+//! Pattern: Reader (one parser from the file's text to the value types; a file that cannot be read is a coded refusal).
 
 use std::fs;
+use std::io::Read;
 use std::path::Path;
 
 use fs_components_commands::Command;
 use serde_json::Value;
 
-use super::{Access, Help, Item, ModuleSet, Refusal};
+use super::model::{Access, Help, Item, ModuleSet, Refusal};
 
 fn bad(c: &str) -> Refusal {
     Refusal::Unreadable(c.to_owned())
@@ -105,8 +108,30 @@ pub(super) fn check(folder: &Path, file: &Path) -> Result<bool, Refusal> {
     Ok(true)
 }
 
-/// Read the file of one module (checked by [`check`]) as the set of the module `name` (the folder name).
+/// Open the file without following a symlink: on unix `O_NOFOLLOW` makes the open itself fail if the last part was swapped for a link
+/// after [`check`]. Windows has no such flag for this call: there only the check before applies (documented limit; the folder belongs
+/// to the installer).
+fn open_plain(file: &Path) -> std::io::Result<fs::File> {
+    let mut options = fs::OpenOptions::new();
+    options.read(true);
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::OpenOptionsExt;
+        options.custom_flags(libc::O_NOFOLLOW);
+    }
+    options.open(file)
+}
+
+/// Read the file of one module (checked by [`check`]) as the set of the module `name` (the folder name): opened without following a
+/// link and read at most [`MAX_BYTES`] + 1 bytes, so a file swapped after the check is neither followed nor read without a limit.
 pub(super) fn read_folder(file: &Path, name: &str) -> Result<ModuleSet, Refusal> {
-    let text = fs::read_to_string(file).map_err(|_| bad("read-failed"))?;
+    let mut bytes = Vec::new();
+    open_plain(file)
+        .and_then(|f| f.take(MAX_BYTES + 1).read_to_end(&mut bytes))
+        .map_err(|_| bad("read-failed"))?;
+    if bytes.len() as u64 > MAX_BYTES {
+        return Err(bad("too-large"));
+    }
+    let text = String::from_utf8(bytes).map_err(|_| bad("read-failed"))?;
     parse(&text, name)
 }

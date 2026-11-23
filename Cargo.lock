@@ -1787,6 +1787,7 @@ dependencies = [
  "fs-rpc",
  "fs-starter",
  "fs-types",
+ "libc",
  "png 0.18.1",
  "serde_json",
  "tempfile",
