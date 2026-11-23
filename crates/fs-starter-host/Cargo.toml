@@ -55,7 +55,7 @@ png = "0.18"
 # earlier `fs-starter-host` package; nothing requires the old name (checked: fs-tasks 0.0.10 and fs-blueprint require only `fs-starter`).
 # Known gap (0.0.6): the package does NOT own the system folders every program and module package puts files in (paths = fs_starter::SHARE_DIR, PROGRAMS_DIR,
 # MODULES_DIR; frontends/). Directory ownership follows as soon as cargo-generate-rpm can build `dir = true` assets (0.21.1 fails with ENOENT: it passes an
-# empty source path to `PackageBuilder::with_file`); upstream PR <link follows>. rpm creates the parent folders implicitly (root, 755); fs-starter trusts the
+# empty source path to `PackageBuilder::with_file`); upstream PR (link follows in a later version). rpm creates the parent folders implicitly (root, 755); fs-starter trusts the
 # system level only for root-owned, not world-writable folders and files, not for the package owner.
 [package.metadata.generate-rpm]
 name = "fs-starter"
