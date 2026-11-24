@@ -15,21 +15,23 @@ use fs_rpc::{CommandStarter, Expected, ServerStarter, SingleTimes, ensure_single
 
 use super::answer::{Limits, clean};
 use super::known::Known;
+use super::range::Version;
+use super::refusal::refusal_or;
 
 #[cfg(test)]
 #[path = "rows_tests.rs"]
 mod rows_tests;
 
-const UNREACHABLE: &str = "host-notice-data-unreachable";
+pub(super) const UNREACHABLE: &str = "host-notice-data-unreachable";
 const CONTRACT: &str = "host-notice-data-contract";
-const ANSWER: &str = "host-notice-data-answer";
+pub(super) const ANSWER: &str = "host-notice-data-answer";
 
-fn cause(code: &str, module: &str, why: &str) -> Coded {
+pub(super) fn cause(code: &str, module: &str, why: &str) -> Coded {
     Coded::new(code).with("module", module).with("cause", why)
 }
 
 /// The socket of the module: only `default_socket(<module>)`, never a path from a description, a word or the service.
-fn socket_of(module: &str) -> Result<PathBuf, Coded> {
+pub(super) fn socket_of(module: &str) -> Result<PathBuf, Coded> {
     fs_rpc::default_socket(module).ok_or_else(|| Coded::new("host-notice-data-no-socket"))
 }
 
@@ -48,7 +50,7 @@ impl ServerStarter for Noted<'_> {
 
 /// A service that is up (started from the folder of the module if none runs; `ours` is set when THIS call started it) and the
 /// capability of `FormSource` on it.
-async fn up(
+pub(super) async fn up(
     known: &Known,
     socket: &Path,
     limits: &Limits,
@@ -87,8 +89,21 @@ async fn beat(_: &Known, _: &Path) -> Result<(), Coded> {
     Ok(())
 }
 
-fn text(t: capnp::Result<capnp::text::Reader<'_>>, max: usize) -> Result<String, ()> {
+pub(super) fn text(t: capnp::Result<capnp::text::Reader<'_>>, max: usize) -> Result<String, ()> {
     Ok(clean(t.map_err(|_| ())?.to_str().map_err(|_| ())?, max))
+}
+
+/// The commands a person may run (`may` of a record or of the page), as clean text; at most `limits.values` of them.
+fn may(
+    list: capnp::Result<capnp::text_list::Reader<'_>>,
+    limits: &Limits,
+) -> Result<Vec<String>, ()> {
+    let list = list.map_err(|_| ())?;
+    (0..list
+        .len()
+        .min(u32::try_from(limits.values).unwrap_or(u32::MAX)))
+        .map(|i| text(list.get(i), limits.text))
+        .collect()
 }
 
 /// One page of one form as rows by channel; the answer is refused (`Err`) when it is over a border.
@@ -128,8 +143,8 @@ fn rows(
         out.push(FormRow {
             key,
             values: by_channel,
-            // `may` is read from the page by SW-5; no statement = nothing may be written (the controls stay locked).
-            may: Vec::new(),
+            // no statement = nothing may be written (the controls stay locked)
+            may: may(record.get_may(), limits)?,
         });
     }
     Ok(out)
@@ -137,7 +152,7 @@ fn rows(
 
 /// A one-time command (`--picture`, `--check-system`) ends the service it started itself: the service has no other user, and the
 /// deadline without a user (SB-3) is not there yet. A service that was up before is never ended.
-async fn finish(socket: &Path, started: &std::cell::Cell<bool>, end: bool) {
+pub(super) async fn finish(socket: &Path, started: &std::cell::Cell<bool>, end: bool) {
     if end && started.get() {
         let _ = stop_server(socket).await;
     }
@@ -187,9 +202,10 @@ async fn read_up(
         let mut request = client.page_request();
         {
             let mut p = request.get();
-            p.set_form(format!(
-                "{}@{}.{}",
-                form.form.name, form.form.major, form.form.minor
+            // ONE spelling on the wire: `name@x.y.z` (a form never raises its patch)
+            p.set_form(fs_interfaces::forms::key(
+                &form.form.name,
+                &Version::new(u64::from(form.form.major), u64::from(form.form.minor), 0),
             ));
             p.set_scope("");
             p.set_limit(limits.rows);
@@ -198,15 +214,19 @@ async fn read_up(
             .send()
             .promise
             .await
-            .map_err(|_| cause(UNREACHABLE, &known.name, "page"))?;
+            .map_err(|e| refusal_or(&e, &known.name, "page", UNREACHABLE))?;
         let page = answer
             .get()
             .and_then(form_source::page_results::Reader::get_page)
-            .and_then(fs_interfaces::formsource_capnp::record_page::Reader::get_records)
             .map_err(|_| cause(ANSWER, &known.name, "page"))?;
-        let rows = rows(page, form, limits, &mut bytes)
+        let list = page
+            .get_records()
+            .map_err(|_| cause(ANSWER, &known.name, "page"))?;
+        let rows = rows(list, form, limits, &mut bytes)
             .map_err(|()| cause(ANSWER, &known.name, "limit"))?;
-        out.push(FormData::read_only(form.clone(), rows));
+        let mut data = FormData::read_only(form.clone(), rows);
+        data.may = may(page.get_may(), limits).map_err(|()| cause(ANSWER, &known.name, "may"))?;
+        out.push(data);
     }
     Ok(FormRecords {
         provider,
@@ -215,7 +235,7 @@ async fn read_up(
     })
 }
 
-fn run<T>(
+pub(super) fn run<T>(
     limits: &Limits,
     known: &Known,
     work: impl std::future::Future<Output = Result<T, Coded>>,
@@ -244,57 +264,4 @@ pub fn fetch(
     end: bool,
 ) -> Result<FormRecords, Coded> {
     run(limits, known, read_all(known, forms, limits, end))
-}
-
-/// Run `command` on `record` through the service (the check that it is a command of the own name space is made by the caller).
-///
-/// # Errors
-/// A code `host-notice-data-*`, or `host-notice-invoke-failed` when the service says it did not do it.
-pub fn call(
-    known: &Known,
-    command: &str,
-    record: &str,
-    limits: &Limits,
-    end: bool,
-) -> Result<(), Coded> {
-    run(limits, known, async {
-        let socket = socket_of(&known.name)?;
-        let started = std::cell::Cell::new(false);
-        let got = call_up(known, command, record, limits, &socket, &started).await;
-        finish(&socket, &started, end).await;
-        got
-    })
-}
-
-async fn call_up(
-    known: &Known,
-    command: &str,
-    record: &str,
-    limits: &Limits,
-    socket: &Path,
-    started: &std::cell::Cell<bool>,
-) -> Result<(), Coded> {
-    let socket = socket.to_path_buf();
-    let single = up(known, &socket, limits, started).await?;
-    let mut request = single.connection.client.invoke_request();
-    {
-        let mut p = request.get();
-        p.set_command(command);
-        p.set_record(record);
-    }
-    let answer = request
-        .send()
-        .promise
-        .await
-        .map_err(|_| cause(UNREACHABLE, &known.name, "invoke"))?;
-    let failed = answer
-        .get()
-        .map_err(|_| cause(ANSWER, &known.name, "invoke"))?
-        .get_failed();
-    if failed {
-        return Err(
-            cause("host-notice-invoke-failed", &known.name, "service").with("command", command)
-        );
-    }
-    Ok(())
 }

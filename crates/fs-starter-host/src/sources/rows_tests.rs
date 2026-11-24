@@ -96,3 +96,22 @@ fn only_the_fields_the_module_mapped_are_taken() {
     assert_eq!(got[0].values.len(), 1);
     assert_eq!(got[0].get("label"), Some("y"));
 }
+
+#[test]
+fn the_may_of_a_record_is_read_masked_and_limited() {
+    let mut msg = capnp::message::Builder::new_default();
+    let root = msg.init_root::<record_page::Builder>();
+    let list = root.init_records(1);
+    let mut r = list.get(0);
+    r.set_id("r0");
+    let mut may = r.init_may(3);
+    may.set(0, "card.move");
+    may.set(1, "card\u{1b}.drop");
+    may.set(2, "third");
+    let limits = Limits {
+        values: 2,
+        ..Limits::default()
+    };
+    let got = read(&msg, &limits).unwrap();
+    assert_eq!(got[0].may, ["card.move", "card\u{FFFD}.drop"]);
+}

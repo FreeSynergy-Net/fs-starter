@@ -14,15 +14,18 @@
 
 use super::{
     answer::Limits,
-    declared,
+    declared, invoke,
     known::{Known, Modules},
     range, service,
+    writer::ModuleWriter,
 };
 use std::path::Path;
 use std::sync::Arc;
 
 use fs_forms_bind::ModuleForm;
 use fs_forms_run::{Coded, FormData, FormRecords, Records, Sources, name_of};
+
+use super::invoke::Written;
 
 /// The sources of the starter.
 #[derive(Clone, Debug)]
@@ -114,8 +117,34 @@ impl StarterSources {
                 .with("cause", why)
         })?;
         let began = std::time::Instant::now();
-        let records = service::fetch(known, &forms, &self.limits, self.end_started)?;
+        let records = self.read(known, &forms)?;
         Ok(read_lines(module, &records, began.elapsed()))
+    }
+
+    /// Read every form of `known` through the service, with the command set of the module on each form (what `allowed` asks).
+    fn read(&self, known: &Known, forms: &[ModuleForm]) -> Result<FormRecords, Coded> {
+        let mut records = service::fetch(known, forms, &self.limits, self.end_started)?;
+        let keys = self.command_keys(&known.name);
+        for data in &mut records.forms {
+            data.commands.clone_from(&keys);
+        }
+        Ok(records)
+    }
+
+    /// The forms of `module` read again (after an accepted call): what the port `Writer` gives the window to show.
+    ///
+    /// # Errors
+    /// `host-notice-source-unknown`, else the codes of the connection.
+    pub(super) fn read_forms(
+        &self,
+        module: &str,
+        forms: &[ModuleForm],
+    ) -> Result<Vec<FormData>, Coded> {
+        let known = self
+            .modules
+            .find(module)
+            .ok_or_else(|| Coded::new("host-notice-source-unknown").with("contract", module))?;
+        Ok(self.read(known, forms)?.forms)
     }
 
     /// The raw contract keys of the command set of `module` (what a form may bind a command channel to).
@@ -129,10 +158,18 @@ impl StarterSources {
 
     /// Run a command of a module on a record. Only a command of the OWN name space of the module that is in its set (`commands.json`)
     /// goes through (border 6); the shared `app.*` commands, another module's and a name the module never listed are refused.
+    /// `args` are the arguments by the FIELD names of the module (`args_of` made them); `record` is empty for a command without one.
     ///
     /// # Errors
-    /// `host-notice-invoke-foreign` for a command that is not the module's own, else the codes of the connection.
-    pub fn invoke(&self, module: &str, command: &str, record: &str) -> Result<(), Coded> {
+    /// `host-notice-invoke-foreign` for a command that is not the module's own; the kind of a refusal of the service as its code
+    /// (`form-source-bad-arguments` ...); else the codes of the connection.
+    pub fn invoke(
+        &self,
+        module: &str,
+        command: &str,
+        record: &str,
+        args: &[(String, String)],
+    ) -> Result<Written, Coded> {
         let known = self
             .modules
             .find(module)
@@ -151,7 +188,7 @@ impl StarterSources {
                 .with("module", module)
                 .with("command", command));
         };
-        service::call(known, key, record, &self.limits, self.end_started)
+        invoke::call(known, key, record, args, &self.limits, self.end_started)
     }
 }
 
@@ -165,13 +202,17 @@ impl Sources for StarterSources {
         };
         let (known, forms) = self.declared(range).map_err(said)?;
         let began = std::time::Instant::now();
-        let records =
-            service::fetch(known, &forms, &self.limits, self.end_started).map_err(said)?;
+        let records = self.read(known, &forms).map_err(said)?;
         // what was read, never silent: an empty picture can be told from a service that gave nothing
         for line in read_lines(known.name.as_str(), &records, began.elapsed()) {
             eprintln!("{line}");
         }
-        Ok(Arc::new(records))
+        // a gesture of the window goes back to this module through the port `Writer`
+        let writer = ModuleWriter::new(self.clone(), &known.name, forms);
+        Ok(Arc::new(FormRecords {
+            writer: Some(Arc::new(writer)),
+            ..records
+        }))
     }
 }
 
@@ -225,53 +266,5 @@ pub fn bare(forms: Vec<ModuleForm>) -> FormRecords {
 }
 
 #[cfg(test)]
-mod read_lines_tests {
-    use super::*;
-    use fs_forms_bind::{FormRef, ModuleForm};
-    use std::time::Duration;
-
-    fn data(rows: usize) -> FormData {
-        let declared = ModuleForm {
-            form: FormRef {
-                name: "board".to_owned(),
-                major: 1,
-                minor: 0,
-            },
-            map: Vec::new(),
-            fields: Vec::new(),
-        };
-        let rows = (0..rows)
-            .map(|i| fs_forms_run::FormRow {
-                key: i.to_string(),
-                values: Vec::new(),
-                may: Vec::new(),
-            })
-            .collect();
-        FormData::read_only(declared, rows)
-    }
-
-    #[test]
-    fn a_read_says_module_form_count_and_time_and_an_empty_one_is_marked() {
-        let full = FormRecords {
-            provider: "real".to_owned(),
-            forms: vec![data(3)],
-            ..FormRecords::default()
-        };
-        let line = &read_lines("planning", &full, Duration::from_millis(7))[0];
-        assert_eq!(
-            line,
-            "fs-starter: read module=planning form=board records=3 ms=7 provider=\"real\""
-        );
-        let empty = FormRecords {
-            forms: vec![data(0)],
-            ..full
-        };
-        assert!(
-            read_lines("planning", &empty, Duration::ZERO)[0]
-                .ends_with("records=0 ms=0 provider=\"real\" empty")
-        );
-        assert!(
-            read_lines("planning", &FormRecords::default(), Duration::ZERO)[0].ends_with("no-form")
-        );
-    }
-}
+#[path = "starter_tests.rs"]
+mod read_lines_tests;

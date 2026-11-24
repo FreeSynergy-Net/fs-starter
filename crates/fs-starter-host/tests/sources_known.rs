@@ -165,19 +165,19 @@ fn a_command_of_another_name_space_is_never_run() {
         ".task.create",
     ] {
         assert_eq!(
-            code(s.invoke("groups", command, "r1")),
+            code(s.invoke("groups", command, "r1", &[])),
             "host-notice-invoke-foreign",
             "{command}"
         );
     }
     // a module that is not there: unknown source, not a command
     assert_eq!(
-        code(s.invoke("tasks", "tasks.task.create", "r1")),
+        code(s.invoke("tasks", "tasks.task.create", "r1", &[])),
         "host-notice-source-unknown"
     );
     // the own, listed command passes the border (it then fails for another reason: no program file here)
     assert_ne!(
-        code(s.invoke("groups", "groups.task.create", "r1")),
+        code(s.invoke("groups", "groups.task.create", "r1", &[])),
         "host-notice-invoke-foreign"
     );
 }

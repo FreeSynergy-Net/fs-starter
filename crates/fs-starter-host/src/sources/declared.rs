@@ -31,10 +31,11 @@ fn names(v: &Value) -> Option<Vec<String>> {
     }
 }
 
-/// The version of a FORM is `Major.Minor` (two numbers: `fs_forms_bind::FormRef` has no third); read through `semver` as `Major.Minor.0`,
-/// so a three part text is refused like any other unreadable one.
+/// The version of a FORM: `Major.Minor.Patch` (the one spelling, `forms::key`) or the short `Major.Minor` (a tolerant reader, as
+/// `Major.Minor.0`), read by `fs_interfaces::forms::parse_key`. `fs_forms_bind::FormRef` keeps major and minor only: a patch of a form is
+/// never raised and does not count, so it is dropped here.
 fn form_version(text: &str) -> Option<(u32, u32)> {
-    let v = super::range::version(&format!("{}.0", text.trim())).ok()?;
+    let (_, v) = fs_interfaces::forms::parse_key(&format!("form@{}", text.trim()))?;
     Some((u32::try_from(v.major).ok()?, u32::try_from(v.minor).ok()?))
 }
 
@@ -158,6 +159,22 @@ mod tests {
             ),
         ] {
             assert_eq!(parse(text), Err(cause), "{text}");
+        }
+    }
+}
+
+#[cfg(test)]
+mod version_tests {
+    use super::form_version;
+
+    #[test]
+    fn a_form_version_is_read_as_x_y_z_and_as_the_short_x_y() {
+        assert_eq!(form_version("1.2.0"), Some((1, 2)));
+        assert_eq!(form_version(" 1.2 "), Some((1, 2)));
+        // the patch of a form never counts
+        assert_eq!(form_version("1.2.7"), Some((1, 2)));
+        for bad in ["1", "x.y", "1.2.3-beta", ""] {
+            assert_eq!(form_version(bad), None, "{bad:?}");
         }
     }
 }
