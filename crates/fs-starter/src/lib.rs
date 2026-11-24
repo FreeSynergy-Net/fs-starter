@@ -44,6 +44,7 @@ mod run;
 mod settings;
 mod system;
 mod tell;
+mod when_open;
 mod words;
 
 #[cfg(feature = "conformance")]
@@ -66,10 +67,14 @@ pub use names::{ActorName, FrontendId, ProgramName, ResumeToken, parse_version};
 pub use program::{Exit, Failure, McpEntry, NoPreference, Preference, Program};
 pub use run::{Parts, main_exit, run};
 pub use semver::Version;
-pub use settings::{MCP_ENABLED, SINGLE_ASK, StarterSettings, TEXT_DE, TEXT_EN};
+pub use settings::{
+    MCP_ENABLED, SETTINGS_FILE, SETTINGS_JSON, SINGLE_ASK, StarterSettings, TEXT_DE, TEXT_EN,
+    WHEN_OPEN,
+};
 #[cfg(unix)]
 pub use system::{MODULES_DIR, PROGRAMS_DIR, SHARE_DIR, STARTER_DIR};
 pub use system::{SystemPlaces, SystemRefusal, programs_dir};
 
 pub use tell::{Level, Note, StderrTell, Tell};
+pub use when_open::WhenOpen;
 pub use words::{StartWords, Words, parse, synopsis};

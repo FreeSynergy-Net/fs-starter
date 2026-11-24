@@ -125,15 +125,23 @@ fn in_a_wide_window_the_third_column_is_whole_and_the_gaps_between_columns_are_e
         return;
     };
     assert_eq!((p.w, p.h), (1300, 760));
-    // the three columns share the main area (x 245..581, 592..927, 938..1274), the rows of the first cards
-    for (x0, x1) in [(247, 580), (595, 926), (941, 1273)] {
-        assert!(!uniform(&p, x0..x1, 150..300), "a column at x {x0}..{x1}");
+    // K2c: a column has no frame of its own any more, its left edge is its text (x 260, 564, 868; step 304). Each heading is drawn, and the
+    // first card of the THIRD column is whole (not cut at the right edge, not shifted).
+    for x0 in [256, 560, 864] {
+        assert!(
+            !uniform(&p, x0..x0 + 40, 98..118),
+            "a column heading at x {x0}"
+        );
     }
-    // between the columns (8 px) and right of the third: the board's own background, one colour
-    assert!(uniform(&p, 585..589, 300..700), "the gap after column 1");
-    assert!(uniform(&p, 931..935, 300..700), "the gap after column 2");
     assert!(
-        uniform(&p, 1278..1298, 300..700),
+        !uniform(&p, 866..1010, 130..170),
+        "the card of column 3 is drawn"
+    );
+    // between the columns (no frame, only the board's own background, one colour) and right of the third
+    assert!(uniform(&p, 552..558, 60..700), "the gap before column 2");
+    assert!(uniform(&p, 856..862, 60..700), "the gap before column 3");
+    assert!(
+        uniform(&p, 1170..1298, 60..700),
         "nothing right of column 3"
     );
 }

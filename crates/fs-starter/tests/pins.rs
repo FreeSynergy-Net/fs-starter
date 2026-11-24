@@ -1,7 +1,19 @@
 //! The pins of the lifted libraries, read from `Cargo.lock` (K4b, mutant P4: `fs-conformance` back on the `rev` of fs-types main 339aa24
 //! has no `fs-types` of its own and so keeps "one source" green; only the exact tag shows it).
 
-/// The `source` line of the package `name` in the workspace lock (there must be exactly one).
+/// The doubles that are KNOWN and wait for a follow-up commit of their owner (E3, 24.11.): `fs-settings-rpc` of fs-rpc d8944ef9 still pins
+/// fs-settings by tag v0.0.35 (R1 is built separately in fs-rpc), and `fs-forms-client` of fs-forms 2927e175 still pins fs-rpc 11cdf714.
+/// Nothing else is allowed twice; a line here is deleted as soon as its owner moved (the test below fails when it is no longer needed).
+const KNOWN_OLD: [(&str, &str); 3] = [
+    ("fs-settings", "?tag=v0.0.35#"),
+    ("fs-rpc", "?rev=11cdf71482cfcd8de14038c4e7fc796f2611e02c#"),
+    (
+        "fs-trusted-path",
+        "?rev=11cdf71482cfcd8de14038c4e7fc796f2611e02c#",
+    ),
+];
+
+/// The `source` line of the package `name` in the workspace lock (there must be exactly one, apart from the `KNOWN_OLD` doubles).
 fn source_of(name: &str) -> String {
     let lock = include_str!("../../../Cargo.lock");
     let mut found = Vec::new();
@@ -19,6 +31,12 @@ fn source_of(name: &str) -> String {
             found.push(source);
         }
     }
+    let old: Vec<&str> = KNOWN_OLD
+        .iter()
+        .filter(|(n, _)| *n == name)
+        .map(|(_, s)| *s)
+        .collect();
+    found.retain(|s| !old.iter().any(|o| s.contains(o)));
     assert_eq!(
         found.len(),
         1,
@@ -39,33 +57,37 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ),
         ("fs-objects", "REV:f6409f2a5378ba1464e69ae216efd4d27d249182"),
         (
+            "fs-settings-rpc",
+            "REV:d8944ef9f446956e2d86942cafd656519d3abdea",
+        ),
+        (
             "fs-settings",
-            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
+            "REV:d49e01d923931732ab1e090bc38f45268db85002",
         ),
         (
             "fs-components-commands",
-            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
+            "REV:d49e01d923931732ab1e090bc38f45268db85002",
         ),
-        ("fs-rpc", "REV:11cdf71482cfcd8de14038c4e7fc796f2611e02c"),
+        ("fs-rpc", "REV:d8944ef9f446956e2d86942cafd656519d3abdea"),
         (
             "fs-components-kanban",
-            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
+            "REV:d49e01d923931732ab1e090bc38f45268db85002",
         ),
         (
             "fs-trusted-path",
-            "REV:11cdf71482cfcd8de14038c4e7fc796f2611e02c",
+            "REV:d8944ef9f446956e2d86942cafd656519d3abdea",
         ),
         (
             "fs-forms-run",
-            "REV:3130014fa0f1a5794785aa7902b9cec7568fab37",
+            "REV:2927e175559ebe2419065eebbc2b0deafc74f9ce",
         ),
         (
             "fs-forms-bind",
-            "REV:3130014fa0f1a5794785aa7902b9cec7568fab37",
+            "REV:2927e175559ebe2419065eebbc2b0deafc74f9ce",
         ),
         (
             "fs-components",
-            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
+            "REV:d49e01d923931732ab1e090bc38f45268db85002",
         ),
     ] {
         let source = source_of(name);
@@ -88,4 +110,19 @@ fn the_conformance_is_the_commit_of_fs_types() {
 fn the_rpc_and_the_trusted_path_come_from_one_repository_at_one_commit() {
     assert_eq!(source_of("fs-rpc"), source_of("fs-trusted-path"));
     assert!(source_of("fs-rpc").contains("github.com/FreeSynergy-Net/fs-rpc?rev="));
+}
+
+/// A `KNOWN_OLD` line that the lock no longer has is removed (the double is gone: the one-source rule is strict again).
+#[test]
+fn every_known_old_double_is_still_in_the_lock() {
+    let lock = include_str!("../../../Cargo.lock");
+    for (name, source) in KNOWN_OLD {
+        let has = lock.split("[[package]]").any(|b| {
+            b.lines().any(|l| l.trim() == format!("name = \"{name}\"")) && b.contains(source)
+        });
+        assert!(
+            has,
+            "{name} {source} is gone from the lock: delete the line of KNOWN_OLD"
+        );
+    }
 }

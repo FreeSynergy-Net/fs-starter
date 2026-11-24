@@ -1,0 +1,130 @@
+//! E3 (ENTWURF einstellungen-als-daten): the host reads `fs.open.when-open` through `Settings::open(program, Catalog)`.
+//! G6: no service, `store-unreachable`, the value is the default `ask`, one visible line, no crash.
+//! G7: person `window`, program profile `switch` gives `switch`; an instance lock `ask` gives `ask` with the lock shown.
+use std::sync::Arc;
+
+use fs_rpc::SingleTimes;
+use fs_settings::{
+    Admin, GrantedLockRights, LockGrant, MemoryStore, NoSystem, Place, ProgramName, Raw, Scope,
+    SettingCode, SettingKey, Settings, SettingsStore, Value, system_clock,
+};
+use fs_starter::{StarterSettings, WHEN_OPEN, WhenOpen};
+use fs_starter_host::open_setting::{OpenSetting, catalog, connect, read};
+
+fn key() -> SettingKey {
+    StarterSettings::key(WHEN_OPEN).expect("key")
+}
+
+fn program() -> ProgramName {
+    ProgramName::new("tasks").expect("program")
+}
+
+fn open(store: &MemoryStore) -> Settings {
+    Settings::open(
+        program(),
+        catalog().expect("catalog"),
+        Arc::new(store.clone()),
+        Arc::new(NoSystem),
+    )
+}
+
+fn put(store: &MemoryStore, scope: &Scope, word: &str) {
+    store
+        .write(
+            scope,
+            Place::Profile,
+            0,
+            &key(),
+            Some(&Raw::Str(word.to_owned())),
+        )
+        .expect("written");
+}
+
+/// G6: no `fs-settings` program beside the running file (and none in `/usr/bin` on a test machine): nothing to start.
+#[test]
+fn g6_without_a_service_the_value_is_ask_and_one_line_says_why() {
+    let dir = tempfile::tempdir().expect("dir");
+    let socket = dir.path().join("settings.sock");
+    let running = dir.path().join("fs-starter");
+    let got = connect(&program(), &socket, &running, &SingleTimes::default());
+    assert_eq!(got.when_open, WhenOpen::Ask);
+    let why = got.notice.as_ref().expect("a notice");
+    assert_eq!(why.code(), SettingCode::StoreUnreachable);
+    let line = got.line().expect("a visible line");
+    assert!(line.starts_with("fs-starter: yellow "), "{line}");
+    assert!(
+        line.contains("store-unreachable") && line.contains("value=ask"),
+        "{line}"
+    );
+    assert!(
+        line.contains("no-server"),
+        "the cause is the one of ensure_service: {line}"
+    );
+    assert_eq!(got.locked, None);
+}
+
+/// Without a notice and without a lock there is nothing to say.
+#[test]
+fn a_default_value_says_nothing() {
+    let got = read(&open(&MemoryStore::new()));
+    assert_eq!(
+        got,
+        OpenSetting {
+            when_open: WhenOpen::Ask,
+            locked: None,
+            notice: None
+        }
+    );
+    assert_eq!(got.line(), None);
+}
+
+/// G7: person `window`, program profile `switch`: the program's own choice wins.
+#[test]
+fn g7_the_program_profile_beats_the_person() {
+    let store = MemoryStore::new();
+    let settings = open(&store);
+    put(&store, &Scope::General, "window");
+    settings.refresh();
+    assert_eq!(
+        read(&settings).when_open,
+        WhenOpen::Window,
+        "the person alone"
+    );
+    put(&store, &Scope::Program(program()), "switch");
+    settings.refresh();
+    let got = read(&settings);
+    assert_eq!(got.when_open, WhenOpen::Switch);
+    assert_eq!(got.locked, None);
+}
+
+/// G7: a lock of the instance (`ask`, with a reason) beats person and program, and is shown with its reason.
+#[test]
+fn g7_an_instance_lock_beats_both_and_is_shown() {
+    let store = MemoryStore::new();
+    let settings = open(&store);
+    put(&store, &Scope::General, "window");
+    put(&store, &Scope::Program(program()), "switch");
+    let admin = Admin {
+        store: Arc::new(store.clone()),
+        rights: Arc::new(GrantedLockRights(LockGrant::InstanceAdmin)),
+        by: fs_types::BasicValue::parse("https://example.org/people/admin").expect("iri"),
+        catalog: catalog().expect("catalog"),
+        clock: system_clock,
+    };
+    admin
+        .lock(
+            &key(),
+            &Value::Choice("ask".to_owned()),
+            "ask everyone first",
+        )
+        .expect("locked");
+    settings.refresh();
+    let got = read(&settings);
+    assert_eq!(got.when_open, WhenOpen::Ask);
+    assert_eq!(got.locked.as_deref(), Some("ask everyone first"));
+    let line = got.line().expect("the lock is visible");
+    assert!(
+        line.contains("locked") && line.contains("ask everyone first"),
+        "{line}"
+    );
+}

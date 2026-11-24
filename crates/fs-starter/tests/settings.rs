@@ -16,11 +16,16 @@ fn find(key: &str) -> Declaration {
         .unwrap_or_else(|| panic!("{key} is not declared"))
 }
 
-/// Exactly the two keys, named by the constants of fs-rpc (one name, two places, kept in step here).
+/// Exactly the three keys, named by the constants of fs-rpc (one name, two places, kept in step here).
 #[test]
 fn the_two_keys_are_declared_under_the_names_of_fs_rpc() {
     let keys: Vec<String> = all().iter().map(|d| d.key.as_str().to_owned()).collect();
-    assert_eq!(keys.len(), 2);
+    assert_eq!(
+        keys.len(),
+        3,
+        "the two old keys and fs.open.when-open: {keys:?}"
+    );
+    assert!(keys.contains(&"fs.open.when-open".to_owned()));
     assert!(keys.contains(&fs_rpc::SINGLE_ASK_KEY.to_owned()));
     assert!(keys.contains(&fs_rpc::MCP_ENABLED_KEY.to_owned()));
     assert_eq!(fs_rpc::SINGLE_ASK_KEY, "fs.rpc.single.ask");

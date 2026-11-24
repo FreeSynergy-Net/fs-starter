@@ -91,6 +91,13 @@ pub fn run(args: &[String]) -> ExitCode {
                     Ok(place) => place,
                     Err(code) => return code,
                 };
+            // E3: the first reader of the settings. The value waits next to the start until `decide` (O4) takes it; without the service the
+            // default `ask` holds and one line says so. A one-time `--picture` starts no service.
+            if c.picture.is_none()
+                && let Some(line) = program.as_deref().and_then(crate::open_setting::line_for)
+            {
+                eprintln!("{line}");
+            }
             let sources = StarterSources::standard();
             let sources = match program.as_deref() {
                 Some(name) => sources.named(name),

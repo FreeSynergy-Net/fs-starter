@@ -7,7 +7,7 @@
 
 use std::sync::{Arc, PoisonError};
 
-use fs_components_kanban::Answer;
+use fs_components_kanban::{Answer, Reason};
 use fs_forms_bind::ModuleForm;
 use fs_forms_run::{ChangeCounter, Coded, FormData, FormRecords, Records, SideItem, UndoState};
 use fs_rpc::{Hold, HoldEvent, HoldSpec, ReconnectTimes, hold, hold_calling};
@@ -102,12 +102,12 @@ impl Records for HeldRecords {
     }
     fn step_back(&self, redo: bool) -> Answer {
         let Some(session) = self.session() else {
-            return Answer::Refused("unsupported".into());
+            return Answer::Refused(Reason::new("unsupported", ""));
         };
         if let Err(c) = session.step_back(redo) {
             // visible, never silent; the unit stays in the history
             eprintln!("fs-starter: {}", super::starter::line(&c));
-            return Answer::Refused(c.code);
+            return Answer::Refused(Reason::new(c.code, ""));
         }
         // accepted: the forms are read again, as after a write
         let again = self.records.writer.as_ref().map(|w| w.reload());

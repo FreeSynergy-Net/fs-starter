@@ -12,7 +12,7 @@ mod support;
 use std::sync::{Mutex, MutexGuard, PoisonError};
 use std::time::{Duration, Instant};
 
-use fs_components_kanban::Answer;
+use fs_components_kanban::{Answer, Reason};
 use fs_forms_run::{Invocation, Records};
 use fs_starter_host::sources::HeldRecords;
 use support::inproc::{commands_of, setup};
@@ -71,7 +71,7 @@ fn a_write_is_in_the_history_and_app_undo_and_redo_go_over_revert() {
     // no step left: refused with its code, not silent, not unsupported
     assert_eq!(
         w.answer_app("app.redo"),
-        Some(Answer::Refused("host-notice-undo-empty".into()))
+        Some(Answer::Refused(Reason::new("host-notice-undo-empty", "")))
     );
     assert_eq!(w.answer_app("app.quit"), None);
 }
@@ -99,7 +99,10 @@ fn an_undo_after_another_window_changed_the_card_is_a_conflict_and_keeps_the_ste
     mv(&b, "c1", "todo");
     assert_eq!(
         a.answer_app("app.undo"),
-        Some(Answer::Refused("host-notice-undo-conflict".into()))
+        Some(Answer::Refused(Reason::new(
+            "host-notice-undo-conflict",
+            ""
+        )))
     );
     // nothing overwritten, nothing lost: the step is still there
     assert_eq!((a.history().undoable, a.history().redoable), (1, 0));

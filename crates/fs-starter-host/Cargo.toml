@@ -21,21 +21,25 @@ path = "src/main.rs"
 [dependencies]
 fs-starter = { path = "../fs-starter", version = "0.0.8" }
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", tag = "v0.0.6", version = "0.0.5" }
-fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "3130014fa0f1a5794785aa7902b9cec7568fab37", version = "0.1.0" }
-fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "3130014fa0f1a5794785aa7902b9cec7568fab37", version = "0.1.0" }
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "2927e175559ebe2419065eebbc2b0deafc74f9ce", version = "0.1.0" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "2927e175559ebe2419065eebbc2b0deafc74f9ce", version = "0.1.0" }
 toml = "0.8"
 # The one reader of module versions (`Version`), already in the lock; ranges are `fs_types::interface::InterfaceReq`.
 semver = "1.0.28"
 # The exchange file of a module (`catalog/commands.json` of fs-capture); already in the lock.
 serde_json = "1"
 # The command model (no dependencies of its own); the same tag as the one the scaffold settings come from (one source, lock check).
-fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "8d52388ae8b0ce425fe93309f846cb70c571c12b", version = "0.1.0" }
+fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "d49e01d923931732ab1e090bc38f45268db85002", version = "0.1.0" }
 # Single instance (ADR 0097): the contract `Instance` of fs-interfaces, served and called through fs-rpc (the same pins as fs-forms-run).
 fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "e6f69213b68b47e139fc8038c8a095f9ed1fef3c", version = "0.2.0" }
-fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "11cdf71482cfcd8de14038c4e7fc796f2611e02c", version = "0.1.3" }
+fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "d8944ef9f446956e2d86942cafd656519d3abdea", version = "0.1.4" }
+# The client of the settings service (E3): `ensure_service` + `RpcSettingsStore`. Same repo and rev as fs-rpc (one source).
+fs-settings-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "d8944ef9f446956e2d86942cafd656519d3abdea", version = "0.1.4" }
+# `Settings::open`, `Catalog`, `CatalogFile` (E1): the same rev as fs-starter.
+fs-settings = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "d49e01d923931732ab1e090bc38f45268db85002", version = "0.1.0" }
 # Same file as an open handle (Unix: device + inode, Windows: volume + file index); instead of an own `same_file`. Already in the lock.
 same-file = "1"
-fs-components-kanban = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "8d52388ae8b0ce425fe93309f846cb70c571c12b", version = "0.1.0" }
+fs-components-kanban = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "d49e01d923931732ab1e090bc38f45268db85002", version = "0.1.0" }
 capnp = "0.27"
 capnp-rpc = "0.27"
 futures = "0.3"

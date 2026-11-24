@@ -17,6 +17,7 @@ mod check_sources;
 mod check_system;
 mod host;
 pub mod instance;
+pub mod open_setting;
 mod package;
 mod pending;
 mod program_arg;
