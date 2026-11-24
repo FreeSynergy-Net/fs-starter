@@ -18,7 +18,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - id: plan
-        uses: FreeSynergy-Net/fs-release/actions/plan@485f74732ddb90965fafcfa37b6a4f6b473dcc6b
+        uses: FreeSynergy-Net/fs-release/actions/plan@e0aa772a12b91f8a37846b4efef5f44a963a6c47
         with:
           # the Cargo version of this branch as the tag name (no tag exists; tag-on-main does nothing on a branch). ADJUST this line at every version bump.
           tag: v0.0.7
@@ -31,11 +31,11 @@ jobs:
           windows-targets: x86_64
   linux:
     needs: plan
-    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-linux.yml@485f74732ddb90965fafcfa37b6a4f6b473dcc6b
+    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-linux.yml@e0aa772a12b91f8a37846b4efef5f44a963a6c47
     with:
       plan: ${{ needs.plan.outputs.plan }}
   windows:
     needs: plan
-    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-windows.yml@485f74732ddb90965fafcfa37b6a4f6b473dcc6b
+    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-windows.yml@e0aa772a12b91f8a37846b4efef5f44a963a6c47
     with:
       plan: ${{ needs.plan.outputs.plan }}
