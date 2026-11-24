@@ -46,7 +46,7 @@ pub fn json_keys(module: &str, keys: &[&str]) -> String {
         })
         .collect();
     format!(
-        r#"{{"module":"{module}","version":"0.1","contract":"{module}","scope":"own-contract","commands":[{}]}}"#,
+        r#"{{"module":"{module}","version":"0.1.0","contract":"{module}","scope":"own-contract","commands":[{}]}}"#,
         commands.join(",")
     )
 }

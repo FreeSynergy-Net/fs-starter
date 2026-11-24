@@ -236,7 +236,7 @@ fn a_folder_that_cannot_be_read_is_not_silently_empty() {
 #[test]
 fn a_bare_service_next_to_service_exe_refuses_the_module_with_its_own_cause() {
     let b = tempfile::tempdir().unwrap();
-    folder(b.path(), "groups", "0.1");
+    folder(b.path(), "groups", "0.1.0");
     let m = load(b.path(), Path::new("/nonexistent"), &SystemPackaged::new());
     let k = m.find("groups").unwrap();
     let dir = b.path().join("groups");

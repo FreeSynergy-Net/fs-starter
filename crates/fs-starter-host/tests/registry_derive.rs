@@ -12,7 +12,7 @@ use fs_starter_host::registry::{Actor, Refusal, Registry, parse};
 
 fn file(module: &str, command: &str) -> String {
     format!(
-        r#"{{"module":"{module}","version":"0.1","contract":"{module}","scope":"own-contract","commands":[{{{command},"call":"x","access":"read","help":{{"topic":"t","text":{{"en":"e","de":"d"}}}}}}]}}"#
+        r#"{{"module":"{module}","version":"0.1.0","contract":"{module}","scope":"own-contract","commands":[{{{command},"call":"x","access":"read","help":{{"topic":"t","text":{{"en":"e","de":"d"}}}}}}]}}"#
     )
 }
 
