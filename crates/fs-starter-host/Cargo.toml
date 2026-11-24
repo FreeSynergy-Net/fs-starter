@@ -67,6 +67,10 @@ png = "0.18"
 name = "fs-starter"
 assets = [
   { source = "target/release/fs-starter", dest = "/usr/bin/fs-starter", mode = "755" },
+  { source = "packaging/net.freesynergy.Starter.desktop", dest = "/usr/share/applications/net.freesynergy.Starter.desktop", mode = "644" },
+  { source = "packaging/net.freesynergy.Starter.metainfo.xml", dest = "/usr/share/metainfo/net.freesynergy.Starter.metainfo.xml", mode = "644" },
+  # The icon is fetched from fs-icons by packaging/prepare.sh before the build (one source, no copy here).
+  { source = "packaging/net.freesynergy.Starter.svg", dest = "/usr/share/icons/hicolor/scalable/apps/net.freesynergy.Starter.svg", mode = "644" },
 ]
 
 [package.metadata.generate-rpm.obsoletes]
@@ -80,3 +84,11 @@ name = "fs-starter"
 replaces = "fs-starter-host"
 conflicts = "fs-starter-host"
 provides = "fs-starter-host"
+# Assets: the binary, the desktop entry, the AppStream metainfo and the hicolor icon (`packaging/`, paths relative to this crate). Giving `assets`
+# replaces cargo-deb's default list, so the binary is named here too. The icon file comes from fs-icons (`packaging/prepare.sh`).
+assets = [
+  ["target/release/fs-starter", "usr/bin/", "755"],
+  ["../../packaging/net.freesynergy.Starter.desktop", "usr/share/applications/", "644"],
+  ["../../packaging/net.freesynergy.Starter.metainfo.xml", "usr/share/metainfo/", "644"],
+  ["../../packaging/net.freesynergy.Starter.svg", "usr/share/icons/hicolor/scalable/apps/", "644"],
+]

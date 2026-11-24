@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=FreeSynergy Starter
+Comment=Opens the window of a FreeSynergy program from its description
+Exec=fs-starter %f
+Icon=net.freesynergy.Starter
+Terminal=false
+Categories=Utility;
+# The host needs a description to open; started alone it only prints its help. Hidden from the menu until a launcher exists.
+NoDisplay=true
