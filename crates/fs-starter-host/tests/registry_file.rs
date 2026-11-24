@@ -89,7 +89,7 @@ fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
             ),
             "capture"
         ),
-        "command-capability"
+        "command-id-differs"
     );
     assert_eq!(
         cause(
@@ -105,8 +105,21 @@ fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
         cause(changed("\"topic\": \"capture-screens\", ", ""), "capture"),
         "command-help"
     );
+    // no `id` is fine since SW-5 (the host derives it); no `capability` is not
+    let no_id = parse(&changed("\"id\": \"capture.screens\", ", ""), "capture").unwrap();
+    assert_eq!(no_id.items[0].command.id.as_str(), "capture.screens");
     assert_eq!(
-        cause(changed("\"id\": \"capture.screens\", ", ""), "capture"),
+        cause(
+            changed("\"capability\": \"capture.screens\"", "\"x\": 1"),
+            "capture"
+        ),
+        "command-capability"
+    );
+    assert_eq!(
+        cause(
+            changed("\"id\": \"capture.screens\"", "\"id\": 7"),
+            "capture"
+        ),
         "command-id"
     );
     assert_eq!(cause(r#"{"module":"capture","version":"0.1","contract":"capture","scope":"own-contract","commands":[]}"#.into(), "capture"), "commands");

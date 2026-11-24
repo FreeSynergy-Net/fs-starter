@@ -11,6 +11,7 @@
 mod model;
 mod names;
 pub(crate) mod read;
+mod read_ids;
 mod verify;
 
 use std::fs;

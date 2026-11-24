@@ -5,12 +5,13 @@
 use fs_starter_host::registry::{ModuleSet, Registry, parse};
 
 /// The text of a set file with `module` and one command per id (all fields the format requires).
+/// The id is the capability too (the own prefix written out, the same command as the bare key).
 pub fn json(module: &str, ids: &[&str]) -> String {
     let commands: Vec<String> = ids
         .iter()
         .map(|id| {
             format!(
-                r#"{{"id":{id:?},"call":"x","capability":"{module}.cap","access":"read","help":{{"topic":{:?},"text":{{"en":"e","de":"d"}}}}}}"#,
+                r#"{{"id":{id:?},"call":"x","capability":{id:?},"access":"read","help":{{"topic":{:?},"text":{{"en":"e","de":"d"}}}}}}"#,
                 id.replace('.', "-")
             )
         })
@@ -21,8 +22,33 @@ pub fn json(module: &str, ids: &[&str]) -> String {
     )
 }
 
+/// A set with exactly these ids, also ones the host would never derive (a forged set, to test what `add` still refuses): the file is
+/// read with bare keys, then the ids are put in by hand.
 pub fn set(module: &str, ids: &[&str]) -> ModuleSet {
-    parse(&json(module, ids), module).unwrap()
+    let keys: Vec<String> = (0..ids.len()).map(|i| format!("k{i}")).collect();
+    let keys: Vec<&str> = keys.iter().map(String::as_str).collect();
+    let mut set = parse(&json_keys(module, &keys), module).unwrap();
+    for (item, id) in set.items.iter_mut().zip(ids) {
+        item.command.id = (*id).into();
+    }
+    set
+}
+
+/// The text of a set file with bare contract keys and NO id (what a module ships since SW-5).
+pub fn json_keys(module: &str, keys: &[&str]) -> String {
+    let commands: Vec<String> = keys
+        .iter()
+        .map(|k| {
+            format!(
+                r#"{{"capability":{k:?},"call":"x","access":"read","help":{{"topic":{:?},"text":{{"en":"e","de":"d"}}}}}}"#,
+                k.replace('.', "-")
+            )
+        })
+        .collect();
+    format!(
+        r#"{{"module":"{module}","version":"0.1","contract":"{module}","scope":"own-contract","commands":[{}]}}"#,
+        commands.join(",")
+    )
 }
 
 pub fn ids(r: &Registry) -> Vec<String> {

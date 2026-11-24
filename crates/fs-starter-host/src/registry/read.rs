@@ -1,6 +1,6 @@
 //! Reading the command set of a module: `<modules>/<module>/catalog/commands.json`, the file `fs-capture` ships (`catalog/commands.json`
 //! @a9ca621). Mandatory: `module` (= the folder name), `version` (`Major.Minor`), `contract` (= module), `scope` (`own-contract`) and a
-//! non-empty `commands`; per command `id`, `capability` (in the name space of the module), `access` (`read`/`write`/`delete`) and
+//! non-empty `commands`; per command `capability` (the contract key, `card.move`; the HOST binds `<module>.<key>`), `access` (`read`/`write`/`delete`) and
 //! `help` (`topic`, `text.en`, `text.de`). `call` is kept as text and never run.
 //!
 //! Pattern: Reader (one parser from the file's text to the value types; a file that cannot be read is a coded refusal).
@@ -13,6 +13,7 @@ use fs_components_commands::Command;
 use serde_json::Value;
 
 use super::model::{Access, Help, Item, ModuleSet, Refusal};
+use super::read_ids;
 
 fn bad(c: &str) -> Refusal {
     Refusal::Unreadable(c.to_owned())
@@ -26,7 +27,7 @@ fn text<'a>(v: &'a Value, key: &str, cause: &str) -> Result<&'a str, Refusal> {
 ///
 /// # Errors
 /// [`Refusal::Unreadable`] with the cause (`json`, `module`, `version`, `contract`, `scope`, `commands`, `command-id`,
-/// `command-capability`, `command-access`, `command-help`); [`Refusal::ModuleName`] if `module` is not the folder name.
+/// `command-id-differs`, `command-capability`, `command-access`, `command-help`); [`Refusal::ModuleName`] if `module` is not the folder name.
 pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
     let doc: Value = serde_json::from_str(text_in).map_err(|_| bad("json"))?;
     let module = text(&doc, "module", "module")?;
@@ -48,13 +49,13 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
         .and_then(Value::as_array)
         .filter(|a| !a.is_empty())
         .ok_or_else(|| bad("commands"))?;
-    let space = format!("{module}.");
+    // The identity of the module is the folder the file was read from (`module == folder` is checked above), never a field the file
+    // sets freely. The id is derived from it and from the key `capability`; a given `id` must equal it (see `read_ids`).
     let mut items = Vec::new();
     for c in list {
-        let id = text(c, "id", "command-id")?;
-        if !text(c, "capability", "command-capability")?.starts_with(&space) {
-            return Err(bad("command-capability"));
-        }
+        let key = text(c, "capability", "command-capability")?;
+        let id = read_ids::derive(folder, key);
+        read_ids::check_explicit(c, folder, &id)?;
         let access = Access::parse(text(c, "access", "command-access")?)
             .ok_or_else(|| bad("command-access"))?;
         let h = c.get("help").ok_or_else(|| bad("command-help"))?;
@@ -65,14 +66,14 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
             de: text(t, "de", "command-help")?.to_owned(),
         };
         items.push(Item {
-            command: Command::new(id, help.topic.as_str()),
+            command: Command::new(id.as_str(), help.topic.as_str()),
             access,
             help,
             call: c.get("call").and_then(Value::as_str).map(str::to_owned),
         });
     }
     Ok(ModuleSet {
-        module: module.to_owned(),
+        module: folder.to_owned(),
         version: version.to_owned(),
         items,
     })
