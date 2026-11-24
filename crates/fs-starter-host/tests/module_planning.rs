@@ -61,7 +61,7 @@ async fn a_refusal_of_planning_decodes_as_a_problem_of_its_kind() {
             for (form, scope, kind) in [
                 ("no-such-form@1.0.0", "", "form-source-unknown-form"),
                 (
-                    "cards-in-columns@1.2.0",
+                    "cards-in-columns@1.3.0",
                     "no-such",
                     "form-source-unknown-scope",
                 ),

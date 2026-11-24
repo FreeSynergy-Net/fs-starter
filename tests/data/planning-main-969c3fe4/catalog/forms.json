@@ -1,19 +1,24 @@
 [
   {
     "name": "cards-in-columns",
-    "version": "1.2",
+    "version": "1.3",
     "type": "Task",
     "map": {
       "cards": "Task",
       "column": "column",
       "column-label": "column-label",
       "title": "title",
-      "facts": ["due", "priority", "participants", "keywords"],
+      "facts": ["due", "participants", "keywords"],
       "lane": "board",
       "progress": "percent",
       "order": "index",
       "after": "after",
       "before": "before",
+      "description": "description",
+      "color": "color",
+      "estimated": "estimated",
+      "priority": "priority",
+      "column-limit": "column-limit",
       "move": "card.move",
       "create": "task.create",
       "remove": "task.delete"
@@ -21,18 +26,20 @@
     "fields": {
       "column": "text",
       "column-label": "text",
+      "column-limit": "number",
       "percent": "number",
       "title": "text",
       "due": "date-time",
-      "progress": "text",
       "board": "text",
       "index": "number",
       "after": "reference",
       "before": "reference",
-      "priority": "text",
+      "priority": "number",
       "participants": "text",
       "keywords": "text",
-      "description": "text"
+      "description": "text",
+      "color": "text",
+      "estimated": "text"
     }
   }
 ]

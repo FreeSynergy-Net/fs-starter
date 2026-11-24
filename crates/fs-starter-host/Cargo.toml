@@ -21,8 +21,8 @@ path = "src/main.rs"
 [dependencies]
 fs-starter = { path = "../fs-starter", version = "0.0.8" }
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", tag = "v0.0.6", version = "0.0.5" }
-fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "687998faf266cd5ffc2ff47feba2a195b1ed4aae", version = "0.1.0" }
-fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "687998faf266cd5ffc2ff47feba2a195b1ed4aae", version = "0.1.0" }
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "53585a542a80ed4b8b9ec8559f4ef181abfe2272", version = "0.1.0" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "53585a542a80ed4b8b9ec8559f4ef181abfe2272", version = "0.1.0" }
 toml = "0.8"
 # The one reader of module versions (`Version`), already in the lock; ranges are `fs_types::interface::InterfaceReq`.
 semver = "1.0.28"
@@ -68,8 +68,8 @@ fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "e
 
 # The real planning service in this process (Unix only: its tests use a Unix socket); every library on the same tag as above (one source each).
 [target.'cfg(unix)'.dev-dependencies]
-fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "e567cd791286e8b37362700811fb95968e2bea95", version = "0.0.4" }
-fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "e567cd791286e8b37362700811fb95968e2bea95", version = "0.0.4" }
+fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "969c3fe44341db14c21b270c397d87363faadd6b", version = "0.0.4" }
+fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "969c3fe44341db14c21b270c397d87363faadd6b", version = "0.0.4" }
 fs-objects = { git = "https://github.com/FreeSynergy-Net/fs-objects", rev = "f6409f2a5378ba1464e69ae216efd4d27d249182", version = "0.0.11", features = ["testing"] }
 
 # RPM (cargo-generate-rpm, built by the release CI only). The package is called `fs-starter` (the host crate keeps its name) and replaces the

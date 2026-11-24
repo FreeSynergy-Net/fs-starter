@@ -160,3 +160,25 @@ fn the_remember_line_is_said_only_while_the_question_is_asked() {
 fn the_socket_of_the_person_service_is_named_settings() {
     assert_eq!(fs_starter_host::open_setting::SOCKET_PROGRAM, "settings");
 }
+
+/// The folder of the system programs is the one NAMED, never a fixed `/usr/bin` (a hermetic G6): a service program that is there is
+/// tried (here one that ends at once: the cause is then not `no-server`), an empty folder says `no-server`.
+#[cfg(unix)]
+#[test]
+fn the_service_program_is_looked_for_in_the_named_folder_only() {
+    use std::os::unix::fs::PermissionsExt;
+    let dir = tempfile::tempdir().expect("dir");
+    let (socket, running) = (dir.path().join("s.sock"), dir.path().join("app/fs-starter"));
+    let bin = dir.path().join("bin");
+    std::fs::create_dir_all(&bin).expect("bin");
+    let exe = bin.join("fs-settings");
+    std::fs::write(&exe, "#!/bin/sh\nexit 1\n").expect("script");
+    std::fs::set_permissions(&exe, std::fs::Permissions::from_mode(0o755)).expect("mode");
+    let times = SingleTimes::default();
+    let tried = connect(&program(), &socket, &running, &bin, &times);
+    let line = tried.line().expect("a line");
+    assert!(
+        !line.contains("no-server"),
+        "the program of the named folder was tried: {line}"
+    );
+}

@@ -3,6 +3,7 @@
   "version": "0.0.3",
   "contract": "planning",
   "scope": "own-contract",
+  "requires": [ { "module": "person", "required": true } ],
   "commands": [
     {
       "capability": "card.move", "call": "Boards.moveCard", "access": "write",

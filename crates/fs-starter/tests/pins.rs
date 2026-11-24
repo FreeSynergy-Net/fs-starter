@@ -1,22 +1,9 @@
 //! The pins of the lifted libraries, read from `Cargo.lock` (K4b, mutant P4: `fs-conformance` back on the `rev` of fs-types main 339aa24
 //! has no `fs-types` of its own and so keeps "one source" green; only the exact tag shows it).
 
-/// The doubles that are KNOWN and wait for a follow-up commit of their owner (E3, 24.11.): fs-forms 687998fa still pins fs-rpc 7f214f93,
-/// and the dev-dependency fs-modules-planning e567cd79 still pins fs-rpc 11cdf714 (tests only). fs-rpc 0120f9af is the one this repo uses
-/// (it holds `fs-settings-rpc` on fs-components d53126ba). Nothing else is allowed twice; a line here is deleted as soon as its owner
-/// moved (the test below fails when it is no longer needed).
-const KNOWN_OLD: [(&str, &str); 4] = [
-    ("fs-rpc", "?rev=7f214f935e9913e8cca5e275ab1fcd5b9dcfc170#"),
-    ("fs-rpc", "?rev=11cdf71482cfcd8de14038c4e7fc796f2611e02c#"),
-    (
-        "fs-trusted-path",
-        "?rev=7f214f935e9913e8cca5e275ab1fcd5b9dcfc170#",
-    ),
-    (
-        "fs-trusted-path",
-        "?rev=11cdf71482cfcd8de14038c4e7fc796f2611e02c#",
-    ),
-];
+/// The doubles that are KNOWN and wait for a follow-up commit of their owner: none (E3 final, 24.11.: every library has one source).
+/// A line here is allowed only with the reason and the owner that has to move; the test below fails when it is no longer needed.
+const KNOWN_OLD: [(&str, &str); 0] = [];
 
 /// The `source` line of the package `name` in the workspace lock (there must be exactly one, apart from the `KNOWN_OLD` doubles).
 fn source_of(name: &str) -> String {
@@ -84,11 +71,11 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ),
         (
             "fs-forms-run",
-            "REV:687998faf266cd5ffc2ff47feba2a195b1ed4aae",
+            "REV:53585a542a80ed4b8b9ec8559f4ef181abfe2272",
         ),
         (
             "fs-forms-bind",
-            "REV:687998faf266cd5ffc2ff47feba2a195b1ed4aae",
+            "REV:53585a542a80ed4b8b9ec8559f4ef181abfe2272",
         ),
         (
             "fs-components",
