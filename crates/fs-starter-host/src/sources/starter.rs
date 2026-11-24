@@ -29,6 +29,8 @@ use fs_forms_run::{Coded, FormData, FormRecords, Records, Sources, name_of};
 pub struct StarterSources {
     modules: Modules,
     limits: Limits,
+    /// A one-time command (`--picture`, `--check-system`): a service this run started is ended when the run is done.
+    end_started: bool,
 }
 
 impl StarterSources {
@@ -41,7 +43,18 @@ impl StarterSources {
     /// Given modules and borders (tests).
     #[must_use]
     pub fn new(modules: Modules, limits: Limits) -> Self {
-        Self { modules, limits }
+        Self {
+            modules,
+            limits,
+            end_started: false,
+        }
+    }
+
+    /// For a one-time command: the services this run started itself are ended again after the read (never one that was up before).
+    #[must_use]
+    pub fn ending_what_it_started(mut self) -> Self {
+        self.end_started = true;
+        self
     }
 
     /// The module and its declared forms for `range`, WITHOUT starting a service: what `--check` shows. The same road the window
@@ -110,7 +123,7 @@ impl StarterSources {
                 .with("module", module)
                 .with("command", command));
         };
-        service::call(known, key, record, &self.limits)
+        service::call(known, key, record, &self.limits, self.end_started)
     }
 }
 
@@ -123,9 +136,42 @@ impl Sources for StarterSources {
             code
         };
         let (known, forms) = self.declared(range).map_err(said)?;
-        let records = service::fetch(known, &forms, &self.limits).map_err(said)?;
+        let began = std::time::Instant::now();
+        let records =
+            service::fetch(known, &forms, &self.limits, self.end_started).map_err(said)?;
+        // what was read, never silent: an empty picture can be told from a service that gave nothing
+        for line in read_lines(known.name.as_str(), &records, began.elapsed()) {
+            eprintln!("{line}");
+        }
         Ok(Arc::new(records))
     }
+}
+
+/// What a read gave, one line per form: `fs-starter: read module=M form=F records=N ms=T provider=P` (+ ` empty` when the service answered
+/// with no record: the service is there, there is just nothing in it).
+#[must_use]
+pub fn read_lines(module: &str, records: &FormRecords, took: std::time::Duration) -> Vec<String> {
+    if records.forms.is_empty() {
+        return vec![format!(
+            "fs-starter: read module={module} form=- records=0 ms={} provider={:?} no-form",
+            took.as_millis(),
+            records.provider
+        )];
+    }
+    records
+        .forms
+        .iter()
+        .map(|f| {
+            let n = f.rows.len();
+            format!(
+                "fs-starter: read module={module} form={} records={n} ms={} provider={:?}{}",
+                f.declared.form.name,
+                took.as_millis(),
+                records.provider,
+                if n == 0 { " empty" } else { "" }
+            )
+        })
+        .collect()
 }
 
 /// A code with its parameters as one line (`code key=value ...`).
@@ -147,5 +193,57 @@ pub fn bare(forms: Vec<ModuleForm>) -> FormRecords {
             .map(|declared| FormData::read_only(declared, Vec::new()))
             .collect(),
         ..FormRecords::default()
+    }
+}
+
+#[cfg(test)]
+mod read_lines_tests {
+    use super::*;
+    use fs_forms_bind::{FormRef, ModuleForm};
+    use std::time::Duration;
+
+    fn data(rows: usize) -> FormData {
+        let declared = ModuleForm {
+            form: FormRef {
+                name: "board".to_owned(),
+                major: 1,
+                minor: 0,
+            },
+            map: Vec::new(),
+            fields: Vec::new(),
+        };
+        let rows = (0..rows)
+            .map(|i| fs_forms_run::FormRow {
+                key: i.to_string(),
+                values: Vec::new(),
+                may: Vec::new(),
+            })
+            .collect();
+        FormData::read_only(declared, rows)
+    }
+
+    #[test]
+    fn a_read_says_module_form_count_and_time_and_an_empty_one_is_marked() {
+        let full = FormRecords {
+            provider: "real".to_owned(),
+            forms: vec![data(3)],
+            ..FormRecords::default()
+        };
+        let line = &read_lines("planning", &full, Duration::from_millis(7))[0];
+        assert_eq!(
+            line,
+            "fs-starter: read module=planning form=board records=3 ms=7 provider=\"real\""
+        );
+        let empty = FormRecords {
+            forms: vec![data(0)],
+            ..full
+        };
+        assert!(
+            read_lines("planning", &empty, Duration::ZERO)[0]
+                .ends_with("records=0 ms=0 provider=\"real\" empty")
+        );
+        assert!(
+            read_lines("planning", &FormRecords::default(), Duration::ZERO)[0].ends_with("no-form")
+        );
     }
 }

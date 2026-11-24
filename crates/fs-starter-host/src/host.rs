@@ -77,7 +77,12 @@ pub fn run(args: &[String]) -> ExitCode {
                 Ok(place) => place,
                 Err(code) => return code,
             };
-            let sources = StarterSources::standard();
+            let sources = if c.picture.is_some() {
+                // `--picture` is a one-time command: a service it started itself is ended again
+                StarterSources::standard().ending_what_it_started()
+            } else {
+                StarterSources::standard()
+            };
             shell::around_window(&c.frontend, c.resumed, || {
                 fs_forms_run::run_code_with(args, &sources)
             })

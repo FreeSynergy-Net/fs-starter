@@ -40,8 +40,11 @@ pub(crate) fn check_sources(ranges: &[String], sources: &StarterSources) -> Exit
                     println!("fs-starter: red {}", crate::sources::line(&c));
                 }
                 println!(
-                    "fs-starter: source {} {} checked",
-                    known.name, known.version
+                    "fs-starter: source {} {} checked forms={} commands={} (no service started)",
+                    known.name,
+                    known.version,
+                    records.forms.len(),
+                    keys.len()
                 );
             }
         }

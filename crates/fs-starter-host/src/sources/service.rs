@@ -11,7 +11,7 @@ use fs_forms_bind::ModuleForm;
 use fs_forms_run::{Coded, FormData, FormRecords, FormRow};
 use fs_interfaces::forms::FORM_SOURCE_LEVEL;
 use fs_interfaces::formsource_capnp::form_source;
-use fs_rpc::{CommandStarter, Expected, SingleTimes, ensure_single};
+use fs_rpc::{CommandStarter, Expected, ServerStarter, SingleTimes, ensure_single, stop_server};
 
 use super::answer::{Limits, clean};
 use super::known::Known;
@@ -33,18 +33,36 @@ fn socket_of(module: &str) -> Result<PathBuf, Coded> {
     fs_rpc::default_socket(module).ok_or_else(|| Coded::new("host-notice-data-no-socket"))
 }
 
-/// A service that is up (started from the folder of the module if none runs) and the capability of `FormSource` on it.
+/// The starter that notes that THIS call started the service (a service that was up already is not ours to end).
+struct Noted<'a> {
+    inner: CommandStarter,
+    started: &'a std::cell::Cell<bool>,
+}
+
+impl ServerStarter for Noted<'_> {
+    fn start(&self) -> std::io::Result<()> {
+        self.started.set(true);
+        self.inner.start()
+    }
+}
+
+/// A service that is up (started from the folder of the module if none runs; `started` is set when THIS call started it) and the
+/// capability of `FormSource` on it.
 async fn up(
     known: &Known,
     socket: &Path,
     limits: &Limits,
+    started: &std::cell::Cell<bool>,
 ) -> Result<fs_rpc::Single<form_source::Client>, Coded> {
     let exe = known
         .service()
         .map_err(|why| cause(UNREACHABLE, &known.name, why))?;
     // any version: the contract version was compared with the catalog of the module by the host (border 2), here only the protocol
     let expected = Expected::new("");
-    let starter = CommandStarter::new(&exe, ["serve"]);
+    let starter = Noted {
+        inner: CommandStarter::new(&exe, ["serve"]),
+        started,
+    };
     let times = SingleTimes {
         overall: limits.time,
         ..SingleTimes::default()
@@ -117,13 +135,36 @@ fn rows(
     Ok(out)
 }
 
+/// A one-time command (`--picture`, `--check-system`) ends the service it started itself: the service has no other user, and the
+/// deadline without a user (SB-3) is not there yet. A service that was up before is never ended.
+async fn finish(socket: &Path, started: &std::cell::Cell<bool>, end: bool) {
+    if end && started.get() {
+        let _ = stop_server(socket).await;
+    }
+}
+
 async fn read_all(
     known: &Known,
     forms: &[ModuleForm],
     limits: &Limits,
+    end: bool,
 ) -> Result<FormRecords, Coded> {
     let socket = socket_of(&known.name)?;
-    let single = up(known, &socket, limits).await?;
+    let started = std::cell::Cell::new(false);
+    let got = read_up(known, forms, limits, &socket, &started).await;
+    finish(&socket, &started, end).await;
+    got
+}
+
+async fn read_up(
+    known: &Known,
+    forms: &[ModuleForm],
+    limits: &Limits,
+    socket: &Path,
+    started: &std::cell::Cell<bool>,
+) -> Result<FormRecords, Coded> {
+    let socket = socket.to_path_buf();
+    let single = up(known, &socket, limits, started).await?;
     beat(known, &socket).await?;
     let client = single.connection.client.clone();
     let hello = client
@@ -194,39 +235,66 @@ fn run<T>(
 /// Start (if needed), check and read: the records of every declared form, as rows by channel.
 ///
 /// # Errors
-/// A code `host-notice-data-*` with the module and the cause; nothing half read is returned.
-pub fn fetch(known: &Known, forms: &[ModuleForm], limits: &Limits) -> Result<FormRecords, Coded> {
-    run(limits, known, read_all(known, forms, limits))
+/// A code `host-notice-data-*` with the module and the cause; nothing half read is returned. `end`: end the service if this call
+/// started it (one-time commands).
+pub fn fetch(
+    known: &Known,
+    forms: &[ModuleForm],
+    limits: &Limits,
+    end: bool,
+) -> Result<FormRecords, Coded> {
+    run(limits, known, read_all(known, forms, limits, end))
 }
 
 /// Run `command` on `record` through the service (the check that it is a command of the own name space is made by the caller).
 ///
 /// # Errors
 /// A code `host-notice-data-*`, or `host-notice-invoke-failed` when the service says it did not do it.
-pub fn call(known: &Known, command: &str, record: &str, limits: &Limits) -> Result<(), Coded> {
+pub fn call(
+    known: &Known,
+    command: &str,
+    record: &str,
+    limits: &Limits,
+    end: bool,
+) -> Result<(), Coded> {
     run(limits, known, async {
         let socket = socket_of(&known.name)?;
-        let single = up(known, &socket, limits).await?;
-        let mut request = single.connection.client.invoke_request();
-        {
-            let mut p = request.get();
-            p.set_command(command);
-            p.set_record(record);
-        }
-        let answer = request
-            .send()
-            .promise
-            .await
-            .map_err(|_| cause(UNREACHABLE, &known.name, "invoke"))?;
-        let failed = answer
-            .get()
-            .map_err(|_| cause(ANSWER, &known.name, "invoke"))?
-            .get_failed();
-        if failed {
-            return Err(
-                cause("host-notice-invoke-failed", &known.name, "service").with("command", command)
-            );
-        }
-        Ok(())
+        let started = std::cell::Cell::new(false);
+        let got = call_up(known, command, record, limits, &socket, &started).await;
+        finish(&socket, &started, end).await;
+        got
     })
+}
+
+async fn call_up(
+    known: &Known,
+    command: &str,
+    record: &str,
+    limits: &Limits,
+    socket: &Path,
+    started: &std::cell::Cell<bool>,
+) -> Result<(), Coded> {
+    let socket = socket.to_path_buf();
+    let single = up(known, &socket, limits, started).await?;
+    let mut request = single.connection.client.invoke_request();
+    {
+        let mut p = request.get();
+        p.set_command(command);
+        p.set_record(record);
+    }
+    let answer = request
+        .send()
+        .promise
+        .await
+        .map_err(|_| cause(UNREACHABLE, &known.name, "invoke"))?;
+    let failed = answer
+        .get()
+        .map_err(|_| cause(ANSWER, &known.name, "invoke"))?
+        .get_failed();
+    if failed {
+        return Err(
+            cause("host-notice-invoke-failed", &known.name, "service").with("command", command)
+        );
+    }
+    Ok(())
 }
