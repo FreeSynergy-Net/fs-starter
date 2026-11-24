@@ -18,7 +18,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 0
       - id: plan
-        uses: FreeSynergy-Net/fs-release/actions/plan@29872ebf9fd8d76c0e212ff2ab448973afa0d9d7
+        uses: FreeSynergy-Net/fs-release/actions/plan@a6da90f5ea1318b416fd900e847703e3e30487e4
         with:
           # the Cargo version of this branch as the tag name (no tag exists; tag-on-main does nothing on a branch). ADJUST this line at every version bump.
           tag: v0.0.8
@@ -31,12 +31,12 @@ jobs:
           windows-targets: x86_64
   linux:
     needs: plan
-    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-linux.yml@29872ebf9fd8d76c0e212ff2ab448973afa0d9d7
+    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-linux.yml@a6da90f5ea1318b416fd900e847703e3e30487e4
     with:
       plan: ${{ needs.plan.outputs.plan }}
   windows:
     needs: plan
-    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-windows.yml@29872ebf9fd8d76c0e212ff2ab448973afa0d9d7
+    uses: FreeSynergy-Net/fs-release/.github/workflows/_release-windows.yml@a6da90f5ea1318b416fd900e847703e3e30487e4
     with:
       plan: ${{ needs.plan.outputs.plan }}
   # Gate: the names inside the built packages (not the manifest) are the same for deb and rpm, and both take over the earlier `fs-starter-host`.

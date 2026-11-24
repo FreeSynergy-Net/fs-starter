@@ -67,6 +67,10 @@ pub fn run(args: &[String]) -> ExitCode {
             println!("{HELP}{}", fs_forms_run::HELP);
             ExitCode::from(Exit::DONE.code())
         }
+        // the list of blocks this build does not draw: the line of fs-forms-run itself (no copy here)
+        Ok(Command::ListBlocks) => {
+            ExitCode::from(Exit::of_frontend(fs_forms_run::run_code(args)).code())
+        }
         Ok(Command::Check(c)) => {
             if let Err(code) = announce(&c) {
                 return code;
