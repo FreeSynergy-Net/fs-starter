@@ -946,7 +946,7 @@ checksum = "fe6d2e5af09e8c8ad56c969f2157a3d4238cebc7c55f0a517728c38f7b200f81"
 dependencies = [
  "serde",
  "termcolor",
- "unicode-width 0.1.14",
+ "unicode-width 0.2.3",
 ]
 
 [[package]]
@@ -1790,7 +1790,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-bind"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=53585a542a80ed4b8b9ec8559f4ef181abfe2272#53585a542a80ed4b8b9ec8559f4ef181abfe2272"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7f17b17f68d0579c15a928f5f92d07dac6163f6b#7f17b17f68d0579c15a928f5f92d07dac6163f6b"
 dependencies = [
  "fs-components-commands",
  "sha2 0.10.9",
@@ -1799,7 +1799,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=53585a542a80ed4b8b9ec8559f4ef181abfe2272#53585a542a80ed4b8b9ec8559f4ef181abfe2272"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7f17b17f68d0579c15a928f5f92d07dac6163f6b#7f17b17f68d0579c15a928f5f92d07dac6163f6b"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1812,7 +1812,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=53585a542a80ed4b8b9ec8559f4ef181abfe2272#53585a542a80ed4b8b9ec8559f4ef181abfe2272"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7f17b17f68d0579c15a928f5f92d07dac6163f6b#7f17b17f68d0579c15a928f5f92d07dac6163f6b"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1821,7 +1821,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=53585a542a80ed4b8b9ec8559f4ef181abfe2272#53585a542a80ed4b8b9ec8559f4ef181abfe2272"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7f17b17f68d0579c15a928f5f92d07dac6163f6b#7f17b17f68d0579c15a928f5f92d07dac6163f6b"
 dependencies = [
  "semver",
  "sha2 0.10.9",
@@ -1830,7 +1830,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=53585a542a80ed4b8b9ec8559f4ef181abfe2272#53585a542a80ed4b8b9ec8559f4ef181abfe2272"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7f17b17f68d0579c15a928f5f92d07dac6163f6b#7f17b17f68d0579c15a928f5f92d07dac6163f6b"
 dependencies = [
  "fs-components",
  "fs-components-app",

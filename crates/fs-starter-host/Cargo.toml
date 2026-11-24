@@ -21,8 +21,8 @@ path = "src/main.rs"
 [dependencies]
 fs-starter = { path = "../fs-starter", version = "0.0.8" }
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", tag = "v0.0.6", version = "0.0.5" }
-fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "53585a542a80ed4b8b9ec8559f4ef181abfe2272", version = "0.1.0" }
-fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "53585a542a80ed4b8b9ec8559f4ef181abfe2272", version = "0.1.0" }
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7f17b17f68d0579c15a928f5f92d07dac6163f6b", version = "0.1.0" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7f17b17f68d0579c15a928f5f92d07dac6163f6b", version = "0.1.0" }
 toml = "0.8"
 # The one reader of module versions (`Version`), already in the lock; ranges are `fs_types::interface::InterfaceReq`.
 semver = "1.0.28"
