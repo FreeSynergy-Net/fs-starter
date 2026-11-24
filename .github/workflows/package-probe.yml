@@ -21,7 +21,7 @@ jobs:
         uses: FreeSynergy-Net/fs-release/actions/plan@9eed5c95eb7311f2b68266a012ec778f51e3ac38
         with:
           # the Cargo version of this branch as the tag name (no tag exists; tag-on-main does nothing on a branch). ADJUST this line at every version bump.
-          tag: v0.0.7
+          tag: v0.0.8
           binaries: fs-starter
           cargo-package: fs-starter-host
           name: fs-starter

@@ -38,6 +38,9 @@ fn the_lifted_libraries_are_pinned_by_their_tags() {
         ("fs-settings", "v0.0.35"),
         ("fs-components-commands", "v0.0.35"),
         ("fs-rpc", "v0.0.8"),
+        ("fs-trusted-path", "v0.0.8"),
+        ("fs-forms-run", "v0.0.12"),
+        ("fs-forms-bind", "v0.0.12"),
         ("fs-components", "v0.0.35"),
     ] {
         let source = source_of(name);
@@ -48,22 +51,15 @@ fn the_lifted_libraries_are_pinned_by_their_tags() {
     }
 }
 
-/// PROVISIONAL (V-5): fs-forms 0.0.12 is not tagged yet; the pin is the head of the branch `unreviewed/v4-sw3-sw4a-r2`. After the tag
-/// `fs-forms v0.0.12` this test goes back to the tag (`?tag=v0.0.12#`) in the list above.
-#[test]
-fn the_forms_crates_are_pinned_by_one_provisional_commit_until_their_tag() {
-    const REV: &str = "7c6d461dada5a6868619bbeadd2bf372b2ab04eb";
-    for name in ["fs-forms-run", "fs-forms-bind"] {
-        let source = source_of(name);
-        assert!(
-            source.contains(&format!("?rev={REV}#{REV}")),
-            "{name}: {source} is not the commit {REV}"
-        );
-    }
-}
-
 /// `fs-conformance` lives in the repo fs-types: the same commit as `fs-types` (one source, and the right one).
 #[test]
 fn the_conformance_is_the_commit_of_fs_types() {
     assert_eq!(source_of("fs-conformance"), source_of("fs-types"));
+}
+
+/// `fs-rpc` and `fs-trusted-path` are two crates of one repository: the same repository URL and the same commit (one source each).
+#[test]
+fn the_rpc_and_the_trusted_path_come_from_one_repository_at_one_commit() {
+    assert_eq!(source_of("fs-rpc"), source_of("fs-trusted-path"));
+    assert!(source_of("fs-rpc").contains("github.com/FreeSynergy-Net/fs-rpc?tag="));
 }

@@ -1603,7 +1603,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-bind"
 version = "0.0.12"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7c6d461dada5a6868619bbeadd2bf372b2ab04eb#7c6d461dada5a6868619bbeadd2bf372b2ab04eb"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?tag=v0.0.12#21b6a476a005460ae975a94d01c20b18df27ca6b"
 dependencies = [
  "fs-components-commands",
  "sha2 0.10.9",
@@ -1612,7 +1612,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.0.12"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7c6d461dada5a6868619bbeadd2bf372b2ab04eb#7c6d461dada5a6868619bbeadd2bf372b2ab04eb"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?tag=v0.0.12#21b6a476a005460ae975a94d01c20b18df27ca6b"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1625,7 +1625,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.0.12"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7c6d461dada5a6868619bbeadd2bf372b2ab04eb#7c6d461dada5a6868619bbeadd2bf372b2ab04eb"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?tag=v0.0.12#21b6a476a005460ae975a94d01c20b18df27ca6b"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1634,7 +1634,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.0.12"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7c6d461dada5a6868619bbeadd2bf372b2ab04eb#7c6d461dada5a6868619bbeadd2bf372b2ab04eb"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?tag=v0.0.12#21b6a476a005460ae975a94d01c20b18df27ca6b"
 dependencies = [
  "semver",
  "sha2 0.10.9",
@@ -1643,7 +1643,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.0.12"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7c6d461dada5a6868619bbeadd2bf372b2ab04eb#7c6d461dada5a6868619bbeadd2bf372b2ab04eb"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?tag=v0.0.12#21b6a476a005460ae975a94d01c20b18df27ca6b"
 dependencies = [
  "fs-components",
  "fs-components-app",
@@ -1732,7 +1732,7 @@ dependencies = [
 
 [[package]]
 name = "fs-starter"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "async-trait",
  "capnp",
@@ -1751,7 +1751,7 @@ dependencies = [
 
 [[package]]
 name = "fs-starter-host"
-version = "0.0.7"
+version = "0.0.8"
 dependencies = [
  "capnp",
  "capnp-rpc",
