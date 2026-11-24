@@ -14,10 +14,7 @@ pub(super) fn valid_id(id: &str) -> bool {
     id.split('.').count() >= 2 && id.split('.').all(word)
 }
 
-/// A version: `Major.Minor`, digits only.
+/// A version as the crate `semver` reads it: `Major.Minor.Patch` (a two part `0.1` is not one; the same reader as for the need).
 pub(super) fn valid_version(v: &str) -> bool {
-    let mut p = v.split('.');
-    let digits =
-        |s: Option<&str>| s.is_some_and(|s| !s.is_empty() && s.bytes().all(|b| b.is_ascii_digit()));
-    digits(p.next()) && digits(p.next()) && p.next().is_none()
+    crate::sources::range::version(v).is_ok()
 }

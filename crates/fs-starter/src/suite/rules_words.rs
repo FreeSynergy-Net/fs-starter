@@ -5,7 +5,7 @@
 use super::check::{exit, gate, nothing_opened, rule, stdout, told};
 use super::codes::{SuiteCode, keys};
 use crate::codes::{StarterCode, keys as starter_keys};
-use crate::names::Version3;
+use crate::names::parse_version;
 use crate::program::Exit;
 use crate::tell::Level;
 use crate::words::synopsis;
@@ -22,7 +22,7 @@ rule!(
             let p = f.program();
             (
                 format!("fs-{} {}\n", p.name(), p.version()),
-                Version3::parse(p.version()).is_some(),
+                parse_version(p.version()).is_some(),
             )
         };
         let o = f.start(&["--version"]);

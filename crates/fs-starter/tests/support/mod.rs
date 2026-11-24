@@ -5,8 +5,8 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 use fs_starter::{
-    ContractReq, Exit, Failure, Found, FrontendId, FrontendManifest, Place, Program, ProgramName,
-    Trust,
+    Exit, Failure, Found, FrontendId, FrontendManifest, InterfaceVersion, Place, Program,
+    ProgramName, Trust,
 };
 use fs_types::coded::{Code, Coded, ErrorCode, Param};
 
@@ -25,11 +25,11 @@ impl ErrorCode for DemoCode {
     }
 }
 
-/// `demo 0.0.1`, app id `net.freesynergy.Demo`, contract `demo 1.2`, standard frontend `simple`.
+/// `demo 0.0.1`, app id `net.freesynergy.Demo`, contract `demo@1.2.0`, standard frontend `simple`.
 pub struct Demo {
     pub name: ProgramName,
     pub version: String,
-    pub contract: ContractReq,
+    pub contract: InterfaceVersion,
     pub standard: FrontendId,
 }
 
@@ -38,7 +38,7 @@ impl Default for Demo {
         Self {
             name: ProgramName::parse("demo").unwrap(),
             version: "0.0.1".to_owned(),
-            contract: ContractReq::parse("demo 1.2").unwrap(),
+            contract: "demo@1.2.0".parse().unwrap(),
             standard: FrontendId::parse("simple").unwrap(),
         }
     }
@@ -54,7 +54,7 @@ impl Program for Demo {
     fn app_id(&self) -> &'static str {
         "net.freesynergy.Demo"
     }
-    fn contract(&self) -> &ContractReq {
+    fn contract(&self) -> &InterfaceVersion {
         &self.contract
     }
     fn standard_frontend(&self) -> &FrontendId {
@@ -105,7 +105,7 @@ pub fn manifest(id: &str) -> FrontendManifest {
         id: fid(id),
         extends: "net.freesynergy.Demo".to_owned(),
         exec: format!("fs-demo-{id}"),
-        requires: vec![ContractReq::parse("demo 1.0").unwrap()],
+        requires: vec!["demo@^1.0.0".parse().unwrap()],
         min_program: None,
         default: false,
     }

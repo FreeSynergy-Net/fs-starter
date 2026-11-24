@@ -13,18 +13,18 @@ use std::path::Path;
 use std::process::ExitCode;
 use std::time::Instant;
 
-use fs_starter::{ContractReq, StarterCode, keys};
 use fs_starter::{
     Ended, Exit, Failure, FrontendId, HookOutcome, McpOff, NoPreference, Parts, ProcessLauncher,
     Program, ProgramName, ResumeToken, ServerGate, StartCx, StartHook, StderrTell, Up,
     XdgManifests,
 };
+use fs_starter::{InterfaceVersion, StarterCode, keys};
 use fs_types::coded::Coded;
 
 /// The host as a "program" for the library: it has a name and a version, no server and no frontends of its own.
 struct HostProgram {
     name: ProgramName,
-    contract: ContractReq,
+    contract: InterfaceVersion,
     frontend: FrontendId,
 }
 
@@ -32,7 +32,7 @@ impl HostProgram {
     fn new() -> Self {
         Self {
             name: ProgramName::parse("starter").expect("a valid name"),
-            contract: ContractReq::parse("starter 0.0").expect("a valid contract"),
+            contract: "starter@0.0.1".parse().expect("a valid contract"),
             frontend: FrontendId::parse("simple").expect("a valid frontend id"),
         }
     }
@@ -48,7 +48,7 @@ impl Program for HostProgram {
     fn app_id(&self) -> &'static str {
         "net.freesynergy.Starter"
     }
-    fn contract(&self) -> &ContractReq {
+    fn contract(&self) -> &InterfaceVersion {
         &self.contract
     }
     fn standard_frontend(&self) -> &FrontendId {

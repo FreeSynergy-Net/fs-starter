@@ -7,7 +7,9 @@ use std::ffi::OsString;
 
 use fs_types::coded::Code;
 
-use crate::names::{ActorName, ContractReq, FrontendId, ProgramName};
+use fs_types::interface::InterfaceVersion;
+
+use crate::names::{ActorName, FrontendId, ProgramName};
 
 /// The exit code of `fs-<program>`. A frontend's own exit code is passed on unchanged.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -56,8 +58,8 @@ pub trait Program {
     /// The AppStream id (`net.freesynergy.Activities`): what a frontend manifest names in `<extends>` and `<requires>`.
     fn app_id(&self) -> &str;
 
-    /// The contract the program's server offers (`history 0.1`): what `fs:requires` of a frontend is checked against.
-    fn contract(&self) -> &ContractReq;
+    /// The contract the program's server offers (`history@0.1.0`): what `fs:requires` of a frontend is checked against.
+    fn contract(&self) -> &InterfaceVersion;
 
     /// The frontend that comes with the program and opens by default (ADR 0074 §8). A default only (O11): the person can switch
     /// to another in the display menu (kept by [`Preference`]), and that choice wins over this one.

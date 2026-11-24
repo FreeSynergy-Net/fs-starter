@@ -5,9 +5,12 @@
 use std::path::PathBuf;
 
 use fs_types::coded::Coded;
+use fs_types::interface::InterfaceReq;
 
 use crate::codes::StarterCode;
-use crate::names::{ContractReq, FrontendId, ProgramName, Version3};
+use semver::Version;
+
+use crate::names::{FrontendId, ProgramName};
 
 /// The few fields of an AppStream `addon` manifest the starter reads (ADR 0094 O1).
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -18,10 +21,10 @@ pub struct FrontendManifest {
     pub extends: String,
     /// `fs:exec`: a bare program file name, no path, no shell.
     pub exec: String,
-    /// Every `fs:requires` (`history 0.1`): the server's contract must serve each.
-    pub requires: Vec<ContractReq>,
+    /// Every `fs:requires` (`history@>=0.1.0, <0.2.0`, `name@<req>`): the server's contract must meet each.
+    pub requires: Vec<InterfaceReq>,
     /// `<requires><id version="X.Y.Z" compare="ge">` of the program, if given.
-    pub min_program: Option<Version3>,
+    pub min_program: Option<Version>,
     /// `fs:default` (`true`/`false`, missing = false): this installation asks for this frontend as the default (ADR 0094 item 4 b).
     pub default: bool,
 }

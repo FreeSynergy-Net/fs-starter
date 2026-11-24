@@ -7,10 +7,11 @@
 use std::path::{Path, PathBuf};
 
 use fs_types::coded::Coded;
+use fs_types::interface::InterfaceReq;
 
 use crate::codes::{StarterCode, keys};
 use crate::frontend::{Found, FrontendManifest, Listing, ManifestSource, Place, Trust};
-use crate::names::{ContractReq, FrontendId, ProgramName, Version3};
+use crate::names::{FrontendId, ProgramName, parse_version};
 use crate::system::SystemPlaces;
 
 fn refuse(file: &Path, field: &str) -> Coded<StarterCode> {
@@ -66,7 +67,13 @@ pub fn read_manifest(xml: &str, file: &Path) -> Result<FrontendManifest, Coded<S
     let exec = exec.ok_or_else(|| refuse(file, "fs:exec"))?.to_owned();
     let mut requires = Vec::new();
     for (_, v) in custom.iter().filter(|(k, _)| *k == "fs:requires") {
-        requires.push(ContractReq::parse(v).ok_or_else(|| refuse(file, "fs:requires"))?);
+        // ONE way of writing (`name@<req>`, every comparison with three numbers): the blank form `history 0.1` is refused
+        let need = v
+            .trim()
+            .parse::<InterfaceReq>()
+            .ok()
+            .filter(InterfaceReq::is_full);
+        requires.push(need.ok_or_else(|| refuse(file, "fs:requires"))?);
     }
     let min_program = match child("requires") {
         None => None,
@@ -78,7 +85,7 @@ pub fn read_manifest(xml: &str, file: &Path) -> Result<FrontendManifest, Coded<S
                 None => None,
                 Some(n) if n.attribute("compare").unwrap_or("ge") == "ge" => Some(
                     n.attribute("version")
-                        .and_then(Version3::parse)
+                        .and_then(parse_version)
                         .ok_or_else(|| refuse(file, "requires"))?,
                 ),
                 Some(_) => return Err(refuse(file, "requires")),

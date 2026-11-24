@@ -17,11 +17,11 @@ message = [
 ]
 
 [[requires]]
-contract = "groups >=0.1 <0.2"
+contract = "groups@>=0.1.0, <0.2.0"
 
 [[source]]
 n = 1
-contract = "groups >=0.1 <0.2"
+contract = "groups@>=0.1.0, <0.2.0"
 type = "Group"
 scope = "all"
 

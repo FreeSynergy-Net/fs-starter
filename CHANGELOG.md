@@ -2,6 +2,18 @@
 
 Version = tag.
 
+## Unreleased (0.0.8: the version number follows in the closing bundle)
+
+### English
+
+- V-5, one way of writing a version need: the host reads a need only as `name@<req>` (`groups@>=0.1.0, <0.2.0`, cargo grammar, comma between comparisons) through `fs_types::interface::InterfaceReq`, and a module version only as three parts (`0.1.0`, `semver::Version`; `0.1` is refused with a cause). The blank form (`groups >=0.1 <0.2`, `groups 0.1`) and a bare name are refused with the message `a need is written name@<req>`; there is no bridge and no second notation. In the library `ContractReq` and `Version3` are gone: `Program::contract` is an `InterfaceVersion`, `fs:requires` of a frontend manifest is an `InterfaceReq` (three numbers in every comparison), the program version is a `semver::Version`. The test data (`tests/data/**`) is on the new form.
+- Pins moved to the FreeSynergy-Net chain: fs-types v0.0.6, fs-interfaces v0.0.34, fs-components v0.0.35, fs-rpc v0.0.8, fs-objects v0.0.10, fs-release 9eed5c9. PROVISIONAL: fs-forms-run/-bind are pinned to a commit of the branch `unreviewed/v4-sw3-sw4a-r2` (7c6d461) until the tag fs-forms v0.0.12 exists. The new fields of `FormRow`, `FormData` and `FormRecords` are filled read-only (no writing yet: SW-5).
+
+### Deutsch
+
+- V-5, eine Schreibweise für einen Versionsbedarf: der Host liest einen Bedarf nur als `name@<req>` (`groups@>=0.1.0, <0.2.0`, Cargo-Grammatik, Komma zwischen den Vergleichen) über `fs_types::interface::InterfaceReq` und eine Modulversion nur dreiteilig (`0.1.0`, `semver::Version`; `0.1` wird mit einer Ursache abgelehnt). Die Leerzeichen-Form (`groups >=0.1 <0.2`, `groups 0.1`) und ein bloßer Name werden mit der Meldung `a need is written name@<req>` abgelehnt; keine Brücke, keine zweite Schreibweise. In der Bibliothek entfallen `ContractReq` und `Version3`: `Program::contract` ist eine `InterfaceVersion`, `fs:requires` eines Frontend-Manifests ist eine `InterfaceReq` (drei Zahlen in jedem Vergleich), die Programmversion eine `semver::Version`. Die Testdaten (`tests/data/**`) stehen auf der neuen Form.
+- Pins auf die FreeSynergy-Net-Kette: fs-types v0.0.6, fs-interfaces v0.0.34, fs-components v0.0.35, fs-rpc v0.0.8, fs-objects v0.0.10, fs-release 9eed5c9. VORLÄUFIG: fs-forms-run/-bind zeigen auf einen Stand des Zweigs `unreviewed/v4-sw3-sw4a-r2` (7c6d461), bis der Tag fs-forms v0.0.12 da ist. Die neuen Felder von `FormRow`, `FormData` und `FormRecords` werden nur lesend gefüllt (noch kein Schreiben: SW-5).
+
 ## 0.0.7
 
 ### English

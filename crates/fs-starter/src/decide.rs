@@ -7,7 +7,7 @@ use fs_types::coded::Coded;
 
 use crate::codes::{StarterCode, keys};
 use crate::frontend::Found;
-use crate::names::{FrontendId, Version3};
+use crate::names::{FrontendId, parse_version};
 use crate::program::{Exit, Program};
 
 /// The frontend to try first: the word, else the person's choice, else the installation's `fs:default`, else the program's
@@ -41,13 +41,13 @@ pub fn precheck(found: &Found, program: &dyn Program) -> Result<(), Coded<Starte
     if m.extends != program.app_id() {
         return Err(contract(&m.id, "extends"));
     }
-    if let Some(min) = m.min_program {
-        let own = Version3::parse(program.version());
-        if own.is_none_or(|own| own < min) {
+    if let Some(min) = &m.min_program {
+        let own = parse_version(program.version());
+        if own.is_none_or(|own| own < *min) {
             return Err(contract(&m.id, "requires"));
         }
     }
-    if m.requires.iter().any(|r| !program.contract().serves(r)) {
+    if m.requires.iter().any(|r| !r.matches(program.contract())) {
         return Err(contract(&m.id, "fs:requires"));
     }
     Ok(())
