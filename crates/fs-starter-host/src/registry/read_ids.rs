@@ -2,8 +2,7 @@
 //!
 //! The file names a command by its contract key (`capability`, a line of `capabilities.txt`: `card.move`). The host binds
 //! `<module>.<key>`, where `<module>` is the folder the file was read from (the identity of the module that supplies it), never a
-//! field the module sets itself. A key that already starts with the own prefix is the same command written out (`planning.card.move`
-//! = `card.move`). An `id` in the file is optional; if it is there it must be the derived one.
+//! field the module sets itself. An `id` in the file is optional; if it is there it must be the derived one.
 //!
 //! Pattern: Specification + Factory (small pure functions over text; one place that makes the id).
 
@@ -12,14 +11,11 @@ use serde_json::Value;
 
 use super::model::Refusal;
 
-/// The id the host binds for the key `key` of the module `module`: the key under the own prefix (the own prefix is not doubled).
+/// The id the host binds for the key `key` of the module `module`: ALWAYS `<module>.<key>`. The host never interprets the key: a key
+/// that starts with the own module name is taken literally (module `people`, key `people.search` = `people.people.search`). The raw key
+/// stays in the item for `invoke` (the service gets the contract key, not the id).
 pub(super) fn derive(module: &str, key: &str) -> String {
-    let space = format!("{module}.");
-    if key.starts_with(&space) {
-        key.to_owned()
-    } else {
-        format!("{space}{key}")
-    }
+    format!("{module}.{key}")
 }
 
 /// Check the `id` the file may carry against the derived id `derived` of the module `module`.
@@ -49,13 +45,14 @@ mod tests {
     use super::*;
 
     #[test]
-    fn the_host_puts_the_own_prefix_before_a_key_and_never_doubles_it() {
+    fn the_host_puts_the_module_name_before_every_key_and_never_reads_it() {
         assert_eq!(derive("planning", "card.move"), "planning.card.move");
+        // no alias: a key that starts with the own module name is taken literally
         assert_eq!(
             derive("planning", "planning.card.move"),
-            "planning.card.move"
+            "planning.planning.card.move"
         );
-        // a key that looks like another module's id stays INSIDE the own name space
+        assert_eq!(derive("people", "people.search"), "people.people.search");
         assert_eq!(derive("planning", "tasks.create"), "planning.tasks.create");
         assert_eq!(derive("plan", "planning.x"), "plan.planning.x");
     }

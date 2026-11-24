@@ -53,6 +53,8 @@ pub struct Entry {
     pub version: String,
     /// `Some(module)` for a command a module added: shown as "new by module X".
     pub new_by: Option<String>,
+    /// The raw contract key a module command has (`None` for the shell's own): what the service is asked for.
+    pub key: Option<String>,
     /// What the command may do (`None` for the shell's own).
     pub access: Option<Access>,
     /// The help of the module's command (`None` for the shell's own).
@@ -78,6 +80,7 @@ impl Registry {
                 new_by: None,
                 access: None,
                 help: None,
+                key: None,
             })
             .collect();
         Self { entries }
@@ -158,6 +161,7 @@ impl Registry {
         }
         self.entries.extend(set.items.into_iter().map(|i| Entry {
             command: i.command,
+            key: Some(i.key),
             module: set.module.clone(),
             version: set.version.clone(),
             new_by: Some(set.module.clone()),

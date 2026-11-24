@@ -5,13 +5,15 @@
 use fs_starter_host::registry::{ModuleSet, Registry, parse};
 
 /// The text of a set file with `module` and one command per id (all fields the format requires).
-/// The id is the capability too (the own prefix written out, the same command as the bare key).
+/// The id is written out; the capability is the contract key (the id without `<module>.`; a foreign id stays as it is, so the file
+/// carries a foreign id the host refuses).
 pub fn json(module: &str, ids: &[&str]) -> String {
     let commands: Vec<String> = ids
         .iter()
         .map(|id| {
+            let key = id.strip_prefix(&format!("{module}.")).unwrap_or(id);
             format!(
-                r#"{{"id":{id:?},"call":"x","capability":{id:?},"access":"read","help":{{"topic":{:?},"text":{{"en":"e","de":"d"}}}}}}"#,
+                r#"{{"id":{id:?},"call":"x","capability":{key:?},"access":"read","help":{{"topic":{:?},"text":{{"en":"e","de":"d"}}}}}}"#,
                 id.replace('.', "-")
             )
         })

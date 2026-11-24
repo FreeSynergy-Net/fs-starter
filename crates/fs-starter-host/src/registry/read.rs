@@ -67,6 +67,7 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
         };
         items.push(Item {
             command: Command::new(id.as_str(), help.topic.as_str()),
+            key: key.to_owned(),
             access,
             help,
             call: c.get("call").and_then(Value::as_str).map(str::to_owned),

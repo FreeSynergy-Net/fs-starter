@@ -44,6 +44,8 @@ pub struct Help {
 pub struct Item {
     /// The command (its label is the help topic).
     pub command: Command,
+    /// The raw contract key (`card.move`): what the service is asked for; the id is `<module>.<key>`.
+    pub key: String,
     /// What it may do.
     pub access: Access,
     /// Its help.

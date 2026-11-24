@@ -87,19 +87,21 @@ impl StarterSources {
             .modules
             .find(module)
             .ok_or_else(|| Coded::new("host-notice-source-unknown").with("contract", module))?;
+        // only a command of the OWN name space that is in the set goes through; the service gets the raw contract key, never the id
+        let key = self
+            .modules
+            .commands(module)
+            .find(|e| e.command.id.as_str() == command)
+            .and_then(|e| e.key.as_deref());
         let own = command
             .strip_prefix(module)
-            .is_some_and(|r| r.starts_with('.'))
-            && self
-                .modules
-                .commands(module)
-                .any(|e| e.command.id.as_str() == command);
-        if !own {
+            .is_some_and(|r| r.starts_with('.'));
+        let Some(key) = key.filter(|_| own) else {
             return Err(Coded::new("host-notice-invoke-foreign")
                 .with("module", module)
                 .with("command", command));
-        }
-        service::call(known, command, record, &self.limits)
+        };
+        service::call(known, key, record, &self.limits)
     }
 }
 

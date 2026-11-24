@@ -1,7 +1,7 @@
 //! SW-5: the HOST binds `<module>.<key>` from the contract key of the file (`capability`); the id never comes from the module.
 //!
 //! Tests: derivation from the folder, own prefix equal to the bare key, a foreign prefix never accepted, a given `id` must be the
-//! derived one, a duplicate key refuses the set. Mutants: the id is the key as written (no prefix added); the prefix is taken from the
+//! derived one, a duplicate key refuses the set; no alias (`people.search` in module `people` is `people.people.search`). Mutants: the id is the key as written (no prefix added); the prefix is taken from the
 //! `module` field instead of the folder; a foreign prefix is taken as it is; a given `id` is ignored; the own prefix is doubled;
 //! `app.` is let through.
 
@@ -21,11 +21,30 @@ fn first_id(text: &str, folder: &str) -> Result<String, Refusal> {
 }
 
 #[test]
-fn a_bare_key_gets_the_prefix_of_the_folder_and_the_own_prefix_is_the_same_command() {
+fn the_host_always_puts_the_module_name_before_the_key_no_alias() {
     let bare = file("planning", r#""capability":"card.move""#);
     let own = file("planning", r#""capability":"planning.card.move""#);
     assert_eq!(first_id(&bare, "planning").unwrap(), "planning.card.move");
-    assert_eq!(first_id(&own, "planning").unwrap(), "planning.card.move");
+    // a key that starts with the own module name is taken literally, never read as the id written out
+    assert_eq!(
+        first_id(&own, "planning").unwrap(),
+        "planning.planning.card.move"
+    );
+    let people = file("people", r#""capability":"people.search""#);
+    assert_eq!(first_id(&people, "people").unwrap(), "people.people.search");
+}
+
+#[test]
+fn the_raw_contract_key_is_kept_for_invoke() {
+    let set = parse(&file("people", r#""capability":"people.search""#), "people").unwrap();
+    assert_eq!(set.items[0].key, "people.search");
+    let mut r = Registry::new();
+    r.add_bundled(Actor::Person, set).unwrap();
+    let e = r.entries().iter().find(|e| e.module == "people").unwrap();
+    assert_eq!(e.command.id.as_str(), "people.people.search");
+    assert_eq!(e.key.as_deref(), Some("people.search"));
+    // the shell's own commands have no key
+    assert!(r.entries().iter().filter(|e| e.module == "app").all(|e| e.key.is_none()));
 }
 
 #[test]
@@ -84,7 +103,6 @@ fn a_given_id_must_be_the_derived_one() {
 fn the_same_key_twice_in_one_module_refuses_the_whole_set() {
     for keys in [
         ["card.move", "card.move"],
-        ["card.move", "planning.card.move"],
     ] {
         let set = parse(&json_keys("planning", &keys), "planning").unwrap();
         let why = Registry::new().add_bundled(Actor::Person, set).unwrap_err();

@@ -5,11 +5,17 @@ mod support;
 use fs_starter_host::registry::{Access, Actor, Refusal, Registry, parse};
 
 /// A copy of `catalog/commands.json` of fs-capture @a9ca621.
-const REAL: &str = include_str!("data/fs-capture-catalog/capture/catalog/commands.json");
+const RAW: &str = include_str!("data/fs-capture-catalog/capture/catalog/commands.json");
+
+/// The file as it is: id and capability both `capture.screens` (the id written out). Since the no-alias rule the capability is the
+/// contract key WITHOUT the module name; the tests read this copy with the key prefix taken off (the id stays as it is).
+fn real() -> String {
+    RAW.replace("\"capability\": \"capture.", "\"capability\": \"")
+}
 
 #[test]
 fn the_real_file_of_fs_capture_is_read_with_help_and_access() {
-    let set = parse(REAL, "capture").unwrap();
+    let set = parse(&real(), "capture").unwrap();
     assert_eq!(
         (set.module.as_str(), set.version.as_str()),
         ("capture", "0.1.0")
@@ -38,8 +44,9 @@ fn the_real_file_of_fs_capture_is_read_with_help_and_access() {
 
 /// The real file with one change; every mandatory field and every rule must turn the test red when it is not kept.
 fn changed(from: &str, to: &str) -> String {
-    assert!(REAL.contains(from), "{from}");
-    REAL.replacen(from, to, 1)
+    let real = real();
+    assert!(real.contains(from), "{from}");
+    real.replacen(from, to, 1)
 }
 
 #[test]
@@ -110,7 +117,7 @@ fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
     assert_eq!(no_id.items[0].command.id.as_str(), "capture.screens");
     assert_eq!(
         cause(
-            changed("\"capability\": \"capture.screens\"", "\"x\": 1"),
+            changed("\"capability\": \"screens\"", "\"x\": 1"),
             "capture"
         ),
         "command-capability"
@@ -139,5 +146,15 @@ fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
 
 #[test]
 fn the_module_name_must_be_the_name_of_the_folder() {
-    assert!(matches!(parse(REAL, "other"), Err(Refusal::ModuleName(n)) if n == "capture"));
+    assert!(matches!(parse(&real(), "other"), Err(Refusal::ModuleName(n)) if n == "capture"));
+}
+
+#[test]
+fn the_file_as_it_is_with_the_module_name_in_the_key_is_refused_there_is_no_alias() {
+    // `capability: capture.screens` is the key `capture.screens` of the contract: the id is `capture.capture.screens`, the id written
+    // in the file (`capture.screens`) is not that one
+    assert_eq!(
+        parse(RAW, "capture"),
+        Err(Refusal::Unreadable("command-id-differs".to_owned()))
+    );
 }
