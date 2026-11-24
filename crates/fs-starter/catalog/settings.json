@@ -1,0 +1,9 @@
+{
+  "owner": "fs.open",
+  "version": "0.1",
+  "settings": [
+    { "key": "fs.open.when-open",
+      "schema": { "type": "string", "enum": ["ask", "switch", "tab", "window"], "default": "ask" },
+      "group": "open" }
+  ]
+}
