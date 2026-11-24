@@ -1,0 +1,32 @@
+{
+  "module": "planning",
+  "version": "0.0.2",
+  "contract": "planning",
+  "scope": "own-contract",
+  "commands": [
+    {
+      "capability": "card.move", "call": "Boards.moveCard", "access": "write",
+      "params": [
+        { "path": "board", "type": "text", "required": true },
+        { "path": "column", "type": "text", "required": true },
+        { "path": "index", "type": "number" }
+      ],
+      "help": { "topic": "planning-card-move", "text": { "en": "Move a card to another column or place.", "de": "Verschiebt eine Karte in eine andere Spalte oder an eine andere Stelle." } }
+    },
+    {
+      "capability": "task.create", "call": "Items.create", "access": "write",
+      "params": [
+        { "path": "title", "type": "text", "required": true },
+        { "path": "board", "type": "text", "required": true },
+        { "path": "column", "type": "text", "required": true },
+        { "path": "index", "type": "number" }
+      ],
+      "help": { "topic": "planning-task-create", "text": { "en": "Create a task and put its card into a column, at a place of the column.", "de": "Legt eine Aufgabe an und stellt ihre Karte in eine Spalte, an eine Stelle der Spalte." } }
+    },
+    {
+      "capability": "task.delete", "call": "Items.delete", "access": "delete",
+      "params": [],
+      "help": { "topic": "planning-task-delete", "text": { "en": "Delete a task and its card.", "de": "Löscht eine Aufgabe und ihre Karte." } }
+    }
+  ]
+}
