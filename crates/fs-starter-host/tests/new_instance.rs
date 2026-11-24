@@ -44,7 +44,17 @@ fn a_two_new_windows_live_next_to_the_first() {
     assert_eq!(label("tasks", k3), "tasks#3");
     drop(w2);
     // a freed place is the smallest free one again
-    assert_eq!(claim_next(&of, any).unwrap().unwrap().0, 2);
+    // a parallel test may hold a forked copy of the lock fd until its exec: ask again for a moment
+    let again = (0..50).find_map(|_| {
+        let got = claim_next(&of, any).unwrap().unwrap();
+        if got.0 == 2 {
+            return Some(got);
+        }
+        drop(got);
+        std::thread::sleep(Duration::from_millis(10));
+        None
+    });
+    assert_eq!(again.map(|g| g.0), Some(2));
     drop((first, w3));
 }
 
@@ -77,6 +87,11 @@ fn c_new_instance_with_a_picture_takes_no_place() {
     else {
         panic!("first window")
     };
+    // every place 2..=9 is taken: a picture that took one would end with `instance-slots-full`
+    let of = |k: u8| Some(at(runtime.path(), &format!("tasks.window-{k}")));
+    let held: Vec<_> = (2..=9)
+        .map(|_| claim_next(&of, any).unwrap().unwrap())
+        .collect();
     let png = runtime.path().join("p.png");
     let out = host(
         runtime.path(),
@@ -88,12 +103,12 @@ fn c_new_instance_with_a_picture_takes_no_place() {
         ],
     );
     let err = support::text(&out.stderr);
+    assert_eq!(out.status.code(), Some(0), "{err}");
+    assert!(png.exists(), "the picture was drawn: {err}");
+    assert!(!err.contains("instance-slots-full"), "{err}");
     assert!(!err.contains("instance-handed-over"), "{err}");
     assert!(first.starts.try_recv().is_err(), "nothing was handed over");
-    assert!(
-        !at(runtime.path(), "tasks.window-2").exists(),
-        "no place taken"
-    );
+    assert_eq!(held.len(), 8);
 }
 
 fn host(runtime: &Path, args: &[&str]) -> std::process::Output {

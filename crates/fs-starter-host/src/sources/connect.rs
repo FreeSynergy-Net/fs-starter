@@ -65,19 +65,7 @@ impl StarterSources {
         let held = if self.end_started {
             Held::None
         } else {
-            let program = self
-                .program
-                .clone()
-                .unwrap_or_else(|| "fs-starter".to_owned());
-            let instance = match self.slot {
-                Some(k) => slots::label(&program, k),
-                None => format!(
-                    "{}/{}",
-                    std::process::id(),
-                    WINDOWS.fetch_add(1, Ordering::SeqCst) + 1
-                ),
-            };
-            let me = Identity { program, instance };
+            let me = identity(self.program.as_deref(), self.slot);
             let wish = Wish {
                 level: levels.used,
                 forms: &forms,
@@ -105,5 +93,34 @@ impl Sources for StarterSources {
     /// The `socket` of the command line is NOT used: a module is reached only on its own socket (border 4).
     fn connect(&self, range: &str, _: Option<&Path>, _: &Path) -> Result<Arc<dyn Records>, Coded> {
         self.connect_saying(range, |line| eprintln!("{line}"))
+    }
+}
+
+/// Who a window says it is: the program (or `fs-starter`) and `<program>#<k>` for a numbered window, else process id and counter.
+fn identity(program: Option<&str>, slot: Option<u8>) -> Identity {
+    let program = program.unwrap_or("fs-starter").to_owned();
+    let instance = match slot {
+        Some(k) => slots::label(&program, k),
+        None => format!(
+            "{}/{}",
+            std::process::id(),
+            WINDOWS.fetch_add(1, Ordering::SeqCst) + 1
+        ),
+    };
+    Identity { program, instance }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::identity;
+
+    #[test]
+    fn a_numbered_window_says_program_and_number() {
+        let me = identity(Some("tasks"), Some(3));
+        assert_eq!(
+            (me.program.as_str(), me.instance.as_str()),
+            ("tasks", "tasks#3")
+        );
+        assert!(!identity(Some("tasks"), None).instance.contains('#'));
     }
 }

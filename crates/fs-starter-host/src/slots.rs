@@ -23,6 +23,8 @@ const FIRST: u8 = 2;
 const LAST: u8 = 9;
 
 /// The words without `--new-instance`, and whether it was there (the flag is a word of the host, not of `fs-forms-run`).
+/// It is taken out wherever it stands, also as the value of another word (`--description --new-instance`) and before
+/// `--check-system`: a known edge, accepted (such a path is no program name).
 #[must_use]
 pub fn strip(args: &[String]) -> (Vec<String>, bool) {
     let words: Vec<String> = args.iter().filter(|a| *a != FLAG).cloned().collect();
