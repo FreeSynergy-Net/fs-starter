@@ -6,5 +6,4 @@ Exec=fs-starter %f
 Icon=net.freesynergy.Starter
 Terminal=false
 Categories=Utility;
-# The host needs a description to open; started alone it only prints its help. Hidden from the menu until a launcher exists.
-NoDisplay=true
+# Visible in the menu in 0.0.9 (decision of the strategy). NoDisplay=true only when the first program package brings its own Starter entry (card INST-7).
