@@ -8,7 +8,7 @@
 //! `single-instance-off`. Who wins is decided by the lock of `fs_rpc::bind_socket`, never by a second window.
 //!
 //! Left out for now: bringing the window to the front, opening the handed-over path in the running window (a start is only
-//! received and noted as `instance-start-received`), `--new-instance`, macOS, killing a hung instance, several windows.
+//! received and noted as `instance-start-received`), macOS, killing a hung instance. Further windows (`--new-instance`) are in `slots.rs`.
 //!
 //! Pattern: Active object (the serving thread owns the socket) + RAII (the [`Guard`] frees thread, socket and lock).
 
@@ -208,6 +208,18 @@ pub fn claim_with(
     let Some(path) = endpoint else {
         return Ok(Claim::Off(OFF));
     };
+    match claim_free(path, check)? {
+        Some(guard) => Ok(Claim::First(guard)),
+        None => hand_over(path, words, times).map(|()| Claim::HandedOver),
+    }
+}
+
+/// Take the place on `path` if it is free: `Some(guard)`; `None` when someone holds it (nothing is handed over, no window is
+/// asked). The lock of `fs_rpc::bind_socket` decides.
+///
+/// # Errors
+/// `instance-endpoint-unusable` (the folder is not private or the system refuses).
+pub fn claim_free(path: &Path, check: Check) -> Result<Option<Guard>, String> {
     let (stop_tx, stop_rx) = oneshot::channel();
     let (starts_tx, starts_rx) = sync_channel(QUEUE);
     let (ready_tx, ready_rx) = sync_channel(1);
@@ -217,14 +229,14 @@ pub fn claim_with(
         .spawn(move || serve_thread(&own, check, starts_tx, stop_rx, &ready_tx))
         .map_err(|e| format!("instance-endpoint-unusable: {e}"))?;
     match ready_rx.recv() {
-        Ok(Ok(())) => Ok(Claim::First(Guard {
+        Ok(Ok(())) => Ok(Some(Guard {
             starts: starts_rx,
             stop: Some(stop_tx),
             thread: Some(thread),
         })),
         Ok(Err(e)) if e.kind() == io::ErrorKind::AddrInUse => {
             let _ = thread.join();
-            hand_over(path, words, times).map(|()| Claim::HandedOver)
+            Ok(None)
         }
         Ok(Err(e)) => {
             let _ = thread.join();

@@ -34,6 +34,8 @@ pub struct StarterSources {
     pub(super) end_started: bool,
     /// The name this host says in `introduce` (the program it opens); empty = `fs-starter`.
     pub(super) program: Option<String>,
+    /// The number of this window of the program (`#k`, `slots.rs`); `None` = a window of the process counter only.
+    pub(super) slot: Option<u8>,
 }
 
 impl StarterSources {
@@ -51,6 +53,7 @@ impl StarterSources {
             limits,
             end_started: false,
             program: None,
+            slot: None,
         }
     }
 
@@ -98,6 +101,13 @@ impl StarterSources {
     #[must_use]
     pub fn named(mut self, program: &str) -> Self {
         self.program = Some(program.to_owned());
+        self
+    }
+
+    /// The number of this window (`<program>#<k>` is its instance in `introduce`); without it the instance is process id and counter.
+    #[must_use]
+    pub fn slot(mut self, slot: Option<u8>) -> Self {
+        self.slot = slot;
         self
     }
 

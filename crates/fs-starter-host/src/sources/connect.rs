@@ -14,6 +14,7 @@ use super::level;
 use super::starter::{StarterSources, line, read_lines};
 use super::watch::Identity;
 use super::writer::ModuleWriter;
+use crate::slots;
 
 /// The windows of this process, counted: the second part of the instance of `introduce` (process id + window).
 static WINDOWS: AtomicU32 = AtomicU32::new(0);
@@ -64,17 +65,19 @@ impl StarterSources {
         let held = if self.end_started {
             Held::None
         } else {
-            let me = Identity {
-                program: self
-                    .program
-                    .clone()
-                    .unwrap_or_else(|| "fs-starter".to_owned()),
-                instance: format!(
+            let program = self
+                .program
+                .clone()
+                .unwrap_or_else(|| "fs-starter".to_owned());
+            let instance = match self.slot {
+                Some(k) => slots::label(&program, k),
+                None => format!(
                     "{}/{}",
                     std::process::id(),
                     WINDOWS.fetch_add(1, Ordering::SeqCst) + 1
                 ),
             };
+            let me = Identity { program, instance };
             let wish = Wish {
                 level: levels.used,
                 forms: &forms,

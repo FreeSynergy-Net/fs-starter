@@ -10,16 +10,17 @@ use fs_forms_run::{Command, Config, FileLink, LayoutLink, SocketLink, session_lo
 use fs_starter::Exit;
 
 use crate::check_sources::check_sources;
-use crate::instance::{self, Claim, InstanceTimes};
 use crate::program_arg::with_program;
+use crate::slots;
 use crate::sources::StarterSources;
 use crate::{package, pending, shell};
 
 /// The help text of the host (the words of the window host follow it).
-pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data] [--picture FILE.png [--steps FILE]]\n\
+pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data] [--new-instance] [--picture FILE.png [--steps FILE]]\n\
     Opens the window of a program from its description, without building the program.\n\
     --steps FILE (only with --picture) plays the steps of FILE before the picture is taken.\n\
     --program NAME takes the installed data package /usr/share/freesynergy/programs/NAME (only a place that passes the system check).\n\
+    --new-instance opens one more window of the program next to the running ones (window-2 .. window-9); without it a second start hands its words to the first window. With --picture it takes no place.\n\
 fs-starter --list-commands [--modules DIR]\n\
     Lists the commands the host knows: the shared app.* and those of the bundled modules (id, module, version).\n\
 fs-starter --check-system [--modules DIR] [--program NAME]... [--description PATH]...\n\
@@ -47,8 +48,9 @@ pub fn run(args: &[String]) -> ExitCode {
     if args.first().map(String::as_str) == Some("--list-commands") {
         return list_commands(args);
     }
+    let (args, new_window) = slots::strip(args);
     let places = fs_starter::SystemPlaces::standard();
-    let args = &match with_program(args, &places) {
+    let args = &match with_program(&args, &places) {
         Ok(args) => args,
         Err(line) => {
             eprintln!("fs-starter: {line}");
@@ -84,15 +86,17 @@ pub fn run(args: &[String]) -> ExitCode {
                 Err(code) => return code,
             };
             // held until the window is closed; a second start of the same program ends here (`HandedOver`)
-            let _place = match single(program.as_deref(), args, c.picture.is_some()) {
-                Ok(place) => place,
-                Err(code) => return code,
-            };
+            let (_place, slot) =
+                match slots::single(program.as_deref(), args, c.picture.is_some(), new_window) {
+                    Ok(place) => place,
+                    Err(code) => return code,
+                };
             let sources = StarterSources::standard();
             let sources = match program.as_deref() {
                 Some(name) => sources.named(name),
                 None => sources,
             };
+            let sources = sources.slot(slot);
             let sources = if c.picture.is_some() {
                 // `--picture` is a one-time command: a service it started itself is ended again
                 sources.ending_what_it_started()
@@ -144,36 +148,6 @@ fn announce(c: &Config) -> Result<Option<String>, ExitCode> {
     }
     eprintln!("{}", pending::note());
     Ok(program)
-}
-
-/// The single instance of the program: `Ok(Some(guard))` the first window (hold it), `Ok(None)` nothing to hold (no program, no
-/// endpoint, or a picture, which has no window to protect), `Err(code)` this start ends (handed over: success; else a failure).
-/// A start that draws a picture takes the place only to learn who has it: a running window gets the words, else it lets go at once.
-fn single(
-    program: Option<&str>,
-    args: &[String],
-    picture: bool,
-) -> Result<Option<instance::Guard>, ExitCode> {
-    let Some(name) = program else {
-        return Ok(None);
-    };
-    let failed = |line: &str| {
-        eprintln!("fs-starter: {line}");
-        ExitCode::from(Exit::FAILED.code())
-    };
-    let endpoint = instance::endpoint_for(name).map_err(|e| failed(&e))?;
-    match instance::claim(endpoint.as_deref(), args, InstanceTimes::default()) {
-        Ok(Claim::First(guard)) => Ok((!picture).then_some(guard)),
-        Ok(Claim::HandedOver) => {
-            eprintln!("fs-starter: {}", instance::HANDED_OVER);
-            Err(ExitCode::from(Exit::DONE.code()))
-        }
-        Ok(Claim::Off(code)) => {
-            eprintln!("fs-starter: {code}");
-            Ok(None)
-        }
-        Err(e) => Err(failed(&e)),
-    }
 }
 
 /// `--check`: only fetch the description, say whether it is there. Fatal (the contract is not there) is the contract code.
