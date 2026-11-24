@@ -14,11 +14,21 @@
 use std::path::Path;
 use std::sync::Arc;
 
-use fs_rpc::{Expected, SingleTimes};
+use std::ffi::OsStr;
+
+use fs_rpc::{CommandStarter, Expected, SingleTimes};
 use fs_settings::{Catalog, CatalogFile, Coded, ProgramName, SettingCode, Settings};
 use fs_settings::{NoSystem, SettingKey, Value};
-use fs_settings_rpc::{ClientTimes, RpcSettingsStore, ensure_service};
+use fs_settings_rpc::{
+    ClientTimes, RpcSettingsStore, ensure_service_with, find_service_program, unreachable_at,
+};
 use fs_starter::{StarterSettings, WHEN_OPEN, WhenOpen};
+
+/// The name of the socket of the person's settings service (`socket_program(false)` in fs-settings-server, `serve.rs:41`).
+pub const SOCKET_PROGRAM: &str = "settings";
+
+/// §9.4 of the draft: asking cannot be remembered yet (`SettingsRemember` follows with C2); once per process, the host says it.
+pub const REMEMBER_LINE: &str = "fs-starter: yellow remember-unavailable key=fs.open.when-open (remembering the answer is not there yet; it is asked every time)";
 
 /// What the host knows about `fs.open.when-open` at the start.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -42,7 +52,18 @@ impl OpenSetting {
         }
     }
 
-    /// The line the person sees (stderr), or `None` when there is nothing to say.
+    /// The lines the person sees (stderr): the state line, and, while the question cannot be remembered, the yellow line that says so.
+    #[must_use]
+    pub fn lines(&self) -> Vec<String> {
+        let mut all: Vec<String> = self.line().into_iter().collect();
+        if self.when_open == WhenOpen::Ask {
+            // §9.4: no `Remembers` is wired (`NoRemember`): the question comes without the box, and this line says why
+            all.push(REMEMBER_LINE.to_owned());
+        }
+        all
+    }
+
+    /// The state line (stderr), or `None` when there is nothing to say.
     #[must_use]
     pub fn line(&self) -> Option<String> {
         if let Some(why) = &self.notice {
@@ -97,16 +118,38 @@ pub fn read(settings: &Settings) -> OpenSetting {
     }
 }
 
-/// Opens the settings of `program` over the service on `socket` and reads the value. `running` is the file of this program
-/// (the service program is looked for beside it, then in `/usr/bin`).
+/// The place of the system programs the service program is looked for in, after the folder of `running` (never `PATH`).
+#[must_use]
+pub fn system_bin() -> &'static Path {
+    if cfg!(windows) {
+        Path::new("")
+    } else {
+        Path::new("/usr/bin")
+    }
+}
+
+/// Opens the settings of `program` over the service on `socket` and reads the value. `running` is the file of this program;
+/// the service program (`fs-settings serve --socket S`) is looked for beside it, then in `usr_bin` (a test names an empty folder).
 #[must_use]
 pub fn connect(
     program: &ProgramName,
     socket: &Path,
     running: &Path,
+    usr_bin: &Path,
     times: &SingleTimes,
 ) -> OpenSetting {
-    if let Err(why) = ensure_service(socket, &Expected::new(""), running, times) {
+    let Some(exe) = find_service_program(running, usr_bin) else {
+        return OpenSetting::unavailable(unreachable_at(socket).with_text("cause", "no-server"));
+    };
+    let starter = CommandStarter::new(
+        &exe,
+        [
+            OsStr::new("serve"),
+            OsStr::new("--socket"),
+            socket.as_os_str(),
+        ],
+    );
+    if let Err(why) = ensure_service_with(socket, &Expected::new(""), &starter, Some(&exe), times) {
         return OpenSetting::unavailable(why);
     }
     let catalog = match catalog() {
@@ -130,7 +173,15 @@ pub fn connect(
 #[must_use]
 pub fn line_for(program: &str) -> Option<String> {
     let name = ProgramName::new(program).ok()?;
-    let socket = fs_rpc::default_socket("fs-settings")?;
+    // the socket name of the person service: `socket_program(false)` of fs-settings-server (`settings`), the convention of fs-rpc
+    let socket = fs_rpc::default_socket(SOCKET_PROGRAM)?;
     let running = std::env::current_exe().ok()?;
-    connect(&name, &socket, &running, &SingleTimes::default()).line()
+    let got = connect(
+        &name,
+        &socket,
+        &running,
+        system_bin(),
+        &SingleTimes::default(),
+    );
+    Some(got.lines().join("\n")).filter(|s| !s.is_empty())
 }

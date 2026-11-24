@@ -1,12 +1,17 @@
 //! The pins of the lifted libraries, read from `Cargo.lock` (K4b, mutant P4: `fs-conformance` back on the `rev` of fs-types main 339aa24
 //! has no `fs-types` of its own and so keeps "one source" green; only the exact tag shows it).
 
-/// The doubles that are KNOWN and wait for a follow-up commit of their owner (E3, 24.11.): `fs-settings-rpc` of fs-rpc d8944ef9 still pins
-/// fs-settings by tag v0.0.35 (R1 is built separately in fs-rpc), and `fs-forms-client` of fs-forms 2927e175 still pins fs-rpc 11cdf714.
-/// Nothing else is allowed twice; a line here is deleted as soon as its owner moved (the test below fails when it is no longer needed).
-const KNOWN_OLD: [(&str, &str); 3] = [
-    ("fs-settings", "?tag=v0.0.35#"),
+/// The doubles that are KNOWN and wait for a follow-up commit of their owner (E3, 24.11.): fs-forms 687998fa still pins fs-rpc 7f214f93,
+/// and the dev-dependency fs-modules-planning e567cd79 still pins fs-rpc 11cdf714 (tests only). fs-rpc 0120f9af is the one this repo uses
+/// (it holds `fs-settings-rpc` on fs-components d53126ba). Nothing else is allowed twice; a line here is deleted as soon as its owner
+/// moved (the test below fails when it is no longer needed).
+const KNOWN_OLD: [(&str, &str); 4] = [
+    ("fs-rpc", "?rev=7f214f935e9913e8cca5e275ab1fcd5b9dcfc170#"),
     ("fs-rpc", "?rev=11cdf71482cfcd8de14038c4e7fc796f2611e02c#"),
+    (
+        "fs-trusted-path",
+        "?rev=7f214f935e9913e8cca5e275ab1fcd5b9dcfc170#",
+    ),
     (
         "fs-trusted-path",
         "?rev=11cdf71482cfcd8de14038c4e7fc796f2611e02c#",
@@ -58,36 +63,36 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ("fs-objects", "REV:f6409f2a5378ba1464e69ae216efd4d27d249182"),
         (
             "fs-settings-rpc",
-            "REV:d8944ef9f446956e2d86942cafd656519d3abdea",
+            "REV:0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4",
         ),
         (
             "fs-settings",
-            "REV:d49e01d923931732ab1e090bc38f45268db85002",
+            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
         ),
         (
             "fs-components-commands",
-            "REV:d49e01d923931732ab1e090bc38f45268db85002",
+            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
         ),
-        ("fs-rpc", "REV:d8944ef9f446956e2d86942cafd656519d3abdea"),
+        ("fs-rpc", "REV:0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4"),
         (
             "fs-components-kanban",
-            "REV:d49e01d923931732ab1e090bc38f45268db85002",
+            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
         ),
         (
             "fs-trusted-path",
-            "REV:d8944ef9f446956e2d86942cafd656519d3abdea",
+            "REV:0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4",
         ),
         (
             "fs-forms-run",
-            "REV:2927e175559ebe2419065eebbc2b0deafc74f9ce",
+            "REV:687998faf266cd5ffc2ff47feba2a195b1ed4aae",
         ),
         (
             "fs-forms-bind",
-            "REV:2927e175559ebe2419065eebbc2b0deafc74f9ce",
+            "REV:687998faf266cd5ffc2ff47feba2a195b1ed4aae",
         ),
         (
             "fs-components",
-            "REV:d49e01d923931732ab1e090bc38f45268db85002",
+            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
         ),
     ] {
         let source = source_of(name);

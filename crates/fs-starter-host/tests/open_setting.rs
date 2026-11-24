@@ -40,13 +40,21 @@ fn put(store: &MemoryStore, scope: &Scope, word: &str) {
         .expect("written");
 }
 
-/// G6: no `fs-settings` program beside the running file (and none in `/usr/bin` on a test machine): nothing to start.
+/// G6: no `fs-settings` program beside the running file and none in the (empty) system folder: nothing to start.
 #[test]
 fn g6_without_a_service_the_value_is_ask_and_one_line_says_why() {
     let dir = tempfile::tempdir().expect("dir");
     let socket = dir.path().join("settings.sock");
     let running = dir.path().join("fs-starter");
-    let got = connect(&program(), &socket, &running, &SingleTimes::default());
+    let usr_bin = dir.path().join("usr-bin"); // an empty folder: the test never sees the `/usr/bin` of the machine
+    std::fs::create_dir(&usr_bin).expect("folder");
+    let got = connect(
+        &program(),
+        &socket,
+        &running,
+        &usr_bin,
+        &SingleTimes::default(),
+    );
     assert_eq!(got.when_open, WhenOpen::Ask);
     let why = got.notice.as_ref().expect("a notice");
     assert_eq!(why.code(), SettingCode::StoreUnreachable);
@@ -127,4 +135,28 @@ fn g7_an_instance_lock_beats_both_and_is_shown() {
         line.contains("locked") && line.contains("ask everyone first"),
         "{line}"
     );
+}
+
+/// §9.4: with the question open (`ask`) the yellow line says that remembering is not there yet; with a chosen word it is not said.
+#[test]
+fn the_remember_line_is_said_only_while_the_question_is_asked() {
+    let ask = read(&open(&MemoryStore::new()));
+    assert!(
+        ask.lines()
+            .iter()
+            .any(|l| l.contains("yellow remember-unavailable")),
+        "{:?}",
+        ask.lines()
+    );
+    let store = MemoryStore::new();
+    let settings = open(&store);
+    put(&store, &Scope::General, "window");
+    settings.refresh();
+    assert_eq!(read(&settings).lines(), Vec::<String>::new());
+}
+
+/// The service socket is named `settings` (`socket_program(false)` of fs-settings-server), the same on both sides.
+#[test]
+fn the_socket_of_the_person_service_is_named_settings() {
+    assert_eq!(fs_starter_host::open_setting::SOCKET_PROGRAM, "settings");
 }
