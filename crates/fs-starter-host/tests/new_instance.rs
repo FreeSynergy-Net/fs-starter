@@ -103,8 +103,14 @@ fn c_new_instance_with_a_picture_takes_no_place() {
         ],
     );
     let err = support::text(&out.stderr);
-    assert_eq!(out.status.code(), Some(0), "{err}");
-    assert!(png.exists(), "the picture was drawn: {err}");
+    // with a graphics adapter the picture is written (rc 0); without one (CI) the start gets as far as drawing and says so
+    // (`no graphics`, like the other picture tests): either way it was not stopped by the places or by the flag
+    let drawn = out.status.code() == Some(0) && png.exists();
+    let no_graphics = err.contains("no graphics");
+    assert!(
+        drawn || no_graphics,
+        "neither drawn nor `no graphics`: {err}"
+    );
     assert!(!err.contains("instance-slots-full"), "{err}");
     assert!(!err.contains("instance-handed-over"), "{err}");
     assert!(first.starts.try_recv().is_err(), "nothing was handed over");
