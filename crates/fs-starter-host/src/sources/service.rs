@@ -46,13 +46,13 @@ impl ServerStarter for Noted<'_> {
     }
 }
 
-/// A service that is up (started from the folder of the module if none runs; `started` is set when THIS call started it) and the
+/// A service that is up (started from the folder of the module if none runs; `ours` is set when THIS call started it) and the
 /// capability of `FormSource` on it.
 async fn up(
     known: &Known,
     socket: &Path,
     limits: &Limits,
-    started: &std::cell::Cell<bool>,
+    ours: &std::cell::Cell<bool>,
 ) -> Result<fs_rpc::Single<form_source::Client>, Coded> {
     let exe = known
         .service()
@@ -61,7 +61,7 @@ async fn up(
     let expected = Expected::new("");
     let starter = Noted {
         inner: CommandStarter::new(&exe, ["serve"]),
-        started,
+        started: ours,
     };
     let times = SingleTimes {
         overall: limits.time,

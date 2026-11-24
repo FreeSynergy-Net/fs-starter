@@ -106,14 +106,14 @@ fn a_given_id_must_be_the_derived_one() {
 
 #[test]
 fn the_same_key_twice_in_one_module_refuses_the_whole_set() {
-    for keys in [["card.move", "card.move"]] {
-        // already refused when the file is read (no set is made), not only in `add`
-        assert_eq!(
-            parse(&json_keys("planning", &keys), "planning"),
-            Err(Refusal::Conflict("planning.card.move".into())),
-            "{keys:?}"
-        );
-    }
+    // already refused when the file is read (no set is made), not only in `add`
+    assert_eq!(
+        parse(
+            &json_keys("planning", &["card.move", "card.move"]),
+            "planning"
+        ),
+        Err(Refusal::Conflict("planning.card.move".into()))
+    );
 }
 
 #[test]
