@@ -21,7 +21,7 @@ mod unix {
     use fs_interfaces::forms::{FORM_SOURCE_LEVEL, parse_key};
     use fs_interfaces::formsource_capnp::form_source;
     use fs_module::{FakeSource, Mode};
-    use fs_rpc::{Heartbeat, Problem, ServerIdentity, run_until_signal_as};
+    use fs_rpc::{Heartbeat, Problem, ServerIdentity, Serving, Shared, run_until_signal_serving};
     use std::rc::Rc;
 
     /// The form the strict `FakeSource` serves (its own data: three cards, the commands of the suite).
@@ -171,24 +171,29 @@ mod unix {
         let module = std::env::var("FAKE_MODULE").unwrap_or_else(|_| "groups".into());
         let mode = std::env::var("FAKE_MODE").unwrap_or_default();
         let socket = fs_rpc::default_socket(&module).expect("a runtime folder");
-        run_until_signal_as(
-            &socket.clone(),
-            ServerIdentity::new("fake-module", ""),
-            || async move {
-                let beat = if mode == "nobeat" {
-                    None
-                } else {
-                    Some(Heartbeat::start(&socket)?)
-                };
-                let cards = Rc::new(FakeSource::new(Mode::Strict));
-                let root: form_source::Client = new_client(Fake {
-                    mode,
-                    _beat: beat,
-                    cards,
-                });
-                Ok(root.client)
-            },
-        )
+        // `FAKE_IDLE_MS`: the service ends by itself after this long without a connection (what `MODULE_IDLE` is for a module), so a test
+        // can show that it lives while held and ends after the hold dropped; without it the service runs until it is stopped
+        let mut serving = Serving::new(ServerIdentity::new("fake-module", ""));
+        if let Some(ms) = std::env::var("FAKE_IDLE_MS")
+            .ok()
+            .and_then(|v| v.parse().ok())
+        {
+            serving = serving.with_idle_timeout(Duration::from_millis(ms));
+        }
+        run_until_signal_serving(&socket.clone(), serving, || async move {
+            let beat = if mode == "nobeat" {
+                None
+            } else {
+                Some(Heartbeat::start(&socket)?)
+            };
+            let cards = Rc::new(FakeSource::new(Mode::Strict));
+            let root: form_source::Client = new_client(Fake {
+                mode,
+                _beat: beat,
+                cards,
+            });
+            Ok(Shared(root.client))
+        })
     }
 }
 

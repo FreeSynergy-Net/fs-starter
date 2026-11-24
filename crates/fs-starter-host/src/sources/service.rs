@@ -48,6 +48,17 @@ impl ServerStarter for Noted<'_> {
     }
 }
 
+/// How the service of a module is started and what it must say about itself: the ONE place (border 3: only the program file of the
+/// module folder; any version, the contract version was compared with the catalog of the module by the host, border 2, here only the
+/// protocol). `up` and the hold of the window both take it from here.
+pub(super) fn parts(known: &Known) -> Result<(PathBuf, Expected, CommandStarter), Coded> {
+    let exe = known
+        .service()
+        .map_err(|why| cause(UNREACHABLE, &known.name, why))?;
+    let starter = CommandStarter::new(&exe, ["serve"]);
+    Ok((exe, Expected::new(""), starter))
+}
+
 /// A service that is up (started from the folder of the module if none runs; `ours` is set when THIS call started it) and the
 /// capability of `FormSource` on it.
 pub(super) async fn up(
@@ -56,13 +67,9 @@ pub(super) async fn up(
     limits: &Limits,
     ours: &std::cell::Cell<bool>,
 ) -> Result<fs_rpc::Single<form_source::Client>, Coded> {
-    let exe = known
-        .service()
-        .map_err(|why| cause(UNREACHABLE, &known.name, why))?;
-    // any version: the contract version was compared with the catalog of the module by the host (border 2), here only the protocol
-    let expected = Expected::new("");
+    let (exe, expected, inner) = parts(known)?;
     let starter = Noted {
-        inner: CommandStarter::new(&exe, ["serve"]),
+        inner,
         started: ours,
     };
     let times = SingleTimes {

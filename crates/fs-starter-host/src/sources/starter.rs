@@ -17,23 +17,20 @@ use super::{
     declared, invoke,
     known::{Known, Modules},
     range, service,
-    writer::ModuleWriter,
 };
-use std::path::Path;
-use std::sync::Arc;
 
 use fs_forms_bind::ModuleForm;
-use fs_forms_run::{Coded, FormData, FormRecords, Records, Sources, name_of};
+use fs_forms_run::{Coded, FormData, FormRecords, name_of};
 
 use super::invoke::Written;
 
 /// The sources of the starter.
 #[derive(Clone, Debug)]
 pub struct StarterSources {
-    modules: Modules,
-    limits: Limits,
+    pub(super) modules: Modules,
+    pub(super) limits: Limits,
     /// A one-time command (`--picture`, `--check-system`): a service this run started is ended when the run is done.
-    end_started: bool,
+    pub(super) end_started: bool,
 }
 
 impl StarterSources {
@@ -122,7 +119,7 @@ impl StarterSources {
     }
 
     /// Read every form of `known` through the service, with the command set of the module on each form (what `allowed` asks).
-    fn read(&self, known: &Known, forms: &[ModuleForm]) -> Result<FormRecords, Coded> {
+    pub(super) fn read(&self, known: &Known, forms: &[ModuleForm]) -> Result<FormRecords, Coded> {
         let mut records = service::fetch(known, forms, &self.limits, self.end_started)?;
         let keys = self.command_keys(&known.name);
         for data in &mut records.forms {
@@ -189,30 +186,6 @@ impl StarterSources {
                 .with("command", command));
         };
         invoke::call(known, key, record, args, &self.limits, self.end_started)
-    }
-}
-
-impl Sources for StarterSources {
-    /// The `socket` of the command line is NOT used: a module is reached only on its own socket (border 4).
-    fn connect(&self, range: &str, _: Option<&Path>, _: &Path) -> Result<Arc<dyn Records>, Coded> {
-        // a source that is not there is said on stderr too (the window shows it as a notice): never silent
-        let said = |code: Coded| {
-            eprintln!("fs-starter: {}", line(&code));
-            code
-        };
-        let (known, forms) = self.declared(range).map_err(said)?;
-        let began = std::time::Instant::now();
-        let records = self.read(known, &forms).map_err(said)?;
-        // what was read, never silent: an empty picture can be told from a service that gave nothing
-        for line in read_lines(known.name.as_str(), &records, began.elapsed()) {
-            eprintln!("{line}");
-        }
-        // a gesture of the window goes back to this module through the port `Writer`
-        let writer = ModuleWriter::new(self.clone(), &known.name, forms);
-        Ok(Arc::new(FormRecords {
-            writer: Some(Arc::new(writer)),
-            ..records
-        }))
     }
 }
 

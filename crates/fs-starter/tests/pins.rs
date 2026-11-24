@@ -44,6 +44,10 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
             "REV:393e7af62bd4cc815906a88e04b3c98a08b46084",
         ),
         ("fs-rpc", "v0.1.3"),
+        (
+            "fs-components-kanban",
+            "REV:393e7af62bd4cc815906a88e04b3c98a08b46084",
+        ),
         ("fs-trusted-path", "v0.1.3"),
         (
             "fs-forms-run",

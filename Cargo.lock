@@ -1884,6 +1884,7 @@ dependencies = [
  "capnp",
  "capnp-rpc",
  "fs-components-commands",
+ "fs-components-kanban",
  "fs-forms-bind",
  "fs-forms-run",
  "fs-interfaces",
