@@ -6,7 +6,7 @@ Version = tag.
 
 ### English
 
-- E2 (settings as data, only data): new `crates/fs-starter/catalog/settings.json` (format of `CatalogFile`, fs-components E1) declares `fs.open.when-open` (ask, switch, tab, window; default ask; `tab` follows with phase 2). Words (label, about, four choices) in `texts/en.mf2` and `texts/de.mf2`. Nothing reads the file yet (that comes with the pin wave); `fs.rpc.single.ask` and `fs.mcp.enabled` stay in `StarterSettings` (a file has one owner).
+- E2 (settings as data, only data): new `crates/fs-starter/catalog/settings.json` (format of `CatalogFile`, fs-components E1) declares `fs.open.when-open` (ask, switch, tab, window; default ask; `tab` follows with phase 2). Words (label, about, four choices) in `texts/en.mf2` and `texts/de.mf2`. E1b format (owner per entry): the file also carries `fs.rpc.single.ask` (flag, default on, group system) and `fs.mcp.enabled` (flag, default OFF, group ai, per device, human-only; the reader refuses it otherwise with `cause=protected`), moved 1:1 from `StarterSettings`. Nothing reads the file yet (pin wave to fs-components 8ec7adc); until then the Rust declarations stay.
 
 - S5: help line `--steps FILE` (only with `--picture`). Pins: fs-forms on 3fe3cf3 (fs-forms-run, fs-forms-bind), fs-components on 9cea35b (commands, kanban, settings; brings fs-components-replay). No new code.
 
@@ -18,7 +18,7 @@ Version = tag.
 
 ### Deutsch
 
-- E2 (Einstellungen als Daten, nur Daten): neue Datei `crates/fs-starter/catalog/settings.json` (Format von `CatalogFile`, fs-components E1) deklariert `fs.open.when-open` (ask, switch, tab, window; Vorgabe ask; `tab` folgt mit Phase 2). Texte (Name, Beschreibung, vier Auswahlen) in `texts/en.mf2` und `texts/de.mf2`. Noch liest niemand die Datei (kommt mit der Pin-Welle); `fs.rpc.single.ask` und `fs.mcp.enabled` bleiben in `StarterSettings` (eine Datei hat einen Besitzer).
+- E2 (Einstellungen als Daten, nur Daten): neue Datei `crates/fs-starter/catalog/settings.json` (Format von `CatalogFile`, fs-components E1) deklariert `fs.open.when-open` (ask, switch, tab, window; Vorgabe ask; `tab` folgt mit Phase 2). Texte (Name, Beschreibung, vier Auswahlen) in `texts/en.mf2` und `texts/de.mf2`. Format E1b (Besitzer je Eintrag): die Datei traegt auch `fs.rpc.single.ask` (Flag, Vorgabe an, Gruppe system) und `fs.mcp.enabled` (Flag, Vorgabe AUS, Gruppe ai, je Geraet, nur Mensch; der Leser lehnt es sonst mit `cause=protected` ab), 1:1 aus `StarterSettings` uebernommen. Noch liest niemand die Datei (Pin-Welle auf fs-components 8ec7adc); bis dahin bleiben die Rust-Deklarationen.
 
 - S5: Hilfezeile `--steps FILE` (nur mit `--picture`). Pins: fs-forms auf 3fe3cf3 (fs-forms-run, fs-forms-bind), fs-components auf 9cea35b (commands, kanban, settings; bringt fs-components-replay). Kein neuer Code.
 

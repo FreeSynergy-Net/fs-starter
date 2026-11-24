@@ -1,9 +1,14 @@
 {
-  "owner": "fs.open",
   "version": "0.1",
   "settings": [
-    { "key": "fs.open.when-open",
+    { "owner": "fs.open", "key": "fs.open.when-open",
       "schema": { "type": "string", "enum": ["ask", "switch", "tab", "window"], "default": "ask" },
-      "group": "open" }
+      "group": "open" },
+    { "owner": "fs.rpc", "key": "fs.rpc.single.ask",
+      "schema": { "type": "boolean", "default": true },
+      "group": "system" },
+    { "owner": "fs.mcp", "key": "fs.mcp.enabled",
+      "schema": { "type": "boolean", "default": false },
+      "group": "ai", "place": "device", "human-only": true }
   ]
 }
