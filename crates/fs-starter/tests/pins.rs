@@ -37,29 +37,29 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ("fs-objects", "v0.0.10"),
         (
             "fs-settings",
-            "REV:393e7af62bd4cc815906a88e04b3c98a08b46084",
+            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
         ),
         (
             "fs-components-commands",
-            "REV:393e7af62bd4cc815906a88e04b3c98a08b46084",
+            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
         ),
         ("fs-rpc", "v0.1.3"),
         (
             "fs-components-kanban",
-            "REV:393e7af62bd4cc815906a88e04b3c98a08b46084",
+            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
         ),
         ("fs-trusted-path", "v0.1.3"),
         (
             "fs-forms-run",
-            "REV:61cee0e32b87a57c5c2cd78193d5b1139310956f",
+            "REV:3fe3cf3bf07babda7b9eb7215d6daa938f7633f6",
         ),
         (
             "fs-forms-bind",
-            "REV:61cee0e32b87a57c5c2cd78193d5b1139310956f",
+            "REV:3fe3cf3bf07babda7b9eb7215d6daa938f7633f6",
         ),
         (
             "fs-components",
-            "REV:393e7af62bd4cc815906a88e04b3c98a08b46084",
+            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
         ),
     ] {
         let source = source_of(name);
