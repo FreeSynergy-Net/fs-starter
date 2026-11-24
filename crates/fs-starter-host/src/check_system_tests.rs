@@ -1,4 +1,6 @@
 //! Unit tests of `--check-system` (the words and the one-line rule).
+//!
+//! Pattern: none (plain tests of two private functions).
 
 use super::*;
 
