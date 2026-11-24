@@ -69,7 +69,7 @@ pub use semver::Version;
 pub use settings::{MCP_ENABLED, SINGLE_ASK, StarterSettings, TEXT_DE, TEXT_EN};
 #[cfg(unix)]
 pub use system::{MODULES_DIR, PROGRAMS_DIR, SHARE_DIR, STARTER_DIR};
-pub use system::{SystemPlaces, SystemRefusal};
+pub use system::{SystemPlaces, SystemRefusal, programs_dir};
 
 pub use tell::{Level, Note, StderrTell, Tell};
 pub use words::{StartWords, Words, parse, synopsis};

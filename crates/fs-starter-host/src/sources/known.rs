@@ -86,6 +86,29 @@ impl Modules {
         )
     }
 
+    /// Like [`Self::standard`], but the bundled modules are read from `dir` (`--check-system --modules DIR`) instead of the folder next to
+    /// the binary. The system folder is read as always.
+    #[must_use]
+    pub fn standard_with_bundled(dir: &Path) -> Self {
+        Self::load_places(
+            Some(dir),
+            system_modules_dir().as_deref(),
+            &SystemPackaged::new(),
+        )
+    }
+
+    /// Every module the registry took in.
+    #[must_use]
+    pub fn known(&self) -> &[Known] {
+        &self.known
+    }
+
+    /// The module folders the registry refused, with the reasons (an empty name: a folder that could not be read at all).
+    #[must_use]
+    pub fn refused(&self) -> &[(String, Vec<Refusal>)] {
+        &self.refused
+    }
+
     /// What the registry said about a folder: a missing folder is fine (nothing brought), every other error and every refused module
     /// is kept and written to stderr, never thrown away.
     fn report(&mut self, dir: &Path, got: std::io::Result<Vec<(String, Vec<Refusal>)>>) {

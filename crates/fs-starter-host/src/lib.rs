@@ -13,6 +13,7 @@
 #![warn(clippy::pedantic)]
 
 mod check_sources;
+mod check_system;
 mod host;
 pub mod instance;
 mod package;

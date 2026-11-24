@@ -9,19 +9,45 @@ use fs_starter::Exit;
 
 use crate::sources::{StarterSources, bare};
 
+/// One finding of the match: what `--check` prints and what `--check-system` turns into its own lines.
+pub(crate) enum Finding {
+    /// A mismatch (the contract code 3).
+    Red(String),
+    /// Said, and the exit code stays 0.
+    Yellow(String),
+    /// A source that was checked: `(module, version, forms, commands)`.
+    Checked(String, String, usize, usize),
+}
+
 /// The match of every source the description names, WITHOUT starting a service: the module is looked up in the registry, its
 /// contract and version are compared, its `forms.json` goes through the one match of fs-forms (`form_report`). Red (a form that does not
 /// fit, a version outside the range) ends with the contract code 3; yellow (a form no component draws, a module that is not there)
 /// is said and ends with 0.
 pub(crate) fn check_sources(ranges: &[String], sources: &StarterSources) -> ExitCode {
     let mut red = false;
+    for f in findings(ranges, sources) {
+        match f {
+            Finding::Red(l) => {
+                red = true;
+                println!("fs-starter: red {l}");
+            }
+            Finding::Yellow(l) => println!("fs-starter: yellow {l}"),
+            Finding::Checked(name, version, forms, commands) => println!(
+                "fs-starter: source {name} {version} checked forms={forms} commands={commands} (no service started)"
+            ),
+        }
+    }
+    ExitCode::from(if red { Exit::CONTRACT } else { Exit::DONE }.code())
+}
+
+/// The findings of the match for every range, in the order they are found.
+pub(crate) fn findings(ranges: &[String], sources: &StarterSources) -> Vec<Finding> {
+    let mut out = Vec::new();
     for range in ranges {
         match sources.declared(range) {
             Err(code) => {
                 // a module that is not there is said (the window shows "unknown source"); a module that does not fit is red
-                let bad = code.code != "host-notice-source-unknown";
-                red |= bad;
-                println!("fs-starter: {}", line(&code, bad));
+                push(&mut out, code.code != "host-notice-source-unknown", &code);
             }
             Ok((known, forms)) => {
                 let mut records = bare(forms);
@@ -30,26 +56,32 @@ pub(crate) fn check_sources(ranges: &[String], sources: &StarterSources) -> Exit
                     data.commands.clone_from(&keys);
                 }
                 for f in fs_forms_run::form_report(&records) {
-                    red |= f.red;
-                    println!("fs-starter: {}", line(&f.code, f.red));
+                    push(&mut out, f.red, &f.code);
                 }
                 // a command channel must be bound to a key of the command set of the module (`task.steal`, `planning.task.create`:
                 // not in it, red)
                 for c in unknown_commands(&records.forms, &keys) {
-                    red = true;
-                    println!("fs-starter: red {}", crate::sources::line(&c));
+                    push(&mut out, true, &c);
                 }
-                println!(
-                    "fs-starter: source {} {} checked forms={} commands={} (no service started)",
-                    known.name,
-                    known.version,
+                out.push(Finding::Checked(
+                    known.name.clone(),
+                    known.version.to_string(),
                     records.forms.len(),
-                    keys.len()
-                );
+                    keys.len(),
+                ));
             }
         }
     }
-    ExitCode::from(if red { Exit::CONTRACT } else { Exit::DONE }.code())
+    out
+}
+
+fn push(out: &mut Vec<Finding>, bad: bool, c: &Coded) {
+    let l = crate::sources::line(c);
+    out.push(if bad {
+        Finding::Red(l)
+    } else {
+        Finding::Yellow(l)
+    });
 }
 
 /// The command channels of the forms bound to a key that is not in `keys` (the command set of the module): `form-command-unknown`.
@@ -68,13 +100,4 @@ fn unknown_commands(forms: &[FormData], keys: &[String]) -> Vec<Coded> {
         }
     }
     out
-}
-
-/// A finding as one line: `red|yellow code key=value ...`.
-fn line(c: &fs_forms_run::Coded, red: bool) -> String {
-    format!(
-        "{} {}",
-        if red { "red" } else { "yellow" },
-        crate::sources::line(c)
-    )
 }

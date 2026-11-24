@@ -90,6 +90,34 @@ impl StarterSources {
         Ok((known, forms))
     }
 
+    /// The modules this host knows (what the registry took in, and what it refused).
+    #[must_use]
+    pub fn modules(&self) -> &Modules {
+        &self.modules
+    }
+
+    /// Start the service of `module` (the one road of the window: `ensure_single`, version handshake, heartbeat), read every form it
+    /// declares, and answer what was read as `read_lines`. A one-time command builds the sources with
+    /// [`Self::ending_what_it_started`], so a service this call started is ended again.
+    ///
+    /// # Errors
+    /// `host-notice-source-unknown` (no such module), `host-notice-data-contract` (the forms cannot be read), else the
+    /// `host-notice-data-*` codes of the connection.
+    pub fn probe(&self, module: &str) -> Result<Vec<String>, Coded> {
+        let known = self
+            .modules
+            .find(module)
+            .ok_or_else(|| Coded::new("host-notice-source-unknown").with("contract", module))?;
+        let forms = declared::read(&known.folder).map_err(|why| {
+            Coded::new("host-notice-data-contract")
+                .with("contract", module)
+                .with("cause", why)
+        })?;
+        let began = std::time::Instant::now();
+        let records = service::fetch(known, &forms, &self.limits, self.end_started)?;
+        Ok(read_lines(module, &records, began.elapsed()))
+    }
+
     /// The raw contract keys of the command set of `module` (what a form may bind a command channel to).
     #[must_use]
     pub fn command_keys(&self, module: &str) -> Vec<String> {

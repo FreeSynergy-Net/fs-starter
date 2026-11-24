@@ -21,6 +21,9 @@ pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) 
     --program NAME takes the installed data package /usr/share/freesynergy/programs/NAME (only a place that passes the system check).\n\
 fs-starter --list-commands [--modules DIR]\n\
     Lists the commands the host knows: the shared app.* and those of the bundled modules (id, module, version).\n\
+fs-starter --check-system [--modules DIR] [--program NAME]... [--description PATH]...\n\
+    Checks what is installed and whether it runs: one line per finding, `ok|yellow|red code key=value`; exit 0 (ok, yellow) or 3 (red).\n\
+    Starts each module service (and ends it again if it started it), asks its heartbeat, checks that MCP is off.\n\
     The words below are read by the window host (`fs-forms-run`), the one reader of them.\n";
 
 /// The line `--version` prints.
@@ -36,6 +39,9 @@ pub fn run(args: &[String]) -> ExitCode {
     if args.first().map(String::as_str) == Some("mcp") {
         let words: Vec<std::ffi::OsString> = args.iter().map(std::ffi::OsString::from).collect();
         return shell::run_library(&words, &mut std::io::stdout().lock());
+    }
+    if args.first().map(String::as_str) == Some("--check-system") {
+        return crate::check_system::run(args);
     }
     if args.first().map(String::as_str) == Some("--list-commands") {
         return list_commands(args);

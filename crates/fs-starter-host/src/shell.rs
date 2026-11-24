@@ -116,6 +116,12 @@ fn with_hooks<R>(hooks: &[&dyn StartHook], f: impl FnOnce(&Parts<'_>) -> R) -> R
     f(&parts)
 }
 
+/// Whether the MCP switch of the host is on (it never is: `McpOff`); `--check-system` asks the same switch `mcp --as <actor>` asks.
+#[must_use]
+pub fn mcp_enabled() -> bool {
+    with_parts(|parts| parts.mcp_switch.enabled())
+}
+
 /// The words `mcp --as <actor>` go through the library: with `McpOff` they end in `mcp-disabled`, exit 1; the host never serves MCP.
 #[must_use]
 pub fn run_library(words: &[OsString], out: &mut dyn io::Write) -> ExitCode {
