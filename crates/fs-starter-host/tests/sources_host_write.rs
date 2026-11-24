@@ -58,3 +58,21 @@ fn a_form_of_a_major_the_service_does_not_have_is_refused_on_the_read_road() {
     let refused = s.sources.probe("cards").unwrap_err();
     assert_eq!(refused.code, "form-source-unknown-form");
 }
+
+#[test]
+fn a_refusal_names_its_reason_in_the_data_next_to_the_code() {
+    let s = module("1.0");
+    let refused = s
+        .sources
+        .invoke("cards", "cards.card.move", "c1", &[])
+        .unwrap_err();
+    assert_eq!(refused.code, "form-source-bad-arguments");
+    let reason = refused
+        .params
+        .iter()
+        .find(|(k, _)| k == "reason")
+        .map(|(_, v)| v.as_str())
+        .expect("the data carry a reason");
+    assert!(!reason.is_empty() && reason.len() <= 120, "{reason}");
+    assert!(refused.params.contains(&("status".into(), "400".into())));
+}

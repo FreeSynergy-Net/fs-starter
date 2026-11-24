@@ -11,7 +11,7 @@ use fs_interfaces::formsource_capnp::form_source;
 
 use super::answer::{Limits, clean};
 use super::known::Known;
-use super::refusal::kind_code;
+use super::refusal::{kind_code, with_reason};
 use super::service::{ANSWER, UNREACHABLE, cause, finish, run, socket_of, text, up};
 
 /// What a command made or changed, as the service says it (`WriteResult`): the record (empty for a delete) and a short text.
@@ -88,17 +88,31 @@ fn read_answer(
     limits: &Limits,
 ) -> Result<Written, Coded> {
     if answer.get_failed() {
-        let kind = answer
-            .get_problem()
-            .and_then(fs_interfaces::common_capnp::problem::Reader::get_type)
-            .ok()
+        let problem = answer.get_problem().ok();
+        let text_of = |t: capnp::Result<capnp::text::Reader<'_>>| {
+            t.ok()
+                .and_then(|t| t.to_str().ok())
+                .unwrap_or("")
+                .to_owned()
+        };
+        let kind = problem
+            .and_then(|p| p.get_type().ok())
             .and_then(|t| t.to_str().ok().and_then(kind_code));
-        return Err(cause(
+        let said = cause(
             kind.as_deref().unwrap_or("host-notice-invoke-failed"),
             module,
             "service",
         )
-        .with("command", command));
+        .with("command", command);
+        return Err(match problem {
+            Some(p) => with_reason(
+                said,
+                &text_of(p.get_title()),
+                &text_of(p.get_detail()),
+                p.get_status(),
+            ),
+            None => said,
+        });
     }
     written(answer.get_result(), limits).map_err(|()| cause(ANSWER, module, "result"))
 }
@@ -158,6 +172,35 @@ mod tests {
         assert!(c.params.contains(&("command".into(), "card.move".into())));
         let c = read(&answer(true, "https://x.example/evil", "", "")).unwrap_err();
         assert_eq!(c.code, "host-notice-invoke-failed");
+    }
+
+    #[test]
+    fn a_refusal_carries_the_reason_of_its_problem_clean_and_cut() {
+        let mut msg = answer(true, "form-source-bad-arguments", "", "");
+        {
+            let r = msg
+                .get_root::<form_source::invoke_results::Builder>()
+                .unwrap();
+            let mut p = r.get_problem().unwrap();
+            p.set_detail(&format!("missing \u{1b}[31mboard\n{}", "x".repeat(500)));
+            p.set_status(400);
+        }
+        let c = read(&msg).unwrap_err();
+        let get = |k: &str| {
+            c.params
+                .iter()
+                .find(|(n, _)| n == k)
+                .map(|(_, v)| v.clone())
+        };
+        let reason = get("reason").expect("reason");
+        assert!(
+            reason.starts_with("missing \u{FFFD}[31mboard\u{FFFD}xxx"),
+            "{reason}"
+        );
+        assert!(reason.len() <= 120 && !reason.contains('\n'));
+        assert_eq!(get("status").as_deref(), Some("400"));
+        let names: Vec<&str> = c.params.iter().map(|(k, _)| k.as_str()).collect();
+        assert_eq!(names, ["module", "cause", "command", "reason", "status"]);
     }
 
     #[test]

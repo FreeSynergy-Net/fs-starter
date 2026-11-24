@@ -7,9 +7,12 @@
 use fs_forms_run::Coded;
 use fs_rpc::Problem;
 
+use super::answer::clean;
 use super::service::cause;
 
 const PREFIX: &str = "form-source-";
+/// The longest reason taken over from a problem (bytes); the rest is cut.
+const REASON_MAX: usize = 120;
 
 /// The problem type as a code, when it has exactly the shape `form-source-<kind>` (kind: lower case letters and `-`, at most 32 bytes).
 #[must_use]
@@ -21,12 +24,45 @@ pub(super) fn kind_code(problem_type: &str) -> Option<String> {
     fits.then(|| problem_type.to_owned())
 }
 
+/// The reason a problem names, as clean short text for the data of the line: the detail (what happened this time), else the title;
+/// control characters are masked and the text is cut. `None` when the problem says nothing. Never a code, never trusted as one.
+#[must_use]
+pub(super) fn reason_of(title: &str, detail: &str) -> Option<String> {
+    let said = if detail.trim().is_empty() {
+        title
+    } else {
+        detail
+    };
+    let said = clean(said.trim(), REASON_MAX);
+    (!said.is_empty()).then_some(said)
+}
+
+/// `coded` with the reason and the status of a problem (`reason=` as text, `status=` as a number).
+#[must_use]
+pub(super) fn with_reason(coded: Coded, title: &str, detail: &str, status: u16) -> Coded {
+    let coded = match reason_of(title, detail) {
+        Some(r) => coded.with("reason", r),
+        None => coded,
+    };
+    if status == 0 {
+        coded
+    } else {
+        coded.with("status", status.to_string())
+    }
+}
+
 /// The refusal of a failed call: the code of the problem the error carries (`form-source-unknown-form`), else `fallback`.
 pub(super) fn refusal_or(error: &capnp::Error, module: &str, why: &str, fallback: &str) -> Coded {
-    let code = Problem::from_error(error)
+    let problem = Problem::from_error(error);
+    let code = problem
+        .as_ref()
         .and_then(|p| kind_code(&p.problem_type))
         .unwrap_or_else(|| fallback.to_owned());
-    cause(&code, module, why)
+    let said = cause(&code, module, why);
+    match problem {
+        Some(p) => with_reason(said, &p.title, &p.detail, p.status),
+        None => said,
+    }
 }
 
 #[cfg(test)]
@@ -51,6 +87,17 @@ mod tests {
     }
 
     #[test]
+    fn the_reason_is_the_detail_else_the_title_clean_and_cut() {
+        assert_eq!(reason_of("t", "d").as_deref(), Some("d"));
+        assert_eq!(reason_of("title", "  ").as_deref(), Some("title"));
+        assert_eq!(reason_of("", ""), None);
+        let long = format!("a\u{7}b\n{}", "y".repeat(400));
+        let got = reason_of("t", &long).unwrap();
+        assert_eq!(got.len(), REASON_MAX);
+        assert!(got.starts_with("a\u{FFFD}b\u{FFFD}yy"));
+    }
+
+    #[test]
     fn a_problem_in_the_error_text_gives_its_kind_and_a_plain_error_the_fallback() {
         let problem = Problem::new("form-source-unknown-form", "t", "d", 404);
         let said = refusal_or(&problem.into_error(), "groups", "page", "fallback");
@@ -62,5 +109,6 @@ mod tests {
             "fallback",
         );
         assert_eq!(plain.code, "fallback");
+        assert!(plain.params.iter().all(|(k, _)| k != "reason"));
     }
 }

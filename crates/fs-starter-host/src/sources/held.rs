@@ -87,7 +87,12 @@ pub(super) fn event_line(module: &str, event: &HoldEvent) -> Option<String> {
             resync_needed: true,
             ..
         } => "attached resync",
-        HoldEvent::GaveUp { .. } => "gave-up",
+        HoldEvent::GaveUp { error } => {
+            return Some(format!(
+                "fs-starter: hold module={module} gave-up error={}",
+                error.code().as_str()
+            ));
+        }
         HoldEvent::Detached => "detached",
         _ => return None,
     };
@@ -145,7 +150,10 @@ mod tests {
         let gave = HoldEvent::GaveUp {
             error: RpcError::new(RpcErrorCode::Unimplemented),
         };
-        assert!(line(&gave).ends_with("gave-up"));
+        assert_eq!(
+            line(&gave),
+            "fs-starter: hold module=groups gave-up error=unimplemented"
+        );
     }
 
     #[test]
