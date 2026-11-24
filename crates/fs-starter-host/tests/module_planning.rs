@@ -19,15 +19,28 @@ async fn the_suite_passes_on_the_real_planning_service() {
             let source = fs_rpc::connect::<form_source::Client>(&socket)
                 .await
                 .unwrap();
+            let other = fs_rpc::connect::<form_source::Client>(&socket)
+                .await
+                .unwrap();
             let uids = board_with(&socket, &source.client, &["a", "b", "c"]).await;
             let fixture = Planning3 {
                 client: source.client.clone(),
+                other: other.client.clone(),
                 uids,
             };
             let report = run_conformance(&fixture).await;
             assert!(report.failures.is_empty(), "{:#?}", report.failures);
             assert!(
-                report.skipped.iter().all(|s| s.starts_with("11 forbidden")),
+                // what the fixture of planning does not offer (no rights per person yet, no image field, no black-out, no ordered move or value fields in it)
+                report.skipped.iter().all(|s| [
+                    "11 forbidden",
+                    "20 blob",
+                    "L2-9 gone",
+                    "21 place",
+                    "22 standard"
+                ]
+                .iter()
+                .any(|p| s.starts_with(p))),
                 "{:#?}",
                 report.skipped
             );

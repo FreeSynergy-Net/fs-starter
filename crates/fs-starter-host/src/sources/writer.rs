@@ -7,6 +7,9 @@
 use fs_forms_bind::ModuleForm;
 use fs_forms_run::{Coded, FormData, Invocation, Writer};
 
+use std::sync::Arc;
+
+use super::session::Session;
 use super::starter::StarterSources;
 
 /// The connection of the window to one module: what a gesture writes and what the form shows afterwards.
@@ -15,14 +18,22 @@ pub(super) struct ModuleWriter {
     sources: StarterSources,
     module: String,
     forms: Vec<ModuleForm>,
+    /// The held connection of a window at level 2: a write goes as `invokeIf` over it and is part of the history.
+    session: Option<Arc<Session>>,
 }
 
 impl ModuleWriter {
-    pub(super) fn new(sources: StarterSources, module: &str, forms: Vec<ModuleForm>) -> Self {
+    pub(super) fn new(
+        sources: StarterSources,
+        module: &str,
+        forms: Vec<ModuleForm>,
+        session: Option<Arc<Session>>,
+    ) -> Self {
         Self {
             sources,
             module: module.to_owned(),
             forms,
+            session,
         }
     }
 }
@@ -32,9 +43,14 @@ impl Writer for ModuleWriter {
         // the key of the contract (`card.move`) lives in the name space of the module: the id the host bound for it
         let id = format!("{}.{}", self.module, call.command);
         let record = call.record.as_deref().unwrap_or("");
-        self.sources
-            .invoke(&self.module, &id, record, &call.args)
-            .map(|_| ())
+        let written = match &self.session {
+            Some(session) => {
+                let key = self.sources.own_key(&self.module, &id)?;
+                session.invoke_if(&key, record, &call.args)
+            }
+            None => self.sources.invoke(&self.module, &id, record, &call.args),
+        };
+        written.map(|_| ())
     }
 
     fn reload(&self) -> Result<Vec<FormData>, Coded> {
@@ -64,6 +80,7 @@ mod tests {
             StarterSources::new(m, Limits::default()),
             "groups",
             Vec::new(),
+            None,
         );
         (b, w)
     }

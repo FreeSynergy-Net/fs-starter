@@ -21,17 +21,37 @@ mod unix {
     use fs_interfaces::forms::{FORM_SOURCE_LEVEL, parse_key};
     use fs_interfaces::formsource_capnp::form_source;
     use fs_module::{FakeSource, Mode};
-    use fs_rpc::{Heartbeat, Problem, ServerIdentity, Serving, Shared, run_until_signal_serving};
+    use fs_rpc::{
+        Caller, Heartbeat, PerConnection, Problem, ServerIdentity, Serving,
+        run_until_signal_serving,
+    };
     use std::rc::Rc;
 
     /// The form the strict `FakeSource` serves (its own data: three cards, the commands of the suite).
     const CARDS: &str = "cards-in-columns";
 
+    /// One connection (= one window or program): its OWN `introduce`, the cards and the log shared with every other connection.
     struct Fake {
         mode: String,
-        _beat: Option<Heartbeat>,
-        /// The contract: every rule of level 1 (version, scope, commands, arguments, rights, `result`).
+        /// The contract: every rule of level 1 and 2 (version, scope, commands, arguments, rights, `result`, `invokeIf`, `revert`, `watch`).
         cards: Rc<FakeSource>,
+    }
+
+    /// The service: a new [`Fake`] for each connection, so two windows are two connections and `introduce` holds for one of them.
+    struct Per {
+        mode: String,
+        _beat: Option<Heartbeat>,
+        cards: FakeSource,
+    }
+
+    impl PerConnection for Per {
+        fn bootstrap(&mut self, _: &Caller) -> capnp::capability::Client {
+            let root: form_source::Client = new_client(Fake {
+                mode: self.mode.clone(),
+                cards: Rc::new(self.cards.connection()),
+            });
+            root.client
+        }
     }
 
     /// A refusal of `FakeSource` (text `form-source-<kind>: <detail> (<status>)`) as the problem a real module sends.
@@ -64,10 +84,12 @@ mod unix {
             mut results: form_source::HelloResults,
         ) -> Result<(), capnp::Error> {
             let mut r = results.get();
-            r.set_level(if self.is("level") {
-                99
-            } else {
-                FORM_SOURCE_LEVEL
+            // `level`: below the minimum (refused); `level99`: a newer service (taken, the host works with its own level)
+            r.set_level(match self.mode.as_str() {
+                "level" => 0,
+                "level99" => 99,
+                "level1" => 1,
+                _ => FORM_SOURCE_LEVEL,
             });
             r.set_provider(if self.is("real") { "groups" } else { "fake" });
             Ok(())
@@ -151,6 +173,57 @@ mod unix {
                 .await
                 .map_err(as_problem)
         }
+
+        // Level 2 (the contract of Stufe 3): the strict `FakeSource` answers; at `level1` it says `unimplemented` like a level 1 service.
+        async fn invoke_if(
+            self: capnp::capability::Rc<Self>,
+            params: form_source::InvokeIfParams,
+            results: form_source::InvokeIfResults,
+        ) -> Result<(), capnp::Error> {
+            form_source::Server::invoke_if(self.cards.clone(), params, results)
+                .await
+                .map_err(as_problem)
+        }
+
+        async fn revert(
+            self: capnp::capability::Rc<Self>,
+            params: form_source::RevertParams,
+            results: form_source::RevertResults,
+        ) -> Result<(), capnp::Error> {
+            form_source::Server::revert(self.cards.clone(), params, results)
+                .await
+                .map_err(as_problem)
+        }
+
+        async fn changes(
+            self: capnp::capability::Rc<Self>,
+            params: form_source::ChangesParams,
+            results: form_source::ChangesResults,
+        ) -> Result<(), capnp::Error> {
+            form_source::Server::changes(self.cards.clone(), params, results)
+                .await
+                .map_err(as_problem)
+        }
+
+        async fn introduce(
+            self: capnp::capability::Rc<Self>,
+            params: form_source::IntroduceParams,
+            results: form_source::IntroduceResults,
+        ) -> Result<(), capnp::Error> {
+            form_source::Server::introduce(self.cards.clone(), params, results)
+                .await
+                .map_err(as_problem)
+        }
+
+        async fn watch(
+            self: capnp::capability::Rc<Self>,
+            params: form_source::WatchParams,
+            results: form_source::WatchResults,
+        ) -> Result<(), capnp::Error> {
+            form_source::Server::watch(self.cards.clone(), params, results)
+                .await
+                .map_err(as_problem)
+        }
     }
 
     fn unknown_form() -> capnp::Error {
@@ -186,13 +259,17 @@ mod unix {
             } else {
                 Some(Heartbeat::start(&socket)?)
             };
-            let cards = Rc::new(FakeSource::new(Mode::Strict));
-            let root: form_source::Client = new_client(Fake {
+            let cards = FakeSource::new(Mode::Strict);
+            let cards = if mode == "level1" {
+                cards.with_level(1)
+            } else {
+                cards
+            };
+            Ok(Per {
                 mode,
                 _beat: beat,
                 cards,
-            });
-            Ok(Shared(root.client))
+            })
         })
     }
 }

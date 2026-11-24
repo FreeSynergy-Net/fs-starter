@@ -46,7 +46,7 @@ fn a_clean_system_module_is_accepted_and_registered() {
     let mut r = Registry::new();
     r.add_package(Actor::Person, set("capture", &["capture.shot"]), &v)
         .unwrap();
-    assert_eq!(r.entries().len(), 5);
+    assert_eq!(r.entries().len(), 7);
 }
 
 #[test]
@@ -76,7 +76,7 @@ fn a_user_writable_folder_a_link_and_a_wrong_owner_are_refused() {
         )
         .unwrap_err();
     assert_eq!(why, [Refusal::NotTrusted]);
-    assert_eq!(r.entries().len(), 4);
+    assert_eq!(r.entries().len(), 6);
 }
 
 #[test]

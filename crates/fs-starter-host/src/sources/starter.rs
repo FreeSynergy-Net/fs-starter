@@ -16,6 +16,7 @@ use super::{
     answer::Limits,
     declared, invoke,
     known::{Known, Modules},
+    level::Levels,
     range, service,
 };
 
@@ -31,6 +32,8 @@ pub struct StarterSources {
     pub(super) limits: Limits,
     /// A one-time command (`--picture`, `--check-system`): a service this run started is ended when the run is done.
     pub(super) end_started: bool,
+    /// The name this host says in `introduce` (the program it opens); empty = `fs-starter`.
+    pub(super) program: Option<String>,
 }
 
 impl StarterSources {
@@ -47,6 +50,7 @@ impl StarterSources {
             modules,
             limits,
             end_started: false,
+            program: None,
         }
     }
 
@@ -90,6 +94,13 @@ impl StarterSources {
         Ok((known, forms))
     }
 
+    /// The program this host opens: the name `introduce` says for its windows (history and the line `by=`), never a right.
+    #[must_use]
+    pub fn named(mut self, program: &str) -> Self {
+        self.program = Some(program.to_owned());
+        self
+    }
+
     /// The modules this host knows (what the registry took in, and what it refused).
     #[must_use]
     pub fn modules(&self) -> &Modules {
@@ -120,12 +131,22 @@ impl StarterSources {
 
     /// Read every form of `known` through the service, with the command set of the module on each form (what `allowed` asks).
     pub(super) fn read(&self, known: &Known, forms: &[ModuleForm]) -> Result<FormRecords, Coded> {
-        let mut records = service::fetch(known, forms, &self.limits, self.end_started)?;
+        self.read_level(known, forms).map(|(records, _)| records)
+    }
+
+    /// [`Self::read`] and the level the host works with for this service.
+    pub(super) fn read_level(
+        &self,
+        known: &Known,
+        forms: &[ModuleForm],
+    ) -> Result<(FormRecords, Levels), Coded> {
+        let (mut records, level) =
+            service::fetch_level(known, forms, &self.limits, self.end_started)?;
         let keys = self.command_keys(&known.name);
         for data in &mut records.forms {
             data.commands.clone_from(&keys);
         }
-        Ok(records)
+        Ok((records, level))
     }
 
     /// The forms of `module` read again (after an accepted call): what the port `Writer` gives the window to show.
@@ -171,6 +192,15 @@ impl StarterSources {
             .modules
             .find(module)
             .ok_or_else(|| Coded::new("host-notice-source-unknown").with("contract", module))?;
+        let key = self.own_key(module, command)?;
+        invoke::call(known, &key, record, args, &self.limits, self.end_started)
+    }
+
+    /// The raw contract key of `command` if it is a command of the OWN name space of `module` that is in its set (border 6).
+    ///
+    /// # Errors
+    /// `host-notice-invoke-foreign`.
+    pub(super) fn own_key(&self, module: &str, command: &str) -> Result<String, Coded> {
         // only a command of the OWN name space that is in the set goes through; the service gets the raw contract key, never the id
         let key = self
             .modules
@@ -180,12 +210,11 @@ impl StarterSources {
         let own = command
             .strip_prefix(module)
             .is_some_and(|r| r.starts_with('.'));
-        let Some(key) = key.filter(|_| own) else {
-            return Err(Coded::new("host-notice-invoke-foreign")
+        key.filter(|_| own).map(str::to_owned).ok_or_else(|| {
+            Coded::new("host-notice-invoke-foreign")
                 .with("module", module)
-                .with("command", command));
-        };
-        invoke::call(known, key, record, args, &self.limits, self.end_started)
+                .with("command", command)
+        })
     }
 }
 

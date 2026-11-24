@@ -27,7 +27,7 @@ fn an_id_or_module_with_a_bad_character_refuses_the_whole_set() {
                 .any(|w| matches!(w, Refusal::BadId(id) if id == bad)),
             "{bad:?}: {why:?}"
         );
-        assert_eq!(r.entries().len(), 4, "{bad:?}: nothing is added");
+        assert_eq!(r.entries().len(), 6, "{bad:?}: nothing is added");
     }
     for module in ["Capture", "cap ture", "cap\nture", "cap.ture", ""] {
         let mut r = Registry::new();
@@ -55,7 +55,7 @@ fn an_id_with_a_line_break_forges_no_line_in_list_commands() {
     );
     assert_eq!(out.status.code(), Some(1), "{}", text(&out.stderr));
     let lines = text(&out.stdout);
-    assert_eq!(lines.lines().count(), 4, "{lines}");
+    assert_eq!(lines.lines().count(), 6, "{lines}");
     assert!(!lines.contains("fake.cmd"), "{lines}");
     assert!(
         // refused before the id is looked at (the key is not on the contract list); no line is forged either way
@@ -98,7 +98,7 @@ fn symlinks_are_not_read() {
         Some(vec![Refusal::Unreadable("symlink".into())])
     );
     assert_eq!(refused.len(), 2, "{refused:?}");
-    assert_eq!(ids(&r).len(), 5, "only capture.shot came in: {:?}", ids(&r));
+    assert_eq!(ids(&r).len(), 7, "only capture.shot came in: {:?}", ids(&r));
 }
 
 #[test]
@@ -128,5 +128,5 @@ fn big_files_and_hidden_folders_are_not_read() {
         1,
         "{refused:?}: the hidden folder is skipped silently"
     );
-    assert_eq!(ids(&r).len(), 5, "only capture.shot came in: {:?}", ids(&r));
+    assert_eq!(ids(&r).len(), 7, "only capture.shot came in: {:?}", ids(&r));
 }

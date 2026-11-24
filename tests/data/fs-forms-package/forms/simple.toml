@@ -1,5 +1,4 @@
-# created by fs-blueprint of fs-release main dcbf81b, not yet tagged; from now on this file belongs to the program and is never overwritten
-schema = 1
+schema = 3
 kind = "frontend"
 id = "simple"
 extends = "net.freesynergy.Forms"
@@ -7,14 +6,17 @@ exec = "fs-forms-run"
 title = "forms-title"
 
 [[requires]]
+elem = "requires:1"
 contract = "forms@>=0.1.0, <0.2.0"
 
 [[message]]
+elem = "message:forms-title/de"
 key = "forms-title"
-lang = "en"
+lang = "de"
 text = "Forms"
 
 [[message]]
+elem = "message:forms-title/en"
 key = "forms-title"
-lang = "de"
+lang = "en"
 text = "Forms"

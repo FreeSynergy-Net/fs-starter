@@ -5,15 +5,20 @@
 //!
 //! Pattern: Decorator (the records of the read, plus the handle) + RAII (`Hold`: the handle is the registration) + Observer (`HoldEvent`).
 
-use std::sync::Arc;
+use std::sync::{Arc, PoisonError};
 
 use fs_components_kanban::Answer;
-use fs_forms_run::{Coded, FormData, FormRecords, Records, SideItem};
-use fs_rpc::{Hold, HoldEvent, HoldSpec, ReconnectTimes, hold};
+use fs_forms_bind::ModuleForm;
+use fs_forms_run::{ChangeCounter, Coded, FormData, FormRecords, Records, SideItem, UndoState};
+use fs_rpc::{Hold, HoldEvent, HoldSpec, ReconnectTimes, hold, hold_calling};
 
 use super::answer::Limits;
 use super::known::Known;
+use super::level::HISTORY_FROM;
+use super::range::Version;
 use super::service::{UNREACHABLE, cause, parts, socket_of};
+use super::session::Session;
+use super::watch::{Attach, Identity};
 
 /// What `connect` gives the window: the records of the read and, as long as they live, the hold of the module.
 ///
@@ -21,16 +26,44 @@ use super::service::{UNREACHABLE, cause, parts, socket_of};
 /// hold it again.
 pub struct HeldRecords {
     records: FormRecords,
-    _hold: Option<Hold>,
+    held: Held,
+}
+
+/// How the module is held: level 1 only keeps the connection; level 2 is a [`Session`] (history, watch).
+pub(super) enum Held {
+    None,
+    /// RAII: the handle is the registration, only dropping it matters.
+    Plain(#[allow(dead_code)] Hold),
+    Session(Arc<Session>),
 }
 
 impl HeldRecords {
     /// The records of a read, held by `hold` (if any).
     #[must_use]
-    pub fn new(records: FormRecords, hold: Option<Hold>) -> Self {
-        Self {
-            records,
-            _hold: hold,
+    pub(super) fn new(records: FormRecords, held: Held) -> Self {
+        Self { records, held }
+    }
+
+    fn session(&self) -> Option<&Arc<Session>> {
+        match &self.held {
+            Held::Session(s) => Some(s),
+            _ => None,
+        }
+    }
+
+    /// The connection that takes a write to the module (the port `Writer`); `None` = nothing can be written.
+    #[must_use]
+    pub fn writer(&self) -> Option<Arc<dyn fs_forms_run::Writer>> {
+        self.records.writer.clone()
+    }
+
+    /// A command of the host itself (`app.undo`, `app.redo`): one step back or forward. `None` = not a command of this kind.
+    #[must_use]
+    pub fn answer_app(&self, command: &str) -> Option<Answer> {
+        match command {
+            crate::registry::UNDO => Some(self.step_back(false)),
+            crate::registry::REDO => Some(self.step_back(true)),
+            _ => None,
         }
     }
 }
@@ -62,6 +95,48 @@ impl Records for HeldRecords {
     }
     fn stale(&self) -> Option<String> {
         self.records.stale()
+    }
+    fn history(&self) -> UndoState {
+        self.session()
+            .map_or_else(UndoState::default, |s| s.state())
+    }
+    fn step_back(&self, redo: bool) -> Answer {
+        let Some(session) = self.session() else {
+            return Answer::Refused("unsupported".into());
+        };
+        if let Err(c) = session.step_back(redo) {
+            // visible, never silent; the unit stays in the history
+            eprintln!("fs-starter: {}", super::starter::line(&c));
+            return Answer::Refused(c.code);
+        }
+        // accepted: the forms are read again, as after a write
+        let again = self.records.writer.as_ref().map(|w| w.reload());
+        match again {
+            Some(Ok(all)) => {
+                *self
+                    .records
+                    .fresh
+                    .write()
+                    .unwrap_or_else(PoisonError::into_inner) = Some(Arc::new(all));
+                *self
+                    .records
+                    .stale
+                    .write()
+                    .unwrap_or_else(PoisonError::into_inner) = None;
+            }
+            _ => {
+                *self
+                    .records
+                    .stale
+                    .write()
+                    .unwrap_or_else(PoisonError::into_inner) =
+                    Some("host-notice-data-reload".to_owned());
+            }
+        }
+        Answer::Accepted
+    }
+    fn changed(&self) -> u64 {
+        self.session().map_or(0, |s| s.counter())
     }
 }
 
@@ -99,16 +174,25 @@ pub(super) fn event_line(module: &str, event: &HoldEvent) -> Option<String> {
     Some(format!("fs-starter: hold module={module} {what}"))
 }
 
+/// What the hold of one window needs besides the module: the negotiated level, the forms to watch and who this window is.
+pub(super) struct Wish<'a> {
+    pub level: u32,
+    pub forms: &'a [ModuleForm],
+    pub me: Identity,
+}
+
 /// Hold the service of `known`: the same program file and the same expectation as the read (`parts`, border 3), on the socket of the
-/// module (border 4). Blocks until the connection stands, at most `limits.time` (`times`); `say` gets each line.
+/// module (border 4). From level 2 the connection also `introduce`s the window and `watch`es its forms (a [`Session`]); level 1
+/// only holds. Blocks until the connection stands, at most `limits.time` (`times`); `say` gets each line.
 ///
 /// # Errors
 /// `host-notice-data-unreachable` (cause `hold`) when no connection stands in time; the codes of `parts` and `socket_of`.
 pub(super) fn hold_module(
     known: &Known,
     limits: &Limits,
+    wish: Wish<'_>,
     say: impl Fn(String) + Send + 'static,
-) -> Result<Hold, Coded> {
+) -> Result<Held, Coded> {
     let (_, expected, starter) = parts(known)?;
     let spec = HoldSpec::new(
         &known.name,
@@ -118,14 +202,41 @@ pub(super) fn hold_module(
     )
     .with_times(times(limits));
     let module = known.name.clone();
-    hold(spec, move |event: HoldEvent| {
+    let observer = move |event: HoldEvent| {
         if let Some(line) = event_line(&module, &event) {
             say(line);
         }
-    })
-    .map_err(|_| cause(UNREACHABLE, &known.name, "hold"))
+    };
+    let unreachable = |_| cause(UNREACHABLE, &known.name, "hold");
+    if wish.level < HISTORY_FROM {
+        return hold(spec, observer).map(Held::Plain).map_err(unreachable);
+    }
+    let counter = ChangeCounter::new();
+    let attach = Attach {
+        module: known.name.clone(),
+        me: wish.me.clone(),
+        forms: wish
+            .forms
+            .iter()
+            .map(|f| {
+                // ONE spelling on the wire: `name@x.y.z` (a form never raises its patch)
+                fs_interfaces::forms::key(
+                    &f.form.name,
+                    &Version::new(u64::from(f.form.major), u64::from(f.form.minor), 0),
+                )
+            })
+            .collect(),
+        counter: counter.clone(),
+    };
+    let hold = hold_calling(spec, move || Box::new(attach), observer).map_err(unreachable)?;
+    Ok(Held::Session(Arc::new(Session::new(
+        hold,
+        &known.name,
+        wish.me,
+        limits.time,
+        counter,
+    ))))
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;

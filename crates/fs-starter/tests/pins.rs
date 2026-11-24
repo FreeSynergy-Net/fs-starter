@@ -33,33 +33,39 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
     for (name, tag) in [
         ("fs-types", "v0.0.6"),
         ("fs-conformance", "v0.0.6"),
-        ("fs-interfaces", "v0.1.0"),
-        ("fs-objects", "v0.0.10"),
+        (
+            "fs-interfaces",
+            "REV:e6f69213b68b47e139fc8038c8a095f9ed1fef3c",
+        ),
+        ("fs-objects", "REV:f6409f2a5378ba1464e69ae216efd4d27d249182"),
         (
             "fs-settings",
-            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
+            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
         ),
         (
             "fs-components-commands",
-            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
+            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
         ),
-        ("fs-rpc", "v0.1.3"),
+        ("fs-rpc", "REV:11cdf71482cfcd8de14038c4e7fc796f2611e02c"),
         (
             "fs-components-kanban",
-            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
+            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
         ),
-        ("fs-trusted-path", "v0.1.3"),
+        (
+            "fs-trusted-path",
+            "REV:11cdf71482cfcd8de14038c4e7fc796f2611e02c",
+        ),
         (
             "fs-forms-run",
-            "REV:3fe3cf3bf07babda7b9eb7215d6daa938f7633f6",
+            "REV:94235ec000e870e61bab6ed619ddd126ba8bb4c8",
         ),
         (
             "fs-forms-bind",
-            "REV:3fe3cf3bf07babda7b9eb7215d6daa938f7633f6",
+            "REV:94235ec000e870e61bab6ed619ddd126ba8bb4c8",
         ),
         (
             "fs-components",
-            "REV:9cea35b045d3fff994358b2c118d693f0cf20246",
+            "REV:8d52388ae8b0ce425fe93309f846cb70c571c12b",
         ),
     ] {
         let source = source_of(name);
@@ -81,5 +87,5 @@ fn the_conformance_is_the_commit_of_fs_types() {
 #[test]
 fn the_rpc_and_the_trusted_path_come_from_one_repository_at_one_commit() {
     assert_eq!(source_of("fs-rpc"), source_of("fs-trusted-path"));
-    assert!(source_of("fs-rpc").contains("github.com/FreeSynergy-Net/fs-rpc?tag="));
+    assert!(source_of("fs-rpc").contains("github.com/FreeSynergy-Net/fs-rpc?rev="));
 }

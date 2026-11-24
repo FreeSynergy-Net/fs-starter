@@ -9,12 +9,13 @@ use std::path::{Path, PathBuf};
 
 use fs_forms_bind::ModuleForm;
 use fs_forms_run::{Coded, FormData, FormRecords, FormRow};
-use fs_interfaces::forms::FORM_SOURCE_LEVEL;
+use fs_interfaces::forms::FORM_SOURCE_MIN_LEVEL;
 use fs_interfaces::formsource_capnp::form_source;
 use fs_rpc::{CommandStarter, Expected, ServerStarter, SingleTimes, ensure_single, stop_server};
 
 use super::answer::{Limits, clean};
 use super::known::Known;
+use super::level::{self, Levels};
 use super::range::Version;
 use super::refusal::refusal_or;
 
@@ -170,7 +171,7 @@ async fn read_all(
     forms: &[ModuleForm],
     limits: &Limits,
     end: bool,
-) -> Result<FormRecords, Coded> {
+) -> Result<(FormRecords, Levels), Coded> {
     let socket = socket_of(&known.name)?;
     let started = std::cell::Cell::new(false);
     let got = read_up(known, forms, limits, &socket, &started).await;
@@ -184,7 +185,7 @@ async fn read_up(
     limits: &Limits,
     socket: &Path,
     started: &std::cell::Cell<bool>,
-) -> Result<FormRecords, Coded> {
+) -> Result<(FormRecords, Levels), Coded> {
     let socket = socket.to_path_buf();
     let single = up(known, &socket, limits, started).await?;
     beat(known, &socket).await?;
@@ -198,9 +199,13 @@ async fn read_up(
     let hello = hello
         .get()
         .map_err(|_| cause(ANSWER, &known.name, "hello"))?;
-    if hello.get_level() != FORM_SOURCE_LEVEL {
-        return Err(cause(CONTRACT, &known.name, "level"));
-    }
+    // the gate is cumulative: every level >= the minimum is taken, the host uses min(level, its own) (`level`); below it: refused with the reason
+    let said = hello.get_level();
+    let Some(used) = level::negotiate(said) else {
+        return Err(cause(CONTRACT, &known.name, "level")
+            .with("level", said.to_string())
+            .with("minimum", FORM_SOURCE_MIN_LEVEL.to_string()));
+    };
     let provider =
         text(hello.get_provider(), 64).map_err(|()| cause(ANSWER, &known.name, "provider"))?;
     let mut bytes = 0;
@@ -235,11 +240,17 @@ async fn read_up(
         data.may = may(page.get_may(), limits).map_err(|()| cause(ANSWER, &known.name, "may"))?;
         out.push(data);
     }
-    Ok(FormRecords {
-        provider,
-        forms: out,
-        ..FormRecords::default()
-    })
+    Ok((
+        FormRecords {
+            provider,
+            forms: out,
+            ..FormRecords::default()
+        },
+        Levels {
+            service: said,
+            used,
+        },
+    ))
 }
 
 pub(super) fn run<T>(
@@ -259,16 +270,17 @@ pub(super) fn run<T>(
         .unwrap_or_else(|_| Err(cause(UNREACHABLE, &known.name, "time")))
 }
 
-/// Start (if needed), check and read: the records of every declared form, as rows by channel.
+/// Start (if needed), check and read: the records of every declared form, as rows by channel, and the levels (what the service said and
+/// what the host works with: `min(level, its own)`; a service below the minimum is refused, cause `level`, with `level` and `minimum`).
 ///
 /// # Errors
 /// A code `host-notice-data-*` with the module and the cause; nothing half read is returned. `end`: end the service if this call
 /// started it (one-time commands).
-pub fn fetch(
+pub fn fetch_level(
     known: &Known,
     forms: &[ModuleForm],
     limits: &Limits,
     end: bool,
-) -> Result<FormRecords, Coded> {
+) -> Result<(FormRecords, Levels), Coded> {
     run(limits, known, read_all(known, forms, limits, end))
 }

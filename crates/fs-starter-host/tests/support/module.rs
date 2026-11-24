@@ -11,7 +11,8 @@ use std::time::{Duration, Instant};
 
 use fs_interfaces::formsource_capnp::form_source;
 use fs_module::{
-    CommandKind, DeclaredCommand, DeclaredForm, FakeSource, FormSourceFixture, Sample,
+    CommandKind, DeclaredCommand, DeclaredForm, FakeSource, FormSourceFixture, LaneCase, Ordered,
+    Sample, ValueField, ValueKind,
 };
 
 /// A child process that is ended at the end of its test, also when the test fails.
@@ -61,11 +62,17 @@ pub async fn connect(socket: &Path) -> fs_rpc::Connection<form_source::Client> {
 }
 
 /// The fixture of the fake: what `FakeSource` declares, over the connection to the process.
-pub struct FakeFixture(pub form_source::Client);
+pub struct FakeFixture(pub form_source::Client, pub Option<form_source::Client>);
 
 impl FormSourceFixture for FakeFixture {
     fn client(&self) -> form_source::Client {
         self.0.clone()
+    }
+    fn level(&self) -> u32 {
+        2
+    }
+    fn second(&self) -> Option<form_source::Client> {
+        self.1.clone()
     }
     fn provider(&self) -> Option<&str> {
         Some("fake")
@@ -84,6 +91,47 @@ impl FormSourceFixture for FakeFixture {
     }
     fn forbidden(&self) -> Option<(String, String)> {
         Some(("card.move".into(), "c3".into()))
+    }
+    fn forbidden_set(&self) -> Option<String> {
+        Some("card.clear".into())
+    }
+    fn time_fields(&self) -> Vec<(String, String)> {
+        vec![("cards-in-columns@1.0.0".into(), "due".into())]
+    }
+    fn ordered(&self) -> Option<Ordered> {
+        Some(Ordered {
+            command: "card.move".into(),
+            form: "cards-in-columns@1.0.0".into(),
+            record: "c1".into(),
+            neighbour: "c3".into(),
+            args: vec![("column".into(), "done".into())],
+        })
+    }
+    fn value_fields(&self) -> Vec<ValueField> {
+        [
+            ("description", ValueKind::Description),
+            ("color", ValueKind::Color),
+            ("estimated", ValueKind::Estimated),
+            ("column-limit", ValueKind::ColumnLimit),
+            ("priority", ValueKind::Priority),
+        ]
+        .into_iter()
+        .map(|(p, kind)| ValueField {
+            form: "cards-in-columns@1.0.0".into(),
+            path: p.into(),
+            kind,
+        })
+        .collect()
+    }
+    fn create_without_lane(&self) -> Option<LaneCase> {
+        Some(LaneCase {
+            command: "card.create".into(),
+            args: vec![
+                ("title".into(), "No lane".into()),
+                ("column".into(), "todo".into()),
+            ],
+            accepted: true,
+        })
     }
 }
 

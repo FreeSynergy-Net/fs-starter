@@ -69,7 +69,7 @@ fn list_commands_without_modules_lists_the_shell_only_and_wrong_words_are_usage(
         "light",
     );
     assert_eq!(out.status.code(), Some(0));
-    assert_eq!(text(&out.stdout).lines().count(), 4);
+    assert_eq!(text(&out.stdout).lines().count(), 6);
     assert_eq!(
         host(&["--list-commands", "--bogus"], "light").status.code(),
         Some(2)

@@ -241,3 +241,31 @@ fn a_module_that_leaves_a_required_channel_out_is_locked_and_the_picture_run_end
         "the tree is not drawn from a module that does not fit"
     );
 }
+
+#[test]
+#[cfg_attr(windows, ignore = "unix sockets")]
+fn the_level_gate_is_cumulative_and_the_negotiated_level_is_one_line() {
+    // a newer service (99) and an older one (1) are both taken; the host works with min(level, its own 2); below the minimum (`level` = 0,
+    // the border test above) it is refused. Counter-proof of the old exact test (`== LEVEL`): it refused both.
+    for (mode, line) in [
+        ("level99", "level module=groups service=99 used=2"),
+        ("level1", "level module=groups service=1 used=1"),
+        ("", "level module=groups service=2 used=2"),
+    ] {
+        let i = good();
+        let env: &[(&str, &str)] = if mode.is_empty() {
+            &[]
+        } else {
+            &[("FAKE_MODE", mode)]
+        };
+        let Some((_, said)) = draw(&i, &[], "light", &format!("groups-{mode}.png"), env) else {
+            return;
+        };
+        assert_eq!(said.matches("fs-starter: level ").count(), 1, "{said}");
+        assert!(said.contains(line), "{mode}: {said}");
+        assert!(
+            said.contains("read module=groups form=tree records=9"),
+            "{mode}: the records are read: {said}"
+        );
+    }
+}

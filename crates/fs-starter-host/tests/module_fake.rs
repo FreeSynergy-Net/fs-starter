@@ -21,9 +21,18 @@ async fn the_suite_passes_on_the_fake_process_over_the_rpc_connection() {
         .run_until(async {
             let connection = connect(&socket).await;
             let client = connection.client.clone();
-            let report = run_conformance(&FakeFixture(client)).await;
+            let other = connect(&socket).await;
+            let second = Some(other.client.clone());
+            let report = run_conformance(&FakeFixture(client, second)).await;
             assert!(report.failures.is_empty(), "{:#?}", report.failures);
-            assert!(report.skipped.is_empty(), "{:#?}", report.skipped);
+            // skipped by design (the suite says so): the locked set command, no image field, no way to black out a change
+            assert!(
+                report.skipped.iter().all(|s| s.starts_with("9 card.clear")
+                    || s.starts_with("20 blob")
+                    || s.starts_with("L2-9 gone")),
+                "{:#?}",
+                report.skipped
+            );
             assert!(report.checked > 30, "{}", report.checked);
         })
         .await;
@@ -90,7 +99,9 @@ async fn the_border_modes_still_break_their_one_rule() {
             .run_until(async {
                 let connection = connect(&socket).await;
                 let client = connection.client.clone();
-                let report = run_conformance(&FakeFixture(client)).await;
+                let other = connect(&socket).await;
+                let second = Some(other.client.clone());
+                let report = run_conformance(&FakeFixture(client, second)).await;
                 assert!(
                     report.failures.iter().any(|f| f.starts_with(rule)),
                     "{mode}: {:#?}",

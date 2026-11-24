@@ -1,49 +1,82 @@
-# forms description of a groups frontend: the group tree beside the member list. IMPORT FORM ONLY (ADR 0096 point 6), like board.toml.
-# Used by the tests of the forms `tree` and `rows` (blocks `tree` and `table`, drawn by channel, `--sample-data`).
-schema = 1
+schema = 3
 kind = "frontend"
 id = "groups"
 extends = "net.freesynergy.Groups"
 exec = "fs-forms-run"
 title = "groups-title"
 style = "default"
-message = [
-  { key = "groups-title", lang = "en", text = "Groups" },
-  { key = "groups-title", lang = "de", text = "Gruppen" },
-  { key = "groups-tree-title", lang = "en", text = "Groups" },
-  { key = "groups-tree-title", lang = "de", text = "Gruppen" },
-  { key = "groups-members-title", lang = "en", text = "Members" },
-  { key = "groups-members-title", lang = "de", text = "Mitglieder" },
-]
 
 [[requires]]
+elem = "requires:1"
 contract = "groups@>=0.1.0, <0.2.0"
 
 [[source]]
+elem = "source:1"
 n = 1
 contract = "groups@>=0.1.0, <0.2.0"
 type = "Group"
 scope = "all"
 
 [[menu]]
+elem = "menu:0"
 kind = "standard-program"
 
 [[menu]]
+elem = "menu:1"
 kind = "standard-help"
 
 [[page]]
+elem = "page:groups"
 page = "groups"
 frame = "workbench"
 navigation = "list-detail"
 
-[[page.block]]
-place = "side"
+[[page.place]]
+elem = "block:groups/side"
+at = "side"
 block = "tree"
 source = 1
 title = "groups-tree-title"
 
-[[page.block]]
-place = "main"
+[[page.place]]
+elem = "block:groups/main"
+at = "main"
 block = "table"
 source = 1
 title = "groups-members-title"
+
+[[message]]
+elem = "message:groups-members-title/de"
+key = "groups-members-title"
+lang = "de"
+text = "Mitglieder"
+
+[[message]]
+elem = "message:groups-members-title/en"
+key = "groups-members-title"
+lang = "en"
+text = "Members"
+
+[[message]]
+elem = "message:groups-title/de"
+key = "groups-title"
+lang = "de"
+text = "Gruppen"
+
+[[message]]
+elem = "message:groups-title/en"
+key = "groups-title"
+lang = "en"
+text = "Groups"
+
+[[message]]
+elem = "message:groups-tree-title/de"
+key = "groups-tree-title"
+lang = "de"
+text = "Gruppen"
+
+[[message]]
+elem = "message:groups-tree-title/en"
+key = "groups-tree-title"
+lang = "en"
+text = "Groups"

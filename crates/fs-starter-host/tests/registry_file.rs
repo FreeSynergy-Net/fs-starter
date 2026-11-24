@@ -36,9 +36,9 @@ fn the_real_file_of_fs_capture_is_read_with_help_and_access() {
         6
     );
     assert!(
-        lines[4].starts_with("capture.screens\tcapture\t0.1"),
+        lines[6].starts_with("capture.screens\tcapture\t0.1"),
         "{}",
-        lines[4]
+        lines[6]
     );
 }
 

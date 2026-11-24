@@ -48,13 +48,13 @@ fn a_module_the_verifier_does_not_accept_is_refused_and_not_added() {
     let mut r = Registry::new();
     let refused = r.load_packages(&modules, &v).unwrap();
     assert_eq!(refused, [("capture".to_owned(), vec![Refusal::NotTrusted])]);
-    assert_eq!(r.entries().len(), 4);
+    assert_eq!(r.entries().len(), 6);
     // the default check (nothing bound) refuses a clean one too
     mode(&modules.join("capture/catalog/commands.json"), 0o644);
     let mut r = Registry::new();
     let refused = r.load_packages(&modules, &Unbound).unwrap();
     assert_eq!(refused.len(), 1);
-    assert_eq!(r.entries().len(), 4);
+    assert_eq!(r.entries().len(), 6);
 }
 
 /// The check looks at the file that is really read, not at a path made from the module name (review S1): a world-writable folder
@@ -74,7 +74,7 @@ fn a_foreign_world_writable_folder_is_not_accepted_as_a_package() {
     let mut r = Registry::new();
     let refused = r.load_packages(&foreign, &v).unwrap();
     assert_eq!(refused, [("capture".to_owned(), vec![Refusal::NotTrusted])]);
-    assert_eq!(r.entries().len(), 4);
+    assert_eq!(r.entries().len(), 6);
     // the same folder, closed, is still no system place of this verifier
     mode(&foreign, 0o755);
     let mut r = Registry::new();

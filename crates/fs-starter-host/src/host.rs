@@ -88,17 +88,40 @@ pub fn run(args: &[String]) -> ExitCode {
                 Ok(place) => place,
                 Err(code) => return code,
             };
+            let sources = StarterSources::standard();
+            let sources = match program.as_deref() {
+                Some(name) => sources.named(name),
+                None => sources,
+            };
             let sources = if c.picture.is_some() {
                 // `--picture` is a one-time command: a service it started itself is ended again
-                StarterSources::standard().ending_what_it_started()
+                sources.ending_what_it_started()
             } else {
-                StarterSources::standard()
+                sources
             };
             shell::around_window(&c.frontend, c.resumed, || {
                 fs_forms_run::run_code_with(args, &sources)
             })
         }
+        // `Command` grows (`#[non_exhaustive]`): a command this host has no code for is said, never ignored
+        Ok(other) => not_built(&other),
     }
+}
+
+/// The exit code of a command of `fs-forms-run` this host does not build: said on stderr (never silent), exit `Exit::USAGE`.
+fn not_built(command: &impl std::fmt::Debug) -> ExitCode {
+    eprintln!("{}", not_built_line(command));
+    ExitCode::from(NOT_BUILT.code())
+}
+
+/// The exit code of a command this host does not build: the one of wrong words (the person asked for what this host cannot do).
+const NOT_BUILT: Exit = Exit::USAGE;
+
+/// The line that says it.
+fn not_built_line(command: &impl std::fmt::Debug) -> String {
+    format!(
+        "fs-starter: command-not-built: {command:?} is not built in this host\nTry `fs-starter --help`."
+    )
 }
 
 /// Say what the path is (a data package: its program, skeleton and layout) and which parts are pending. A package whose
@@ -250,4 +273,25 @@ fn list_commands(args: &[String]) -> ExitCode {
         }
         .code(),
     )
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn a_command_this_host_does_not_build_is_said_and_ends_with_the_code_of_wrong_words() {
+        // the arm `Ok(other)` of `run`: `Command` grows (`#[non_exhaustive]`), a new command is never ignored or a panic
+        let line = not_built_line(&"Frobnicate");
+        assert!(
+            line.starts_with("fs-starter: command-not-built: "),
+            "{line}"
+        );
+        assert!(
+            line.contains("Frobnicate") && line.contains("--help"),
+            "{line}"
+        );
+        assert_eq!(NOT_BUILT.code(), Exit::USAGE.code());
+        assert_ne!(NOT_BUILT.code(), Exit::DONE.code());
+    }
 }

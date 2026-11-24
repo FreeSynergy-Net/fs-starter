@@ -6,9 +6,11 @@
     "map": {
       "cards": "Task",
       "column": "column",
+      "column-label": "column-label",
       "title": "title",
       "facts": ["due", "priority", "participants", "keywords"],
       "lane": "board",
+      "progress": "percent",
       "order": "index",
       "after": "after",
       "before": "before",
@@ -18,6 +20,8 @@
     },
     "fields": {
       "column": "text",
+      "column-label": "text",
+      "percent": "number",
       "title": "text",
       "due": "date-time",
       "progress": "text",

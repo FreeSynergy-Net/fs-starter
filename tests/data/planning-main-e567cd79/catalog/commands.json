@@ -18,12 +18,12 @@
       "capability": "task.create", "call": "Items.create", "access": "write",
       "params": [
         { "path": "title", "type": "text", "required": true },
-        { "path": "board", "type": "text", "required": true },
+        { "path": "board", "type": "text" },
         { "path": "column", "type": "text", "required": true },
         { "path": "after", "type": "reference" },
         { "path": "before", "type": "reference" }
       ],
-      "help": { "topic": "planning-task-create", "text": { "en": "Create a task and put its card into a column, between two cards of the column (after, before).", "de": "Legt eine Aufgabe an und stellt ihre Karte in eine Spalte, zwischen zwei Karten der Spalte (after, before)." } }
+      "help": { "topic": "planning-task-create", "text": { "en": "Create a task and put its card into a column, between two cards of the column (after, before). Without board the only board is meant; with none or several it is refused with the reason.", "de": "Legt eine Aufgabe an und stellt ihre Karte in eine Spalte, zwischen zwei Karten der Spalte (after, before). Ohne board gilt das einzige Board, bei keinem oder mehreren gibt es einen Fehler mit Grund." } }
     },
     {
       "capability": "task.delete", "call": "Items.delete", "access": "delete",

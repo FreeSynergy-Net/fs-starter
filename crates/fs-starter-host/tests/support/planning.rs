@@ -1,6 +1,6 @@
 //! The real planning service (fs-modules-planning, one fixed commit) in this process behind a real Unix socket in a temporary folder,
 //! with a board `work` and three cards, and the fixture of the suite for it: forms and commands are the REAL catalog files of that commit
-//! (`tests/data/planning-main-674bd383/catalog/`, a copy, never edited).
+//! (`tests/data/planning-main-e567cd79/catalog/`, a copy, never edited).
 //!
 //! Pattern: Template Method (the suite's rules; this is the fixture) + Fixture (a service in a temporary folder).
 
@@ -19,15 +19,24 @@ use tokio::sync::oneshot;
 
 pub const FORM: &str = "cards-in-columns@1.2.0";
 const FORMS: &str =
-    include_str!("../../../../tests/data/planning-main-674bd383/catalog/forms.json");
+    include_str!("../../../../tests/data/planning-main-e567cd79/catalog/forms.json");
 const COMMANDS: &str =
-    include_str!("../../../../tests/data/planning-main-674bd383/catalog/commands.json");
+    include_str!("../../../../tests/data/planning-main-e567cd79/catalog/commands.json");
 
 /// The service on a socket in `dir` (data and socket there); ends when the sender is dropped or used.
 pub async fn serve(dir: &Path) -> (PathBuf, oneshot::Sender<()>) {
-    let store = TursoStore::open(dir.join("objects.db")).await.unwrap();
+    // the store has an owner (fs-objects 0.0.11), as the service opens it
+    let owner = fs_objects::testing::owner();
+    let options = fs_objects::OpenOptions::default().with_owner(owner.clone());
+    let store = TursoStore::open_with(dir.join("objects.db"), options)
+        .await
+        .unwrap();
     let store: Arc<dyn Store> = Arc::new(store);
-    let repo = Arc::new(TaskRepo::new(store, "https://local.invalid/users/owner"));
+    let repo = Arc::new(TaskRepo::new(
+        store,
+        "https://local.invalid/users/owner",
+        owner,
+    ));
     let socket = dir.join("planning.sock");
     let bound = fs_rpc::bind_socket(&socket).await.unwrap();
     let (stop, stopped) = oneshot::channel::<()>();
@@ -82,12 +91,20 @@ pub async fn board_with(
 /// The fixture of the suite for planning: the catalog files of the commit, valid calls on the cards `uids`.
 pub struct Planning3 {
     pub client: form_source::Client,
+    /// A second connection to the same service (another program: the rules L2-8 and L2-11).
+    pub other: form_source::Client,
     pub uids: Vec<String>,
 }
 
 impl FormSourceFixture for Planning3 {
     fn client(&self) -> form_source::Client {
         self.client.clone()
+    }
+    fn level(&self) -> u32 {
+        fs_modules_planning::LEVEL
+    }
+    fn second(&self) -> Option<form_source::Client> {
+        Some(self.other.clone())
     }
     fn provider(&self) -> Option<&str> {
         Some("planning")

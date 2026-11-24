@@ -13,17 +13,24 @@ fn the_shell_commands_come_from_the_command_model_and_a_module_adds_its_own() {
     let mut r = Registry::new();
     assert_eq!(
         ids(&r),
-        ["app.settings", "app.quit", "app.help", "app.about"]
+        [
+            "app.settings",
+            "app.quit",
+            "app.help",
+            "app.about",
+            "app.undo",
+            "app.redo"
+        ]
     );
     r.add_bundled(
         Actor::Person,
         set("capture", &["capture.shot", "capture.list"]),
     )
     .unwrap();
-    assert_eq!(r.entries().len(), 6);
+    assert_eq!(r.entries().len(), 8);
     let lines = r.lines();
     assert_eq!(
-        lines[4],
+        lines[6],
         "capture.shot\tcapture\t0.1.0\tnew by module capture"
     );
     assert!(!lines[0].contains("new by"), "{}", lines[0]);
@@ -46,7 +53,7 @@ fn a_module_may_not_take_the_app_prefix() {
         why.iter().any(|w| matches!(w, Refusal::ModuleName(_))),
         "{why:?}"
     );
-    assert_eq!(r.entries().len(), 4);
+    assert_eq!(r.entries().len(), 6);
 }
 
 #[test]
@@ -78,7 +85,7 @@ fn a_foreign_id_is_never_overwritten_and_the_whole_set_is_refused() {
     assert_eq!(why, [Refusal::Conflict("zip.a".into())]);
     assert_eq!(
         ids(&r).len(),
-        5,
+        7,
         "nothing of a refused set is added: {:?}",
         ids(&r)
     );
@@ -91,7 +98,7 @@ fn a_bot_never_extends_the_command_set() {
         .add_bundled(Actor::Bot, set("capture", &["capture.shot"]))
         .unwrap_err();
     assert_eq!(why, [Refusal::Bot]);
-    assert_eq!(r.entries().len(), 4);
+    assert_eq!(r.entries().len(), 6);
 }
 
 /// A test double of the signature check that accepts (the real one is `fs-update`, not bound yet).
@@ -109,10 +116,10 @@ fn a_package_is_refused_by_default_and_accepted_only_by_a_verifier_that_says_yes
         .add_package(Actor::Person, set("capture", &["capture.shot"]), &Unbound)
         .unwrap_err();
     assert_eq!(why, [Refusal::NotTrusted]);
-    assert_eq!(r.entries().len(), 4);
+    assert_eq!(r.entries().len(), 6);
     r.add_package(Actor::Person, set("capture", &["capture.shot"]), &Accepting)
         .unwrap();
-    assert_eq!(r.entries().len(), 5);
+    assert_eq!(r.entries().len(), 7);
     // a verifier does not lift the other rules
     let why = r
         .add_package(Actor::Person, set("zip", &["app.x"]), &Accepting)
