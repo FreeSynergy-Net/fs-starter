@@ -1643,7 +1643,7 @@ dependencies = [
  "capnp",
  "capnp-rpc",
  "fs-interfaces",
- "fs-rpc 0.1.0",
+ "fs-rpc",
  "semver",
  "tokio",
 ]
@@ -1687,7 +1687,7 @@ dependencies = [
  "fs-forms-exchange",
  "fs-forms-layout",
  "fs-interfaces",
- "fs-rpc 0.1.0",
+ "fs-rpc",
  "fs-types",
  "tokio",
 ]
@@ -1739,27 +1739,7 @@ dependencies = [
  "chrono",
  "fs-interfaces",
  "fs-objects",
- "fs-trusted-path 0.1.0",
- "fs-types",
- "futures",
- "rustix 1.1.6",
- "tokio",
- "tokio-util",
- "uuid",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "fs-rpc"
-version = "0.1.1"
-source = "git+https://github.com/FreeSynergy-Net/fs-rpc?tag=v0.1.1#966d4ffd7987e61a86ccfc008ca8dad147641c35"
-dependencies = [
- "capnp",
- "capnp-rpc",
- "chrono",
- "fs-interfaces",
- "fs-objects",
- "fs-trusted-path 0.1.1",
+ "fs-trusted-path",
  "fs-types",
  "futures",
  "rustix 1.1.6",
@@ -1784,10 +1764,10 @@ dependencies = [
  "async-trait",
  "capnp",
  "fs-conformance",
- "fs-rpc 0.1.1",
+ "fs-rpc",
  "fs-settings",
  "fs-starter",
- "fs-trusted-path 0.1.1",
+ "fs-trusted-path",
  "fs-types",
  "roxmltree",
  "semver",
@@ -1806,7 +1786,7 @@ dependencies = [
  "fs-forms-bind",
  "fs-forms-run",
  "fs-interfaces",
- "fs-rpc 0.1.1",
+ "fs-rpc",
  "fs-starter",
  "fs-types",
  "libc",
@@ -1823,14 +1803,6 @@ dependencies = [
 name = "fs-trusted-path"
 version = "0.1.0"
 source = "git+https://github.com/FreeSynergy-Net/fs-rpc?tag=v0.1.0#a0123782090dc7e74f20fba164ee10d009f3f985"
-dependencies = [
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "fs-trusted-path"
-version = "0.1.1"
-source = "git+https://github.com/FreeSynergy-Net/fs-rpc?tag=v0.1.1#966d4ffd7987e61a86ccfc008ca8dad147641c35"
 dependencies = [
  "windows-sys 0.61.2",
 ]
