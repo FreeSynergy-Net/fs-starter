@@ -56,6 +56,15 @@ path = "examples/fake_module.rs"
 fs-starter = { path = "../fs-starter", version = "0.0.8", features = ["test-support"] }
 tempfile = "3"
 png = "0.18"
+tokio = { version = "1", features = ["rt", "macros", "sync", "time", "net"] }
+# Conformance suite of the contract module_v1 and its fake (fs-module of fs-interfaces v0.1.0; the same source as fs-interfaces above, checked in the lock).
+fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", tag = "v0.1.0", version = "0.1.0" }
+
+# The real planning service in this process (Unix only: its tests use a Unix socket); every library on the same tag as above (one source each).
+[target.'cfg(unix)'.dev-dependencies]
+fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "674bd383e9ebf6b7e709d86f56573a5d79f1e204", version = "0.0.3" }
+fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "674bd383e9ebf6b7e709d86f56573a5d79f1e204", version = "0.0.3" }
+fs-objects = { git = "https://github.com/FreeSynergy-Net/fs-objects", tag = "v0.0.10" }
 
 # RPM (cargo-generate-rpm, built by the release CI only). The package is called `fs-starter` (the host crate keeps its name) and replaces the
 # earlier `fs-starter-host` package; nothing requires the old name (checked: fs-tasks 0.0.10 and fs-blueprint require only `fs-starter`).

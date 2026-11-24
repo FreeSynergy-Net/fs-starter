@@ -69,7 +69,8 @@ fn the_window_from_the_service_is_the_sample_window_and_not_the_empty_one() {
         !said.contains(GROUPS),
         "no notice for a service that fits: {said}"
     );
-    // the one-time command ends the service it started (with fs-rpc 0.1.3 the socket is gone after the run), so the proof of the start is the read
+    // the one-time command ends the service it started and fs-rpc REMOVES the socket file at the end of a run on purpose (fs-rpc
+    // `serve.rs`: "The socket is removed on return"; `BoundSocket` drops it; CHANGELOG: "the socket file is removed (the bound socket drops)"), so the proof of the start is the read
     // line: the runtime folder of `i` is new, nobody else could have started the service that answered
     assert!(
         said.contains("read module=groups form=tree records=9")

@@ -1,0 +1,34 @@
+{
+  "module": "planning",
+  "version": "0.0.3",
+  "contract": "planning",
+  "scope": "own-contract",
+  "commands": [
+    {
+      "capability": "card.move", "call": "Boards.moveCard", "access": "write",
+      "params": [
+        { "path": "board", "type": "text", "required": true },
+        { "path": "column", "type": "text", "required": true },
+        { "path": "after", "type": "reference" },
+        { "path": "before", "type": "reference" }
+      ],
+      "help": { "topic": "planning-card-move", "text": { "en": "Move a card to another column or between two cards (after, before: the neighbours; never a number).", "de": "Verschiebt eine Karte in eine andere Spalte oder zwischen zwei Karten (after, before: die Nachbarn; nie eine Zahl)." } }
+    },
+    {
+      "capability": "task.create", "call": "Items.create", "access": "write",
+      "params": [
+        { "path": "title", "type": "text", "required": true },
+        { "path": "board", "type": "text", "required": true },
+        { "path": "column", "type": "text", "required": true },
+        { "path": "after", "type": "reference" },
+        { "path": "before", "type": "reference" }
+      ],
+      "help": { "topic": "planning-task-create", "text": { "en": "Create a task and put its card into a column, between two cards of the column (after, before).", "de": "Legt eine Aufgabe an und stellt ihre Karte in eine Spalte, zwischen zwei Karten der Spalte (after, before)." } }
+    },
+    {
+      "capability": "task.delete", "call": "Items.delete", "access": "delete",
+      "params": [],
+      "help": { "topic": "planning-task-delete", "text": { "en": "Delete a task and its card.", "de": "Löscht eine Aufgabe und ihre Karte." } }
+    }
+  ]
+}
