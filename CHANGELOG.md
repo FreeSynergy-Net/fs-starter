@@ -6,6 +6,8 @@ Version = tag.
 
 ### English
 
+- S5: help line `--steps FILE` (only with `--picture`). Pins: fs-forms on 3fe3cf3 (fs-forms-run, fs-forms-bind), fs-components on 9cea35b (commands, kanban, settings; brings fs-components-replay). No new code.
+
 - A refusal of a module (`invoke`, page) now carries the reason of its problem in the data of the line (`reason=` clean and cut to 120 bytes, `status=`), next to the code; the hold line `gave-up` names its `error=<code>`.
 
 - H-3, a window holds its module: `StarterSources::connect` gives `HeldRecords` (the records of the read and, as long as they live, `fs_rpc::hold` of fs-rpc v0.1.3), so the module does not end after its idle time while a window lives and ends by itself after it. Said on stderr, never silent: `fs-starter: hold module=M attached`, `attached resync`, `gave-up`, `detached`. The hold waits at most half of the budget of a read (not the 30 s + 10 s of the defaults). A one-time command (`--picture`, `--check-system`) does not hold (it ends the service it started). The starter and the expectation of the service come from one place (`service::parts`). The fake module takes `FAKE_IDLE_MS` (end after that time without a connection). New tests: `sources_hold.rs`, `sources_host_write.rs` (the write road of the host through the fake process: arguments, refusal kind as code). New direct dependency `fs-components-kanban` (the type `Answer` of `Records`; the same source as in the lock).
@@ -13,6 +15,8 @@ Version = tag.
 - SB-2, `fs-starter --check-system [--modules DIR] [--program NAME]... [--description PATH]...` (a word of the host like `--list-commands`, read before `fs_forms_run::parse`; it draws nothing): one line per finding, `ok|yellow|red code key=value`, exit 0 (only ok and yellow), 3 (any red), 2 (wrong words). It reads the registry (bundled and system modules; a refused module is `red module-refused`), starts every module service through the road of the window (`ensure_single`, version handshake, heartbeat; `ok module-up module=M version=V heartbeat=ok ms=T`, else `red module-down`), writes the `read` line of every form it reads (`ok read module=M form=F records=N ms=T provider=P`), asks the MCP switch of the host (`ok mcp-disabled`, `red mcp-enabled` if it were on), and runs the `--check` match for every installed program (`--program NAME`, `--description PATH`; without both, every data package in the system place). The parts that are not built are said `yellow skeleton-part-pending part=<session|update|help|mcp> note="not there yet"` and `yellow update-binding-pending`, never red and never silently green. Like `--picture`, it ends the services it started itself (one that was up before is left alone). New: `check_system.rs`, `tests/check_system.rs` (run in CI only); `--check` prints the same lines as before (its findings now come from one function).
 
 ### Deutsch
+
+- S5: Hilfezeile `--steps FILE` (nur mit `--picture`). Pins: fs-forms auf 3fe3cf3 (fs-forms-run, fs-forms-bind), fs-components auf 9cea35b (commands, kanban, settings; bringt fs-components-replay). Kein neuer Code.
 
 - Eine Ablehnung eines Moduls (`invoke`, page) trägt jetzt den Grund ihres Problems in den Daten der Zeile (`reason=` bereinigt, auf 120 Byte gekürzt, `status=`) neben dem Code; die Hold-Zeile `gave-up` nennt ihren `error=<code>`.
 

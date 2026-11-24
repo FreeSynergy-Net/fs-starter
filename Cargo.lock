@@ -578,6 +578,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "blinc_recorder"
+version = "0.6.0"
+source = "git+https://github.com/FreeSynergy/Blinc?tag=fs-blinc-3.2#cd3e196eca4dd68360bd5f86fa35355a7f5eec4a"
+dependencies = [
+ "blinc_animation",
+ "blinc_app",
+ "blinc_core",
+ "blinc_layout",
+ "blinc_theme",
+ "parking_lot",
+ "png 0.17.16",
+ "serde",
+ "tracing",
+ "wgpu",
+]
+
+[[package]]
 name = "blinc_router"
 version = "0.6.0"
 source = "git+https://github.com/FreeSynergy/Blinc?tag=fs-blinc-3.2#cd3e196eca4dd68360bd5f86fa35355a7f5eec4a"
@@ -943,6 +960,16 @@ name = "const-oid"
 version = "0.10.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be95d4a884358a21a199689323c29e9256b4a1b315e22f183d155422041d3a9a"
+
+[[package]]
+name = "cookie"
+version = "0.16.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e859cd57d0710d9e06c381b550c06e76992472a8c6d527aecd2fc673dcc231fb"
+dependencies = [
+ "time",
+ "version_check",
+]
 
 [[package]]
 name = "core-foundation"
@@ -1395,6 +1422,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
+name = "form_urlencoded"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "afa489199eaffb1211795df1c6236ce1ad0d41a6fa45250add73e3b02420f06e"
+dependencies = [
+ "percent-encoding",
+]
+
+[[package]]
 name = "fracindex"
 version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1407,7 +1443,7 @@ dependencies = [
 [[package]]
 name = "fs-components"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_animation",
  "blinc_app",
@@ -1426,16 +1462,18 @@ dependencies = [
 [[package]]
 name = "fs-components-app"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_app",
  "blinc_cn",
  "blinc_core",
  "blinc_layout",
+ "blinc_recorder",
  "blinc_theme",
  "fs-components-commands",
  "fs-components-mf2",
  "fs-components-render",
+ "fs-components-replay",
  "fs-components-widgets",
  "fs-components-words",
  "tracing",
@@ -1444,7 +1482,7 @@ dependencies = [
 [[package]]
 name = "fs-components-catalog"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "fs-records",
  "fs-types",
@@ -1455,12 +1493,12 @@ dependencies = [
 [[package]]
 name = "fs-components-commands"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 
 [[package]]
 name = "fs-components-core"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_cn",
  "blinc_core",
@@ -1475,12 +1513,12 @@ dependencies = [
 [[package]]
 name = "fs-components-editor"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 
 [[package]]
 name = "fs-components-fields"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_core",
  "blinc_layout",
@@ -1495,7 +1533,7 @@ dependencies = [
 [[package]]
 name = "fs-components-kanban"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_cn",
  "blinc_core",
@@ -1511,7 +1549,7 @@ dependencies = [
 [[package]]
 name = "fs-components-lists"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_cn",
  "blinc_core",
@@ -1527,7 +1565,7 @@ dependencies = [
 [[package]]
 name = "fs-components-measures"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_cn",
  "blinc_core",
@@ -1542,7 +1580,7 @@ dependencies = [
 [[package]]
 name = "fs-components-mf2"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "fs-components-words",
  "mf2",
@@ -1551,7 +1589,7 @@ dependencies = [
 [[package]]
 name = "fs-components-overlays"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_cn",
  "blinc_core",
@@ -1567,7 +1605,7 @@ dependencies = [
 [[package]]
 name = "fs-components-primitives"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_cn",
  "blinc_core",
@@ -1580,7 +1618,7 @@ dependencies = [
 [[package]]
 name = "fs-components-render"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_app",
  "blinc_cn",
@@ -1597,14 +1635,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "fs-components-replay"
+version = "0.1.0"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
+dependencies = [
+ "blinc_recorder",
+ "serde_json",
+ "webdriver",
+]
+
+[[package]]
 name = "fs-components-styles"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 
 [[package]]
 name = "fs-components-widgets"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_cn",
  "blinc_core",
@@ -1628,12 +1676,12 @@ dependencies = [
 [[package]]
 name = "fs-components-words"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 
 [[package]]
 name = "fs-components-workbenches"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "blinc_app",
  "blinc_cn",
@@ -1665,7 +1713,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-bind"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=61cee0e32b87a57c5c2cd78193d5b1139310956f#61cee0e32b87a57c5c2cd78193d5b1139310956f"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=3fe3cf3bf07babda7b9eb7215d6daa938f7633f6#3fe3cf3bf07babda7b9eb7215d6daa938f7633f6"
 dependencies = [
  "fs-components-commands",
  "sha2 0.10.9",
@@ -1674,7 +1722,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=61cee0e32b87a57c5c2cd78193d5b1139310956f#61cee0e32b87a57c5c2cd78193d5b1139310956f"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=3fe3cf3bf07babda7b9eb7215d6daa938f7633f6#3fe3cf3bf07babda7b9eb7215d6daa938f7633f6"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1687,7 +1735,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=61cee0e32b87a57c5c2cd78193d5b1139310956f#61cee0e32b87a57c5c2cd78193d5b1139310956f"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=3fe3cf3bf07babda7b9eb7215d6daa938f7633f6#3fe3cf3bf07babda7b9eb7215d6daa938f7633f6"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1696,7 +1744,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=61cee0e32b87a57c5c2cd78193d5b1139310956f#61cee0e32b87a57c5c2cd78193d5b1139310956f"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=3fe3cf3bf07babda7b9eb7215d6daa938f7633f6#3fe3cf3bf07babda7b9eb7215d6daa938f7633f6"
 dependencies = [
  "semver",
  "sha2 0.10.9",
@@ -1705,7 +1753,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=61cee0e32b87a57c5c2cd78193d5b1139310956f#61cee0e32b87a57c5c2cd78193d5b1139310956f"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=3fe3cf3bf07babda7b9eb7215d6daa938f7633f6#3fe3cf3bf07babda7b9eb7215d6daa938f7633f6"
 dependencies = [
  "fs-components",
  "fs-components-app",
@@ -1853,7 +1901,7 @@ dependencies = [
 [[package]]
 name = "fs-settings"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=393e7af62bd4cc815906a88e04b3c98a08b46084#393e7af62bd4cc815906a88e04b3c98a08b46084"
+source = "git+https://github.com/FreeSynergy-Net/fs-components?rev=9cea35b045d3fff994358b2c118d693f0cf20246#9cea35b045d3fff994358b2c118d693f0cf20246"
 dependencies = [
  "fs-types",
 ]
@@ -2534,6 +2582,30 @@ dependencies = [
  "zerotrie",
  "zerovec",
 ]
+
+[[package]]
+name = "icu_segmenter"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "61b195dc605f81aa181bec9b3bd14e26cc71b903e4644f6af578ca9772c7a710"
+dependencies = [
+ "core_maths",
+ "icu_collections",
+ "icu_locale_fallback",
+ "icu_provider",
+ "icu_segmenter_data",
+ "potential_utf",
+ "smallvec",
+ "utf8_iter",
+ "zerotrie",
+ "zerovec",
+]
+
+[[package]]
+name = "icu_segmenter_data"
+version = "2.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "913a7d294ad056474749152107309fdee3ec17d2482d1ab70fdc61a81c64b9a3"
 
 [[package]]
 name = "idna"
@@ -5573,6 +5645,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "url"
+version = "2.5.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f00cd2407bb42c0ef17be88d4cf020f5cceffd121665bac9b8b9493a369b3b1a"
+dependencies = [
+ "form_urlencoded",
+ "idna",
+ "percent-encoding",
+ "serde",
+]
+
+[[package]]
 name = "usvg"
 version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5855,6 +5939,26 @@ checksum = "5a6580f308b1fad9207618087a65c04e7a10bc77e02c8e84e9b00dd4b12fa0bb"
 dependencies = [
  "js-sys",
  "wasm-bindgen",
+]
+
+[[package]]
+name = "webdriver"
+version = "0.54.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "799eea1e97dc3b3505b178be76e301138ced2af3b62490d8d932ace71168a948"
+dependencies = [
+ "base64",
+ "bytes",
+ "cookie",
+ "http",
+ "icu_segmenter",
+ "log",
+ "serde",
+ "serde_derive",
+ "serde_json",
+ "thiserror 1.0.69",
+ "time",
+ "url",
 ]
 
 [[package]]

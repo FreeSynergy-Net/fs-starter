@@ -16,8 +16,9 @@ use crate::sources::StarterSources;
 use crate::{package, pending, shell};
 
 /// The help text of the host (the words of the window host follow it).
-pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data] [--picture FILE.png]\n\
+pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data] [--picture FILE.png [--steps FILE]]\n\
     Opens the window of a program from its description, without building the program.\n\
+    --steps FILE (only with --picture) plays the steps of FILE before the picture is taken.\n\
     --program NAME takes the installed data package /usr/share/freesynergy/programs/NAME (only a place that passes the system check).\n\
 fs-starter --list-commands [--modules DIR]\n\
     Lists the commands the host knows: the shared app.* and those of the bundled modules (id, module, version).\n\
