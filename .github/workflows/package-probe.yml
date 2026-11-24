@@ -1,9 +1,9 @@
 # Package probe: builds the same Linux (deb, rpm, tar.gz, arch) and Windows (zip, msi) packages as release.yml, with the same inputs and the same
 # pinned fs-release parts, but NEVER finalizes, signs, tags or publishes (no `finalize`/`publish`/`library` job, `contents: read` only).
-# Runs on a push of a `unreviewed/release-pins-*` branch (and `unreviewed/deb-name`) and by hand. The job `names` checks the BUILT deb and rpm: both must be called like the program (`fs-starter`) and take over `fs-starter-host`. Keep `inputs` equal to release.yml (checked by eye in review).
+# Runs on a push of a `unreviewed/release-pins-*`, `unreviewed/deb-name`, `unreviewed/starter-*` (the bundle and tag branches) or `release-*` branch and by hand. The job `names` checks the BUILT deb and rpm: both must be called like the program (`fs-starter`) and take over `fs-starter-host`. Keep `inputs` equal to release.yml (checked by eye in review).
 name: package-probe
 on:
-  push: { branches: ["unreviewed/release-pins-*", "unreviewed/deb-name"] }
+  push: { branches: ["unreviewed/release-pins-*", "unreviewed/deb-name", "unreviewed/starter-*", "release-*"] }
   workflow_dispatch:
 permissions:
   contents: read
