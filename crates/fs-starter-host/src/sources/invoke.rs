@@ -182,7 +182,7 @@ mod tests {
                 .get_root::<form_source::invoke_results::Builder>()
                 .unwrap();
             let mut p = r.get_problem().unwrap();
-            p.set_detail(&format!("missing \u{1b}[31mboard\n{}", "x".repeat(500)));
+            p.set_detail(format!("missing \u{1b}[31mboard\n{}", "x".repeat(500)));
             p.set_status(400);
         }
         let c = read(&msg).unwrap_err();
