@@ -105,7 +105,7 @@ fn a_running_module_is_ok_with_its_read_line_and_is_ended_again() {
         "{lines:?}"
     );
     assert!(
-        has(&lines, "ok read module=groups form=members records="),
+        has(&lines, "ok read module=groups form=rows records="),
         "{lines:?}"
     );
     // the run started the service itself, so it ended it again (the socket goes away)

@@ -14,8 +14,8 @@ pub const GOOD_FORMS: &str = r#"[
  {"name":"tree","version":"1.0","type":"Group",
   "map":{"nodes":"Group","parent":"parent","label":"name","edge-kind":"mode","owner-mark":"mine"},
   "fields":{"parent":"reference","name":"text","mode":"choice","mine":"bool"}},
- {"name":"members","version":"1.0","type":"Member",
-  "map":{"records":"Member","person":"person","role":"role","badge":"level"},
+ {"name":"rows","version":"1.0","type":"Member",
+  "map":{"items":"Member","label":"person","columns":["role","level"]},
   "fields":{"person":"reference","role":"reference","level":"text"}}
 ]"#;
 
