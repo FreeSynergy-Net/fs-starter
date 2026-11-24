@@ -91,7 +91,7 @@ fn a_file_that_misses_a_mandatory_field_or_breaks_a_rule_is_unreadable() {
     assert_eq!(
         cause(
             changed(
-                "\"capability\": \"capture.screens\"",
+                "\"capability\": \"screens\"",
                 "\"capability\": \"tasks.screens\""
             ),
             "capture"

@@ -58,7 +58,8 @@ fn an_id_with_a_line_break_forges_no_line_in_list_commands() {
     assert_eq!(lines.lines().count(), 4, "{lines}");
     assert!(!lines.contains("fake.cmd"), "{lines}");
     assert!(
-        text(&out.stderr).contains("command-bad-id:"),
+        // refused before the id is looked at (the key is not on the contract list); no line is forged either way
+        text(&out.stderr).contains("command-capability-unknown"),
         "{}",
         text(&out.stderr)
     );
