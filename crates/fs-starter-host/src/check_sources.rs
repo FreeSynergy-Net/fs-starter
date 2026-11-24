@@ -4,8 +4,7 @@
 
 use std::process::ExitCode;
 
-use fs_forms_run::{Coded, FormData, command_key}
-;
+use fs_forms_run::{Coded, FormData, command_key};
 use fs_starter::Exit;
 
 use crate::sources::{StarterSources, bare};

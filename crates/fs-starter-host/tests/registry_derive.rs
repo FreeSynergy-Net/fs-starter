@@ -44,7 +44,12 @@ fn the_raw_contract_key_is_kept_for_invoke() {
     assert_eq!(e.command.id.as_str(), "people.people.search");
     assert_eq!(e.key.as_deref(), Some("people.search"));
     // the shell's own commands have no key
-    assert!(r.entries().iter().filter(|e| e.module == "app").all(|e| e.key.is_none()));
+    assert!(
+        r.entries()
+            .iter()
+            .filter(|e| e.module == "app")
+            .all(|e| e.key.is_none())
+    );
 }
 
 #[test]
@@ -101,9 +106,7 @@ fn a_given_id_must_be_the_derived_one() {
 
 #[test]
 fn the_same_key_twice_in_one_module_refuses_the_whole_set() {
-    for keys in [
-        ["card.move", "card.move"],
-    ] {
+    for keys in [["card.move", "card.move"]] {
         // already refused when the file is read (no set is made), not only in `add`
         assert_eq!(
             parse(&json_keys("planning", &keys), "planning"),
