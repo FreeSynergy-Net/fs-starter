@@ -72,3 +72,12 @@ assets = [
 
 [package.metadata.generate-rpm.obsoletes]
 fs-starter-host = "*"
+
+# DEB (cargo-deb, built by the release CI only). Same name as the RPM: `fs-starter` (cargo-deb would take the crate name `fs-starter-host`). From 0.0.8 on
+# the deb replaces the earlier `fs-starter-host` package (0.0.4 .. 0.0.7): Replaces (takes over its files), Conflicts (apt removes it on the upgrade),
+# Provides (whatever might depend on the old name stays satisfied). `tests/package_names.rs` and `package-probe.yml` keep deb and rpm on one name.
+[package.metadata.deb]
+name = "fs-starter"
+replaces = "fs-starter-host"
+conflicts = "fs-starter-host"
+provides = "fs-starter-host"
