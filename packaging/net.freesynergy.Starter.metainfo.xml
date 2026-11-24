@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>net.freesynergy.Starter</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT OR Apache-2.0</project_license>
+  <name>FreeSynergy Starter</name>
+  <summary>Opens the window of a FreeSynergy program from its description</summary>
+  <description>
+    <p>The host of FreeSynergy programs: it opens the window of a program from its description, without building the program.</p>
+  </description>
+  <icon type="stock">net.freesynergy.Starter</icon>
+  <launchable type="desktop-id">net.freesynergy.Starter.desktop</launchable>
+  <provides><binary>fs-starter</binary></provides>
+  <url type="homepage">https://github.com/FreeSynergy-Net/fs-starter</url>
+  <developer id="net.freesynergy"><name>FreeSynergy</name></developer>
+  <content_rating type="oars-1.1"/>
+  <categories><category>Utility</category></categories>
+</component>

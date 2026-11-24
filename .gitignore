@@ -17,3 +17,4 @@ Thumbs.db
 *.swp
 # local secrets (crates.io token etc. live in ~/.cargo, never here)
 .env
+/packaging/*.svg
