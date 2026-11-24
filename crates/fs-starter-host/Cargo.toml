@@ -34,6 +34,8 @@ fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-componen
 # Single instance (ADR 0097): the contract `Instance` of fs-interfaces, served and called through fs-rpc (the same pins as fs-forms-run).
 fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", tag = "v0.0.34" }
 fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", tag = "v0.0.8" }
+# Same file as an open handle (Unix: device + inode, Windows: volume + file index); instead of an own `same_file`. Already in the lock.
+same-file = "1"
 capnp = "0.27"
 capnp-rpc = "0.27"
 tokio = { version = "1", features = ["rt", "sync", "time", "net"] }
@@ -51,6 +53,8 @@ path = "examples/fake_module.rs"
 
 # Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
 [dev-dependencies]
+# The tests use `SystemPlaces::for_test` (the feature only here: a program never builds its own circle of trust).
+fs-starter = { path = "../fs-starter", features = ["test-support"] }
 tempfile = "3"
 png = "0.18"
 

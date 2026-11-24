@@ -3,6 +3,7 @@
 //!
 //! Pattern: Adapter: the command of `fs-forms-run` in, an exit code of the starter out.
 
+use std::path::PathBuf;
 use std::process::ExitCode;
 
 use fs_forms_run::{Command, Config, FileLink, LayoutLink, SocketLink, session_locale};
@@ -171,15 +172,19 @@ fn check(c: &Config) -> ExitCode {
 /// out; the exit code is then 1.
 fn list_commands(args: &[String]) -> ExitCode {
     // Only the default folder next to the binary may be missing; a folder that was named must be there (never silent).
-    let (dir, named) = match args {
+    let system = fs_starter::system_modules_dir();
+    let (dir, named): (Option<PathBuf>, bool) = match args {
+        // no folder next to the binary is `None` (no empty path stands for it); where it is the system folder too (Windows install) it
+        // is read once, as a package
         [_] => (
-            std::env::current_exe()
-                .ok()
-                .and_then(|p| p.parent().map(|d| d.join("modules")))
-                .unwrap_or_default(),
+            fs_starter::bundled_modules_dir().filter(|b| {
+                !system
+                    .as_deref()
+                    .is_some_and(|s| crate::registry::is_same_folder(b, s))
+            }),
             false,
         ),
-        [_, flag, dir] if flag == "--modules" => (dir.into(), true),
+        [_, flag, dir] if flag == "--modules" => (Some(dir.into()), true),
         _ => {
             eprintln!(
                 "fs-starter: --list-commands takes only --modules DIR\nTry `fs-starter --help`."
@@ -188,25 +193,27 @@ fn list_commands(args: &[String]) -> ExitCode {
         }
     };
     let mut registry = crate::registry::Registry::new();
-    let mut refused = match registry.load_bundled(&dir) {
-        Ok(refused) => refused,
-        Err(e) if !named && e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
-        Err(e) => {
+    let mut refused = match dir.as_deref().map(|d| registry.load_bundled(d)) {
+        None => Vec::new(),
+        Some(Ok(refused)) => refused,
+        Some(Err(e)) if !named && e.kind() == std::io::ErrorKind::NotFound => Vec::new(),
+        Some(Err(e)) => {
             eprintln!(
                 "fs-starter: modules folder {:?}: {e}",
-                dir.to_string_lossy()
+                dir.unwrap_or_default().to_string_lossy()
             );
             return ExitCode::from(Exit::FAILED.code());
         }
     };
     // The modules of the package manager (system folder): only what `SystemPackaged` accepts; a missing folder is fine.
-    match registry.load_packages(
-        std::path::Path::new(fs_starter::MODULES_DIR),
-        &crate::registry::SystemPackaged::new(),
-    ) {
-        Ok(more) => refused.extend(more),
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {}
-        Err(e) => {
+    let more = system
+        .as_deref()
+        .map(|s| registry.load_packages(s, &crate::registry::SystemPackaged::new()));
+    match more {
+        None => {}
+        Some(Ok(more)) => refused.extend(more),
+        Some(Err(e)) if e.kind() == std::io::ErrorKind::NotFound => {}
+        Some(Err(e)) => {
             eprintln!("fs-starter: system modules folder: {e}");
             return ExitCode::from(Exit::FAILED.code());
         }

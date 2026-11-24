@@ -122,7 +122,7 @@ fn read_limited(file: &Path, max: u64) -> Result<String, Coded<StarterCode>> {
 }
 
 /// The two levels, user before system (ADR 0094 item 3).
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug)]
 pub struct XdgManifests {
     /// `$XDG_DATA_HOME/freesynergy/frontends` (or `~/.local/share/...`); `None` without a home.
     pub user: Option<PathBuf>,
@@ -160,18 +160,37 @@ impl XdgManifests {
             .filter(|p| p.is_absolute())
             .or_else(|| home.map(|h| PathBuf::from(h).join(".local").join("share")))
             .map(sub);
-        let dirs = data_dirs.filter(|v| !v.is_empty());
-        let dirs = dirs.unwrap_or_else(|| "/usr/local/share:/usr/share".into());
-        let system = std::env::split_paths(&dirs)
-            .filter(|p| p.is_absolute())
-            .map(sub)
-            .collect();
+        let system = match data_dirs.filter(|v| !v.is_empty()) {
+            Some(dirs) => std::env::split_paths(&dirs)
+                .filter(|p| p.is_absolute())
+                .map(sub)
+                .collect(),
+            None => Self::default_system(),
+        };
         Self {
             user,
             system,
             max_bytes: MAX_MANIFEST_BYTES,
             places: SystemPlaces::standard(),
         }
+    }
+
+    /// The system level without `XDG_DATA_DIRS`: Unix `/usr/local/share` and `/usr/share` (XDG default), Windows `<anchor>\frontends`
+    /// (the installer's place; there is no XDG there).
+    #[cfg(unix)]
+    fn default_system() -> Vec<PathBuf> {
+        ["/usr/local/share", "/usr/share"]
+            .iter()
+            .map(|base| PathBuf::from(base).join("freesynergy").join("frontends"))
+            .collect()
+    }
+
+    #[cfg(not(unix))]
+    fn default_system() -> Vec<PathBuf> {
+        crate::system::share_dir()
+            .map(|share| share.join("frontends"))
+            .into_iter()
+            .collect()
     }
 
     fn read_level(&self, dir: &Path, place: Place, out: &mut Listing) {

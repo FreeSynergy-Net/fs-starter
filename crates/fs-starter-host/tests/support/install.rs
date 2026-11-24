@@ -84,7 +84,7 @@ impl Install {
         let dir = tempfile::tempdir().unwrap();
         std::fs::copy(
             env!("CARGO_BIN_EXE_fs-starter"),
-            dir.path().join("fs-starter"),
+            fs_starter::program_file(dir.path(), "fs-starter"),
         )
         .unwrap();
         std::fs::create_dir(dir.path().join("modules")).unwrap();
@@ -107,7 +107,7 @@ impl Install {
         std::fs::write(catalog.join("forms.json"), forms).unwrap();
         let fake = fake_module();
         let fake = fake.as_path();
-        let file = self.folder(name).join("service");
+        let file = fs_starter::program_file(&self.folder(name), fs_starter::SERVICE_STEM);
         match service {
             Service::Fake => drop(std::fs::copy(fake, &file).unwrap()),
             Service::None => {}
@@ -119,7 +119,8 @@ impl Install {
     /// The copied host with `args`; `env` is set on top of a clean environment (no session, own HOME and runtime folder).
     pub fn run(&self, args: &[&str], scheme: &str, env: &[(&str, &str)]) -> Output {
         let home = tempfile::tempdir().unwrap();
-        let mut c = std::process::Command::new(self.dir.path().join("fs-starter"));
+        let mut c =
+            std::process::Command::new(fs_starter::program_file(self.dir.path(), "fs-starter"));
         c.args(args)
             .env("LANG", "en_US.UTF-8")
             .env("FS_COLOR_SCHEME", scheme)

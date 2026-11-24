@@ -1739,11 +1739,14 @@ dependencies = [
  "fs-conformance",
  "fs-rpc",
  "fs-settings",
+ "fs-starter",
+ "fs-trusted-path",
  "fs-types",
  "roxmltree",
  "semver",
  "tempfile",
  "tokio",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1761,6 +1764,7 @@ dependencies = [
  "fs-types",
  "libc",
  "png 0.18.1",
+ "same-file",
  "semver",
  "serde_json",
  "tempfile",

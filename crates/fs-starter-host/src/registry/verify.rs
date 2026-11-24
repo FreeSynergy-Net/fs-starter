@@ -6,7 +6,7 @@
 use std::fs::File;
 use std::path::{Path, PathBuf};
 
-use fs_starter::{MODULES_DIR, SystemPlaces};
+use fs_starter::{SystemPlaces, system_modules_dir};
 
 use super::model::ModuleSet;
 use super::names::word;
@@ -39,16 +39,17 @@ impl Verifier for Unbound {}
 #[derive(Clone, Debug)]
 pub struct SystemPackaged {
     places: SystemPlaces,
-    modules: PathBuf,
+    /// `None` where the system has no such folder: nothing is then accepted by `verify` (no empty path stands for "none").
+    modules: Option<PathBuf>,
 }
 
 impl SystemPackaged {
-    /// The real system places (owner root) and the folder `/usr/libexec/freesynergy/modules`.
+    /// The real system places (owner root) and the system folder of the modules (none where there is no package manager).
     #[must_use]
     pub fn new() -> Self {
         Self {
             places: SystemPlaces::standard(),
-            modules: PathBuf::from(MODULES_DIR),
+            modules: system_modules_dir(),
         }
     }
 
@@ -56,7 +57,10 @@ impl SystemPackaged {
     #[doc(hidden)]
     #[must_use]
     pub fn for_test(places: SystemPlaces, modules: PathBuf) -> Self {
-        Self { places, modules }
+        Self {
+            places,
+            modules: Some(modules),
+        }
     }
 }
 
@@ -77,12 +81,14 @@ impl Verifier for SystemPackaged {
 
     fn verify(&self, set: &ModuleSet) -> bool {
         // the name is a folder name of the modules folder: no way out of it
+        let Some(modules) = &self.modules else {
+            return false;
+        };
         word(&set.module)
             && self
                 .places
                 .check(
-                    &self
-                        .modules
+                    &modules
                         .join(&set.module)
                         .join("catalog")
                         .join("commands.json"),
@@ -91,17 +97,25 @@ impl Verifier for SystemPackaged {
     }
 }
 
-/// Is the open `file` the one that `path` names at this moment (no link followed)? Unix: same device and inode. Elsewhere never.
-#[cfg(unix)]
+/// Is the open `file` the one that `path` names at this moment (no link followed)? The crate `same-file` compares device and inode
+/// (Unix) or volume and file index (Windows); a link at `path` is refused first (the crate would follow it).
 fn same_file(path: &Path, file: &File) -> bool {
-    use std::os::unix::fs::MetadataExt;
-    match (std::fs::symlink_metadata(path), file.metadata()) {
-        (Ok(a), Ok(b)) => !a.file_type().is_symlink() && a.dev() == b.dev() && a.ino() == b.ino(),
-        _ => false,
-    }
+    let plain = std::fs::symlink_metadata(path).is_ok_and(|m| !m.file_type().is_symlink());
+    plain
+        && file.try_clone().is_ok_and(|open| {
+            match (
+                same_file::Handle::from_file(open),
+                same_file::Handle::from_path(path),
+            ) {
+                (Ok(a), Ok(b)) => a == b,
+                _ => false,
+            }
+        })
 }
 
-#[cfg(not(unix))]
-fn same_file(_path: &Path, _file: &File) -> bool {
-    false
+/// Are `a` and `b` the same folder (after links)? On Windows the folder `modules\` next to the starter IS the system folder of the
+/// modules once the installer put it there: that folder is read once and as a package (checked), never also as "bundled" (unchecked).
+/// A folder that is not there is not the same.
+pub(crate) fn is_same_folder(a: &Path, b: &Path) -> bool {
+    same_file::is_same_file(a, b).unwrap_or(false)
 }
