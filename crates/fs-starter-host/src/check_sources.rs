@@ -4,6 +4,8 @@
 
 use std::process::ExitCode;
 
+use fs_forms_run::{Coded, FormData, command_key}
+;
 use fs_starter::Exit;
 
 use crate::sources::{StarterSources, bare};
@@ -23,9 +25,20 @@ pub(crate) fn check_sources(ranges: &[String], sources: &StarterSources) -> Exit
                 println!("fs-starter: {}", line(&code, bad));
             }
             Ok((known, forms)) => {
-                for f in fs_forms_run::form_report(&bare(forms)) {
+                let mut records = bare(forms);
+                let keys = sources.command_keys(&known.name);
+                for data in &mut records.forms {
+                    data.commands.clone_from(&keys);
+                }
+                for f in fs_forms_run::form_report(&records) {
                     red |= f.red;
                     println!("fs-starter: {}", line(&f.code, f.red));
+                }
+                // a command channel must be bound to a key of the command set of the module (`task.steal`, `planning.task.create`:
+                // not in it, red)
+                for c in unknown_commands(&records.forms, &keys) {
+                    red = true;
+                    println!("fs-starter: red {}", crate::sources::line(&c));
                 }
                 println!(
                     "fs-starter: source {} {} checked",
@@ -35,6 +48,24 @@ pub(crate) fn check_sources(ranges: &[String], sources: &StarterSources) -> Exit
         }
     }
     ExitCode::from(if red { Exit::CONTRACT } else { Exit::DONE }.code())
+}
+
+/// The command channels of the forms bound to a key that is not in `keys` (the command set of the module): `form-command-unknown`.
+fn unknown_commands(forms: &[FormData], keys: &[String]) -> Vec<Coded> {
+    let mut out = Vec::new();
+    for data in forms {
+        for (channel, _) in &data.declared.map {
+            if let Some(key) = command_key(data, channel).filter(|k| !keys.iter().any(|x| x == k)) {
+                out.push(
+                    Coded::new("form-command-unknown")
+                        .with("form", data.declared.form.name.clone())
+                        .with("channel", channel.clone())
+                        .with("command", key),
+                );
+            }
+        }
+    }
+    out
 }
 
 /// A finding as one line: `red|yellow code key=value ...`.

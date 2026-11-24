@@ -157,12 +157,12 @@ fn a_command_of_another_name_space_is_never_run() {
     let (_b, s) = sources("0.1.0");
     for command in [
         "app.undo",
-        "tasks.add",
+        "tasks.task.create",
         "groups",
         "groups.unlisted",
-        "groupsx.add",
+        "groupsx.task.create",
         "groups.",
-        ".add",
+        ".task.create",
     ] {
         assert_eq!(
             code(s.invoke("groups", command, "r1")),
@@ -172,12 +172,12 @@ fn a_command_of_another_name_space_is_never_run() {
     }
     // a module that is not there: unknown source, not a command
     assert_eq!(
-        code(s.invoke("tasks", "tasks.add", "r1")),
+        code(s.invoke("tasks", "tasks.task.create", "r1")),
         "host-notice-source-unknown"
     );
     // the own, listed command passes the border (it then fails for another reason: no program file here)
     assert_ne!(
-        code(s.invoke("groups", "groups.add", "r1")),
+        code(s.invoke("groups", "groups.task.create", "r1")),
         "host-notice-invoke-foreign"
     );
 }

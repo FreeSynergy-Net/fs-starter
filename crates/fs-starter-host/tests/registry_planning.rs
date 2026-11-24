@@ -69,3 +69,51 @@ fn check_of_the_sw7_forms_against_the_real_planning_files_is_green() {
     assert!(text.contains("source planning 0.0.2 checked"), "{text}");
     assert!(!text.contains("red") && !text.contains("yellow"), "{text}");
 }
+
+/// The planning forms with the key of one channel changed: `--check` must say red, never green (SW-5: the keys of the forms are checked
+/// against the command set of the module).
+fn check_with_key(from: &str, to: &str) -> (Option<i32>, String) {
+    let i = install();
+    let file = i.folder("planning").join("catalog").join("forms.json");
+    let text = std::fs::read_to_string(&file).unwrap();
+    assert!(text.contains(from), "{from}");
+    std::fs::write(&file, text.replace(from, to)).unwrap();
+    let out = i.run(&["--check", "--description", TASKS], "light", &[]);
+    (
+        out.status.code(),
+        String::from_utf8_lossy(&out.stdout).into_owned(),
+    )
+}
+
+#[test]
+fn check_is_red_for_a_form_key_the_module_does_not_have() {
+    for key in ["task.steal", "capture.screens", "planning.task.create"] {
+        let (rc, text) = check_with_key("\"task.create\"", &format!("\"{key}\""));
+        assert_eq!(rc, Some(3), "{key}: {text}");
+        assert!(
+            text.contains("red form-command-unknown") && text.contains(&format!("command={key}")),
+            "{key}: {text}"
+        );
+    }
+}
+
+#[test]
+fn a_commands_file_with_a_capability_that_is_not_on_the_contract_list_is_refused() {
+    let i = install();
+    let file = i.folder("planning").join("catalog").join("commands.json");
+    let text = std::fs::read_to_string(&file).unwrap();
+    std::fs::write(&file, text.replace("\"task.delete\"", "\"task.steal\"")).unwrap();
+    let dir = i.dir.path().join("modules");
+    let out = i.run(
+        &["--list-commands", "--modules", dir.to_str().unwrap()],
+        "light",
+        &[],
+    );
+    let all = format!(
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(all.contains("command-capability-unknown"), "{all}");
+    assert!(!all.contains("planning.task.create"), "{all}");
+}

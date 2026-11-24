@@ -68,7 +68,7 @@ pub struct Install {
 /// `commands.json` of a module of this version (one command of its own name space).
 pub fn commands(module: &str, version: &str) -> String {
     format!(
-        r#"{{"module":"{module}","version":"{version}","contract":"{module}","scope":"own-contract","commands":[{{"id":"{module}.add","call":"x","capability":"add","access":"write","help":{{"topic":"add","text":{{"en":"e","de":"d"}}}}}}]}}"#
+        r#"{{"module":"{module}","version":"{version}","contract":"{module}","scope":"own-contract","commands":[{{"id":"{module}.task.create","call":"x","capability":"task.create","access":"write","help":{{"topic":"add","text":{{"en":"e","de":"d"}}}}}}]}}"#
     )
 }
 

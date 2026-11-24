@@ -77,6 +77,15 @@ impl StarterSources {
         Ok((known, forms))
     }
 
+    /// The raw contract keys of the command set of `module` (what a form may bind a command channel to).
+    #[must_use]
+    pub fn command_keys(&self, module: &str) -> Vec<String> {
+        self.modules
+            .commands(module)
+            .filter_map(|e| e.key.clone())
+            .collect()
+    }
+
     /// Run a command of a module on a record. Only a command of the OWN name space of the module that is in its set (`commands.json`)
     /// goes through (border 6); the shared `app.*` commands, another module's and a name the module never listed are refused.
     ///

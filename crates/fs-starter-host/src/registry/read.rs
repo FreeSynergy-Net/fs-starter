@@ -27,7 +27,7 @@ fn text<'a>(v: &'a Value, key: &str, cause: &str) -> Result<&'a str, Refusal> {
 ///
 /// # Errors
 /// [`Refusal::Unreadable`] with the cause (`json`, `module`, `version`, `contract`, `scope`, `commands`, `command-id`,
-/// `command-id-differs`, `command-capability`, `command-access`, `command-help`); [`Refusal::ModuleName`] if `module` is not the folder name.
+/// `command-id-differs`, `command-capability`, `command-capability-unknown` (files read from disk only), `command-access`, `command-help`); [`Refusal::ModuleName`] if `module` is not the folder name.
 pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
     let doc: Value = serde_json::from_str(text_in).map_err(|_| bad("json"))?;
     let module = text(&doc, "module", "module")?;
@@ -78,6 +78,15 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
         version: version.to_owned(),
         items,
     })
+}
+
+/// The first raw key of `set` that is not on the contract list (`capabilities.txt`, via `fs_interfaces::capabilities::is_known`).
+#[must_use]
+pub fn unknown_capability(set: &ModuleSet) -> Option<&str> {
+    set.items
+        .iter()
+        .map(|i| i.key.as_str())
+        .find(|k| !fs_interfaces::capabilities::is_known(k))
 }
 
 /// The biggest file read (a set is a few KiB).
@@ -149,5 +158,11 @@ pub(super) fn read_handle(f: fs::File, name: &str) -> Result<ModuleSet, Refusal>
         return Err(bad("too-large"));
     }
     let text = String::from_utf8(bytes).map_err(|_| bad("read-failed"))?;
-    parse(&text, name)
+    let set = parse(&text, name)?;
+    // A file read from disk: every `capability` must be a key of the contract list `capabilities.txt` of fs-interfaces (the one list,
+    // `fs_interfaces::capabilities`, the version this host is built with). Not in `parse`: that reads the syntax only.
+    match unknown_capability(&set) {
+        Some(_) => Err(bad("command-capability-unknown")),
+        None => Ok(set),
+    }
 }

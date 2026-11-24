@@ -71,5 +71,5 @@ pub fn modules_dir(files: &[(&str, &str)]) -> tempfile::TempDir {
 }
 
 pub fn capture() -> String {
-    json("capture", &["capture.shot"])
+    json("capture", &["capture.task.create"])
 }

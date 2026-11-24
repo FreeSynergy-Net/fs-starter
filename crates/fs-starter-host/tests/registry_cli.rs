@@ -17,13 +17,13 @@ fn list_commands_reads_the_bundled_modules_at_run_time() {
     let lines = text(&out.stdout);
     assert!(lines.contains("app.quit\tapp\t"), "{lines}");
     assert!(
-        lines.contains("capture.shot\tcapture\t0.1.0\tnew by module capture"),
+        lines.contains("capture.task.create\tcapture\t0.1.0\tnew by module capture"),
         "{lines}"
     );
     // a second module appears without a change of the host
     let more = modules_dir(&[
         ("capture", &capture()),
-        ("zip", &json("zip", &["zip.shot"])),
+        ("zip", &json("zip", &["zip.task.create"])),
     ]);
     let out = host(
         &[
@@ -34,7 +34,7 @@ fn list_commands_reads_the_bundled_modules_at_run_time() {
         "light",
     );
     assert!(
-        text(&out.stdout).contains("zip.shot\tzip\t0.1"),
+        text(&out.stdout).contains("zip.task.create\tzip\t0.1"),
         "{}",
         text(&out.stdout)
     );
