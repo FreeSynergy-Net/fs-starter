@@ -27,27 +27,43 @@ fn source_of(name: &str) -> String {
     found.remove(0)
 }
 
-/// Each lifted library is the tag, nothing else: no `rev`, no branch.
+/// Each lifted library is its tag, or (value "REV:<sha>") the exact commit of a main head not yet tagged (fs-forms, fs-components).
 #[test]
-fn the_lifted_libraries_are_pinned_by_their_tags() {
+fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
     for (name, tag) in [
         ("fs-types", "v0.0.6"),
         ("fs-conformance", "v0.0.6"),
         ("fs-interfaces", "v0.0.35"),
         ("fs-objects", "v0.0.10"),
-        ("fs-settings", "v0.1.0"),
-        ("fs-components-commands", "v0.1.0"),
-        ("fs-rpc", "v0.1.0"),
-        ("fs-trusted-path", "v0.1.0"),
-        ("fs-forms-run", "v0.1.0"),
-        ("fs-forms-bind", "v0.1.0"),
-        ("fs-components", "v0.1.0"),
+        (
+            "fs-settings",
+            "REV:ba505454d2438c4a32d14ce776f94ce3bbb7fd9b",
+        ),
+        (
+            "fs-components-commands",
+            "REV:ba505454d2438c4a32d14ce776f94ce3bbb7fd9b",
+        ),
+        ("fs-rpc", "v0.1.1"),
+        ("fs-trusted-path", "v0.1.1"),
+        (
+            "fs-forms-run",
+            "REV:8baf84c36f0f8664b7a71b9c3158feb2a362ab3e",
+        ),
+        (
+            "fs-forms-bind",
+            "REV:8baf84c36f0f8664b7a71b9c3158feb2a362ab3e",
+        ),
+        (
+            "fs-components",
+            "REV:ba505454d2438c4a32d14ce776f94ce3bbb7fd9b",
+        ),
     ] {
         let source = source_of(name);
-        assert!(
-            source.contains(&format!("?tag={tag}#")),
-            "{name}: {source} is not the tag {tag}"
-        );
+        let want = match tag.strip_prefix("REV:") {
+            Some(sha) => format!("?rev={sha}#{sha}"),
+            None => format!("?tag={tag}#"),
+        };
+        assert!(source.contains(&want), "{name}: {source} is not {tag}");
     }
 }
 

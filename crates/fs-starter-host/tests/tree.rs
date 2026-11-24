@@ -40,8 +40,18 @@ fn the_blueprint_of_a_program_gives_the_board_page_with_a_side_list_and_a_board(
 
 #[test]
 fn the_sample_records_make_a_board_with_three_columns() {
-    let columns = SampleBoard::default().columns();
-    let names: Vec<_> = columns.iter().map(|c| c.title.as_str()).collect();
+    // the board is a form of the module (cards in columns): the columns are the distinct `column-label` values of its rows
+    let forms = SampleBoard::default().forms();
+    let board = forms
+        .iter()
+        .find(|f| f.declared.form.name == "cards-in-columns")
+        .expect("the sample has the board form");
+    let mut names: Vec<&str> = Vec::new();
+    for label in board.rows.iter().filter_map(|r| r.get("column-label")) {
+        if !names.contains(&label) {
+            names.push(label);
+        }
+    }
     assert_eq!(names, ["To do", "Doing", "Done"]);
     assert!(SampleBoard::default().is_sample(), "sample data says so");
 }
