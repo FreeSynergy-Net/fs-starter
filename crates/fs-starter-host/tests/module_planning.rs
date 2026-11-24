@@ -1,6 +1,6 @@
 //! The contract `module_v1` against the REAL planning service (fs-modules-planning, the commit the Cargo.toml names) behind a real Unix
 //! socket in a temporary folder, over the same RPC connection the host uses: the suite `fs_module::conformance` and the refusal of
-//! planning decoded as a problem `form-source-<kind>` (WP4a). Planning has no rights per person yet: only rule 11 "forbidden" is skipped.
+//! planning decoded as a problem `form-source-<kind>` (`WP4a`). Planning has no rights per person yet: only rule 11 "forbidden" is skipped.
 #![cfg(unix)]
 
 mod support;

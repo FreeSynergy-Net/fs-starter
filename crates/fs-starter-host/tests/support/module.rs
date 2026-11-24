@@ -1,4 +1,4 @@
-//! A module service as a process and the suite `fs_module::conformance` (module_v1) against it: shared by the contract tests of the
+//! A module service as a process and the suite `fs_module::conformance` (`module_v1`) against it: shared by the contract tests of the
 //! host. Unix only (sockets, heartbeat of fs-rpc).
 //!
 //! Pattern: Template Method (the rules are the suite's; the fixtures here only say what the service declares and how to call it).

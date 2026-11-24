@@ -1,5 +1,5 @@
-//! The contract `module_v1` against the fake module as a PROCESS (Hülle around `FakeSource`), over the real RPC connection of the host:
-//! the suite `fs_module::conformance` (13 rules of level 1), the decoding of a refusal as a problem `form-source-<kind>` (WP4a), and the
+//! The contract `module_v1` against the fake module as a PROCESS (Huelle around `FakeSource`), over the real RPC connection of the host:
+//! the suite `fs_module::conformance` (13 rules of level 1), the decoding of a refusal as a problem `form-source-<kind>` (`WP4a`), and the
 //! border modes of the process, which must keep their meaning next to the strict contract.
 #![cfg(unix)]
 
