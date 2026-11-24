@@ -104,11 +104,10 @@ fn the_same_key_twice_in_one_module_refuses_the_whole_set() {
     for keys in [
         ["card.move", "card.move"],
     ] {
-        let set = parse(&json_keys("planning", &keys), "planning").unwrap();
-        let why = Registry::new().add_bundled(Actor::Person, set).unwrap_err();
+        // already refused when the file is read (no set is made), not only in `add`
         assert_eq!(
-            why,
-            [Refusal::Conflict("planning.card.move".into())],
+            parse(&json_keys("planning", &keys), "planning"),
+            Err(Refusal::Conflict("planning.card.move".into())),
             "{keys:?}"
         );
     }

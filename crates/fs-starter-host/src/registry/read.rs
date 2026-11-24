@@ -56,6 +56,10 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
         let key = text(c, "capability", "command-capability")?;
         let id = read_ids::derive(folder, key);
         read_ids::check_explicit(c, folder, &id)?;
+        // a key twice in one file is refused here, not only when the set is added
+        if items.iter().any(|i: &Item| i.command.id.as_str() == id) {
+            return Err(Refusal::Conflict(id.as_str().into()));
+        }
         let access = Access::parse(text(c, "access", "command-access")?)
             .ok_or_else(|| bad("command-access"))?;
         let h = c.get("help").ok_or_else(|| bad("command-help"))?;
