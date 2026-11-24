@@ -24,6 +24,10 @@ pub(super) struct Identity {
     pub instance: String,
 }
 
+/// NOT yet the hub: the `generation` of a `RecordGrip` (fs-forms-run `RecordHub`) is counted only by the `ChangeSink` the hub itself gives to
+/// `Module::connect`, and the hub has no write path nor `history`/`step_back`. This host holds its module directly (no `Module`/`Link` adapter
+/// yet), so only `changed` is counted here. `invokeIf` sends `expect` empty: the page carries no revision and `Link::writer` does not hand the
+/// seen one on (REVIEW-s6-r3 S1, S2).
 /// The receiver of the changes of one connection.
 struct Sink {
     module: String,
