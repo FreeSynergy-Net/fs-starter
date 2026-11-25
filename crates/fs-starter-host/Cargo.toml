@@ -21,25 +21,25 @@ path = "src/main.rs"
 [dependencies]
 fs-starter = { path = "../fs-starter", version = "0.0.8" }
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", rev = "722d3ce0156711d40cb278f2e835e865d9448290", version = "0.0.7" }
-fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "c270e2904ae120475fc3e367bf213ae6d1633380", version = "0.1.0" }
-fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "c270e2904ae120475fc3e367bf213ae6d1633380", version = "0.1.0" }
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "f14c0ebec6eebbd0586d845e7cfedb9aea70281b", version = "0.1.0" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "f14c0ebec6eebbd0586d845e7cfedb9aea70281b", version = "0.1.0" }
 toml = "0.8"
 # The one reader of module versions (`Version`), already in the lock; ranges are `fs_types::interface::InterfaceReq`.
 semver = "1.0.28"
 # The exchange file of a module (`catalog/commands.json` of fs-capture); already in the lock.
 serde_json = "1"
 # The command model (no dependencies of its own); the same tag as the one the scaffold settings come from (one source, lock check).
-fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "233c920831a1399df3eb54b5e2054409655453f3", version = "0.1.0" }
+fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "77b23ea3a3b2d788f5f60c62e975db9501a137ef", version = "0.1.0" }
 # Single instance (ADR 0097): the contract `Instance` of fs-interfaces, served and called through fs-rpc (the same pins as fs-forms-run).
-fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "a395979b5df2fbff91347bf10b3324a2e1bfa33d", version = "0.2.0" }
-fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "9aff426a37cfbaec657b9164c1b11389c6d1712b", version = "0.1.4" }
+fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "ad56e2f4b953ebf51d41bb7aec8202dfafebdfac", version = "0.2.0" }
+fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "0f639470a7c1e5bbae5f84fbbbb41bf2504c232a", version = "0.1.4" }
 # The client of the settings service (E3): `ensure_service` + `RpcSettingsStore`. Same repo and rev as fs-rpc (one source).
-fs-settings-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "9aff426a37cfbaec657b9164c1b11389c6d1712b", version = "0.1.4" }
+fs-settings-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "0f639470a7c1e5bbae5f84fbbbb41bf2504c232a", version = "0.1.4" }
 # `Settings::open`, `Catalog`, `CatalogFile` (E1): the same rev as fs-starter.
-fs-settings = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "233c920831a1399df3eb54b5e2054409655453f3", version = "0.1.0" }
+fs-settings = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "77b23ea3a3b2d788f5f60c62e975db9501a137ef", version = "0.1.0" }
 # Same file as an open handle (Unix: device + inode, Windows: volume + file index); instead of an own `same_file`. Already in the lock.
 same-file = "1"
-fs-components-kanban = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "233c920831a1399df3eb54b5e2054409655453f3", version = "0.1.0" }
+fs-components-kanban = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "77b23ea3a3b2d788f5f60c62e975db9501a137ef", version = "0.1.0" }
 capnp = "0.27"
 capnp-rpc = "0.27"
 futures = "0.3"
@@ -64,12 +64,12 @@ tempfile = "3"
 png = "0.18"
 tokio = { version = "1", features = ["rt", "macros", "sync", "time", "net"] }
 # Conformance suite of the contract module_v1 and its fake (fs-module of fs-interfaces 0.2.0; the same source as fs-interfaces above, checked in the lock).
-fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "a395979b5df2fbff91347bf10b3324a2e1bfa33d", version = "0.2.0" }
+fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "ad56e2f4b953ebf51d41bb7aec8202dfafebdfac", version = "0.2.0" }
 
 # The real planning service in this process (Unix only: its tests use a Unix socket); every library on the same tag as above (one source each).
 [target.'cfg(unix)'.dev-dependencies]
-fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "c54c85162ebd85499bb8cbad8c4e59c4949d0ad8", version = "0.0.4" }
-fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "c54c85162ebd85499bb8cbad8c4e59c4949d0ad8", version = "0.0.4" }
+fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "36947ed1423f52135111d911396fef46026ece82", version = "0.0.5" }
+fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "36947ed1423f52135111d911396fef46026ece82", version = "0.0.5" }
 fs-objects = { git = "https://github.com/FreeSynergy-Net/fs-objects", rev = "e38093f1ec61b7c9faaa6f6046f65addb11dcf46", version = "0.0.11", features = ["testing"] }
 
 # RPM (cargo-generate-rpm, built by the release CI only). The package is called `fs-starter` (the host crate keeps its name) and replaces the
