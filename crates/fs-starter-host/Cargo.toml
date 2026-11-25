@@ -20,26 +20,26 @@ path = "src/main.rs"
 # (fs-rpc, fs-interfaces: the same revs as here, one source each) and the description reader; `fs-forms-bin` is NOT a dependency (it depends on `fs-starter`: a cycle).
 [dependencies]
 fs-starter = { path = "../fs-starter", version = "0.0.8" }
-fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", tag = "v0.0.6", version = "0.0.5" }
-fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7f17b17f68d0579c15a928f5f92d07dac6163f6b", version = "0.1.0" }
-fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7f17b17f68d0579c15a928f5f92d07dac6163f6b", version = "0.1.0" }
+fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", rev = "722d3ce0156711d40cb278f2e835e865d9448290", version = "0.0.7" }
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "e3b7da13e4d96d7778e691d62efb8c74f56be7b3", version = "0.1.0" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "e3b7da13e4d96d7778e691d62efb8c74f56be7b3", version = "0.1.0" }
 toml = "0.8"
 # The one reader of module versions (`Version`), already in the lock; ranges are `fs_types::interface::InterfaceReq`.
 semver = "1.0.28"
 # The exchange file of a module (`catalog/commands.json` of fs-capture); already in the lock.
 serde_json = "1"
 # The command model (no dependencies of its own); the same tag as the one the scaffold settings come from (one source, lock check).
-fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "d53126ba3948288cb965095a7e6a8d7189f02df1", version = "0.1.0" }
+fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "9ab4ac280fb2354d41fdbc15bdbed92664a016de", version = "0.1.0" }
 # Single instance (ADR 0097): the contract `Instance` of fs-interfaces, served and called through fs-rpc (the same pins as fs-forms-run).
-fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "e6f69213b68b47e139fc8038c8a095f9ed1fef3c", version = "0.2.0" }
-fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4", version = "0.1.4" }
+fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "2bb70d826681403894ec6d65a7fad9d3a3f51ac2", version = "0.2.0" }
+fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "9cbce63c73045a2ea32b88038fd35732c4762624", version = "0.1.4" }
 # The client of the settings service (E3): `ensure_service` + `RpcSettingsStore`. Same repo and rev as fs-rpc (one source).
-fs-settings-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4", version = "0.1.4" }
+fs-settings-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "9cbce63c73045a2ea32b88038fd35732c4762624", version = "0.1.4" }
 # `Settings::open`, `Catalog`, `CatalogFile` (E1): the same rev as fs-starter.
-fs-settings = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "d53126ba3948288cb965095a7e6a8d7189f02df1", version = "0.1.0" }
+fs-settings = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "9ab4ac280fb2354d41fdbc15bdbed92664a016de", version = "0.1.0" }
 # Same file as an open handle (Unix: device + inode, Windows: volume + file index); instead of an own `same_file`. Already in the lock.
 same-file = "1"
-fs-components-kanban = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "d53126ba3948288cb965095a7e6a8d7189f02df1", version = "0.1.0" }
+fs-components-kanban = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "9ab4ac280fb2354d41fdbc15bdbed92664a016de", version = "0.1.0" }
 capnp = "0.27"
 capnp-rpc = "0.27"
 futures = "0.3"
@@ -64,19 +64,17 @@ tempfile = "3"
 png = "0.18"
 tokio = { version = "1", features = ["rt", "macros", "sync", "time", "net"] }
 # Conformance suite of the contract module_v1 and its fake (fs-module of fs-interfaces 0.2.0; the same source as fs-interfaces above, checked in the lock).
-fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "e6f69213b68b47e139fc8038c8a095f9ed1fef3c", version = "0.2.0" }
+fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "2bb70d826681403894ec6d65a7fad9d3a3f51ac2", version = "0.2.0" }
 
 # The real planning service in this process (Unix only: its tests use a Unix socket); every library on the same tag as above (one source each).
 [target.'cfg(unix)'.dev-dependencies]
-fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "969c3fe44341db14c21b270c397d87363faadd6b", version = "0.0.4" }
-fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "969c3fe44341db14c21b270c397d87363faadd6b", version = "0.0.4" }
-fs-objects = { git = "https://github.com/FreeSynergy-Net/fs-objects", rev = "f6409f2a5378ba1464e69ae216efd4d27d249182", version = "0.0.11", features = ["testing"] }
+fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "06e2d91c7475ff6e4db8d08def444e75a168c41e", version = "0.0.4" }
+fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "06e2d91c7475ff6e4db8d08def444e75a168c41e", version = "0.0.4" }
+fs-objects = { git = "https://github.com/FreeSynergy-Net/fs-objects", rev = "e38093f1ec61b7c9faaa6f6046f65addb11dcf46", version = "0.0.11", features = ["testing"] }
 
 # RPM (cargo-generate-rpm, built by the release CI only). The package is called `fs-starter` (the host crate keeps its name) and replaces the
 # earlier `fs-starter-host` package; nothing requires the old name (checked: fs-tasks 0.0.10 and fs-blueprint require only `fs-starter`).
-# Known gap (0.0.6): the package does NOT own the system folders every program and module package puts files in (paths = fs_starter::SHARE_DIR, PROGRAMS_DIR,
-# MODULES_DIR; frontends/). Directory ownership follows as soon as cargo-generate-rpm can build `dir = true` assets (0.21.1 fails with ENOENT: it passes an
-# empty source path to `PackageBuilder::with_file`); upstream PR (link follows in a later version). rpm creates the parent folders implicitly (root, 755); fs-starter trusts the
+# The package does not own the system folders (paths = fs_starter::SHARE_DIR, PROGRAMS_DIR, MODULES_DIR; frontends/): the package `freesynergy-filesystem` owns them (INST-5, Repository) and this one `Requires` it. fs-starter trusts the
 # system level only for root-owned, not world-writable folders and files, not for the package owner.
 [package.metadata.generate-rpm]
 name = "fs-starter"
@@ -87,6 +85,10 @@ assets = [
   # The icon is fetched from fs-icons by packaging/prepare.sh before the build (one source, no copy here).
   { source = "packaging/net.freesynergy.Starter.svg", dest = "/usr/share/icons/hicolor/scalable/apps/net.freesynergy.Starter.svg", mode = "644" },
 ]
+
+# The system folders every program and module package puts files in are owned by the package `freesynergy-filesystem` (Repository, INST-5); this package does not own them, it requires the package that does.
+[package.metadata.generate-rpm.requires]
+freesynergy-filesystem = "*"
 
 [package.metadata.generate-rpm.obsoletes]
 fs-starter-host = "*"

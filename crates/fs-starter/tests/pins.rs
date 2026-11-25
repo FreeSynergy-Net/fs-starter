@@ -41,45 +41,48 @@ fn source_of(name: &str) -> String {
 #[test]
 fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
     for (name, tag) in [
-        ("fs-types", "v0.0.6"),
-        ("fs-conformance", "v0.0.6"),
+        ("fs-types", "REV:722d3ce0156711d40cb278f2e835e865d9448290"),
+        (
+            "fs-conformance",
+            "REV:722d3ce0156711d40cb278f2e835e865d9448290",
+        ),
         (
             "fs-interfaces",
-            "REV:e6f69213b68b47e139fc8038c8a095f9ed1fef3c",
+            "REV:2bb70d826681403894ec6d65a7fad9d3a3f51ac2",
         ),
-        ("fs-objects", "REV:f6409f2a5378ba1464e69ae216efd4d27d249182"),
+        ("fs-objects", "REV:e38093f1ec61b7c9faaa6f6046f65addb11dcf46"),
         (
             "fs-settings-rpc",
-            "REV:0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4",
+            "REV:9cbce63c73045a2ea32b88038fd35732c4762624",
         ),
         (
             "fs-settings",
-            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
+            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
         ),
         (
             "fs-components-commands",
-            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
+            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
         ),
-        ("fs-rpc", "REV:0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4"),
+        ("fs-rpc", "REV:9cbce63c73045a2ea32b88038fd35732c4762624"),
         (
             "fs-components-kanban",
-            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
+            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
         ),
         (
             "fs-trusted-path",
-            "REV:0120f9afadf5b74540e8df3f0dfdd1b2edb4e1d4",
+            "REV:9cbce63c73045a2ea32b88038fd35732c4762624",
         ),
         (
             "fs-forms-run",
-            "REV:7f17b17f68d0579c15a928f5f92d07dac6163f6b",
+            "REV:e3b7da13e4d96d7778e691d62efb8c74f56be7b3",
         ),
         (
             "fs-forms-bind",
-            "REV:7f17b17f68d0579c15a928f5f92d07dac6163f6b",
+            "REV:e3b7da13e4d96d7778e691d62efb8c74f56be7b3",
         ),
         (
             "fs-components",
-            "REV:d53126ba3948288cb965095a7e6a8d7189f02df1",
+            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
         ),
     ] {
         let source = source_of(name);
