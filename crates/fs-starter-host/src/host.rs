@@ -112,6 +112,7 @@ pub fn run(args: &[String]) -> ExitCode {
             };
             shell::around_window(
                 program.as_deref().filter(|_| c.picture.is_none()),
+                slot,
                 &c.frontend,
                 c.resumed,
                 || fs_forms_run::run_code_with(args, &sources),

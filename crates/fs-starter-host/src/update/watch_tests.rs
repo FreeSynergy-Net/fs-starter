@@ -144,6 +144,41 @@ fn the_thread_polls_and_stops() {
     replace(&svc, "s2 longer");
     let run = Running::spawn(w, Duration::from_millis(20), Arc::new(|_| {}));
     std::thread::sleep(Duration::from_millis(300));
-    run.stop();
+    assert!(run.stop(Duration::from_secs(2)));
     assert_eq!(*rec.0.lock().unwrap(), ["end planning"]);
+}
+
+struct Hangs;
+impl Act for Hangs {
+    fn end_module(&self, _: &str) -> Result<Option<Saved>, String> {
+        std::thread::sleep(Duration::from_secs(3));
+        Ok(None)
+    }
+    fn restart_own(&self) -> Result<(), String> {
+        Ok(())
+    }
+}
+
+#[test]
+fn a_watcher_that_hangs_in_a_call_does_not_hold_the_end_of_the_window() {
+    let dir = tempfile::tempdir().unwrap();
+    let svc = dir.path().join("service");
+    std::fs::write(&svc, "s1").unwrap();
+    let files = vec![Watched::begin(svc.clone(), Role::Module("m".into())).unwrap()];
+    let w = Watcher::new(
+        files,
+        Box::new(Quiet(false)),
+        Box::new(NoSignal),
+        Box::new(Hangs),
+        Duration::ZERO,
+    );
+    replace(&svc, "s2 longer");
+    let run = Running::spawn(w, Duration::from_millis(10), Arc::new(|_| {}));
+    std::thread::sleep(Duration::from_millis(300));
+    let began = Instant::now();
+    assert!(
+        !run.stop(Duration::from_millis(200)),
+        "it hangs: left behind"
+    );
+    assert!(began.elapsed() < Duration::from_secs(2));
 }

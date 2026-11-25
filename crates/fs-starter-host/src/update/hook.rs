@@ -10,6 +10,9 @@ use super::{
 };
 use fs_starter::{Ended, HookOutcome, ResumeToken, StartCx, StartHook};
 
+/// How long the end of the window waits for the watcher.
+const STOP_WAIT: std::time::Duration = std::time::Duration::from_secs(2);
+
 /// The code of the line that says the hook is there (replaces `update-binding-pending`).
 pub const ACTIVE_CODE: &str = "update-hook-active";
 
@@ -32,7 +35,11 @@ fn say_stderr(line: &str) {
 impl UpdateHook {
     /// The hook of the host for `program`: watches the own file and the service of every known module.
     #[must_use]
-    pub fn standard(program: &str, modules: &[crate::sources::Known]) -> Self {
+    pub fn standard(
+        program: &str,
+        instance: Option<u8>,
+        modules: &[crate::sources::Known],
+    ) -> Self {
         let mut files = Vec::new();
         if let Some(own) = std::env::current_exe()
             .ok()
@@ -49,7 +56,7 @@ impl UpdateHook {
                 files.push(w);
             }
         }
-        let marker = Marker::standard(program);
+        let marker = Marker::standard(program, instance);
         let act = RpcAct {
             own_exe: std::env::current_exe().unwrap_or_default(),
             args: std::env::args_os().skip(1).collect(),
@@ -111,8 +118,12 @@ impl StartHook for UpdateHook {
     }
 
     fn after_end(&self, _cx: &StartCx<'_>, ended: &Ended) {
-        if let Some(r) = self.running.lock().ok().and_then(|mut g| g.take()) {
-            r.stop();
+        if let Some(r) = self.running.lock().ok().and_then(|mut g| g.take())
+            && !r.stop(STOP_WAIT)
+        {
+            (self.say)(
+                "update-watcher-hung note=\"the watcher did not end in time (a call to a module hangs); it is left behind, the window ends\"",
+            );
         }
         let Some(m) = &self.marker else { return };
         if ended.code == 0 {

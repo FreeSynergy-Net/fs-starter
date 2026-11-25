@@ -138,6 +138,7 @@ pub fn run_library(words: &[OsString], out: &mut dyn io::Write) -> ExitCode {
 /// crash needs a mark that the next start reads, not this hook. A code outside 0..=255 ends the process with 1 (`Exit::of_frontend`).
 pub fn around_window(
     program: Option<&str>,
+    instance: Option<u8>,
     frontend: &str,
     resumed: bool,
     open: impl FnOnce() -> i32,
@@ -147,6 +148,7 @@ pub fn around_window(
         Some(name) => {
             let hook = crate::update::UpdateHook::standard(
                 name,
+                instance,
                 crate::sources::Modules::standard().known(),
             );
             with_hooks(&[&hook], |parts| run_around(parts, frontend, resumed, open))

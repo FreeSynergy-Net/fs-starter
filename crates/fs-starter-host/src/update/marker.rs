@@ -116,10 +116,12 @@ pub struct Marker {
 }
 
 impl Marker {
+    /// One mark for each window (`instance`: the slot of `--new-instance`, `None` for the first), so a second window neither tells a crash that
+    /// did not happen nor removes the mark of the other.
     /// `<state>/freesynergy/<program>.update`; `state` is `$XDG_STATE_HOME`, else `~/.local/state` (Windows: `%LOCALAPPDATA%`).
     /// `None` without any of them (no fallback below `/tmp`): the host says `update-marker-off` and goes on.
     #[must_use]
-    pub fn standard(program: &str) -> Option<Self> {
+    pub fn standard(program: &str, instance: Option<u8>) -> Option<Self> {
         let env = |k: &str| {
             std::env::var_os(k)
                 .filter(|v| !v.is_empty())
@@ -128,7 +130,8 @@ impl Marker {
         let base = env("XDG_STATE_HOME")
             .or_else(|| env("LOCALAPPDATA"))
             .or_else(|| env("HOME").map(|h| h.join(".local/state")))?;
-        Some(Self::in_folder(&base.join("freesynergy"), program))
+        let name = instance.map_or_else(|| program.to_owned(), |n| format!("{program}-{n}"));
+        Some(Self::in_folder(&base.join("freesynergy"), &name))
     }
 
     /// In a given folder (tests). The program name is a file name: only letters, digits and `-` `_` stay.

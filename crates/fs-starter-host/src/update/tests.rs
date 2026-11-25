@@ -209,3 +209,58 @@ fn a_service_file_replaced_during_the_window_is_ended_through_the_hook() {
             .any(|l| l.starts_with("update-module-ended module=planning saved=saved"))
     );
 }
+
+#[test]
+fn two_windows_of_one_program_keep_their_own_marks() {
+    let dir = tempfile::tempdir().unwrap();
+    let (p, f) = (
+        ProgramName::parse("starter").unwrap(),
+        FrontendId::parse("simple").unwrap(),
+    );
+    let one = |name: &str, say: Say| {
+        let w = Watcher::new(
+            vec![],
+            Box::new(Quiet),
+            Box::new(NoSignal),
+            Box::new(Rec::default()),
+            Duration::ZERO,
+        );
+        UpdateHook::with("starter", Some(Marker::in_folder(dir.path(), name)), w, say)
+    };
+    let (say1, got1) = lines();
+    let (say2, got2) = lines();
+    let first = one("starter", say1);
+    let second = one("starter-2", say2);
+    first.before_open(&cx(&p, &f));
+    second.before_open(&cx(&p, &f));
+    assert!(
+        got2.lock()
+            .unwrap()
+            .iter()
+            .all(|l| !l.starts_with("update-crash")),
+        "{:?}",
+        got2.lock().unwrap()
+    );
+    // the first window ends cleanly: the mark of the second stays (a later crash of the second is not lost)
+    first.after_end(
+        &cx(&p, &f),
+        &Ended {
+            code: 0,
+            after: Duration::from_secs(1),
+        },
+    );
+    assert!(Marker::in_folder(dir.path(), "starter").read().is_none());
+    assert_eq!(
+        Marker::in_folder(dir.path(), "starter-2")
+            .read()
+            .unwrap()
+            .state,
+        State::Running
+    );
+    assert!(
+        got1.lock()
+            .unwrap()
+            .iter()
+            .all(|l| !l.starts_with("update-crash"))
+    );
+}

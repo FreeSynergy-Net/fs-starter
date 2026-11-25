@@ -19,6 +19,8 @@ pub type Say = Arc<dyn Fn(&str) + Send + Sync>;
 /// How often the files are looked at.
 pub const POLL: Duration = Duration::from_secs(5);
 
+/// Pattern: Strategy – what ending a module and restarting the own file mean (the world the watcher acts on).
+///
 /// What the watcher does to the world.
 pub trait Act: Send {
     /// Ask the module service to save (heartbeat `save`), wait for it, then end it; the next call starts the new one (`ensure_single`).
@@ -143,6 +145,7 @@ impl Watcher {
 /// The running thread; dropping or [`Running::stop`] ends it.
 pub struct Running {
     stop: mpsc::Sender<()>,
+    done: mpsc::Receiver<()>,
     handle: JoinHandle<()>,
 }
 
@@ -151,20 +154,27 @@ impl Running {
     #[must_use]
     pub fn spawn(mut watcher: Watcher, every: Duration, say: Say) -> Self {
         let (stop, wake) = mpsc::channel::<()>();
+        let (finished, done) = mpsc::channel::<()>();
         let handle = std::thread::spawn(move || {
             while wake.recv_timeout(every) == Err(mpsc::RecvTimeoutError::Timeout) {
                 for line in watcher.step(Instant::now()) {
                     say(&line);
                 }
             }
+            let _ = finished.send(());
         });
-        Self { stop, handle }
+        Self { stop, done, handle }
     }
 
-    /// End the thread and wait for it.
-    pub fn stop(self) {
+    #[must_use = "false: the thread hangs and was left behind"]
+    /// End the thread and wait for it, at most `wait` (a thread that hangs in a call is left behind, not waited for). `true`: it ended.
+    pub fn stop(self, wait: Duration) -> bool {
         let _ = self.stop.send(());
-        let _ = self.handle.join();
+        let ended = self.done.recv_timeout(wait).is_ok() || self.handle.is_finished();
+        if ended {
+            let _ = self.handle.join();
+        }
+        ended
     }
 }
 

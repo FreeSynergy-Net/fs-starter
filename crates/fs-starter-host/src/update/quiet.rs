@@ -12,12 +12,14 @@ use super::stamp::Stamp;
 /// How long the new file must stay the same before it counts as settled.
 pub const SETTLE: Duration = Duration::from_secs(10);
 
-/// Is a package manager at work?
+/// Pattern: Strategy – is a package manager at work?
 pub trait Transaction: Send {
     /// `true` while a transaction holds its lock.
     fn busy(&self) -> bool;
 }
 
+/// Pattern: Strategy – is the person calm enough that the own window may end?
+///
 /// Is it fine to end the own window now (the rest rule of ADR 0069 addendum, item 5: no input focus, no modal, nothing running)?
 pub trait Calm: Send {
     /// `true` when the person is calm. The host has no such signal yet: see [`NoSignal`].
@@ -35,15 +37,16 @@ impl Calm for NoSignal {
     }
 }
 
-/// The lock files of the package managers of Linux. Which file dnf 5 holds is not proven here (`[nicht belegt]`): the list is
-/// data, a name more is one line more.
+/// The locks of the package managers of Linux, read from outside (never taken).
 ///
-/// `dnf.pid` (dnf 4 / yum): present while dnf runs. `.rpm.lock`: held with `flock` by rpm during a transaction.
-/// `lock-frontend`/`lock`: held with `fcntl` by apt/dpkg.
+/// dnf 4 / yum: `/run/dnf.pid` exists while dnf runs. rpm: `.rpm.lock` is held with `fcntl` (POSIX lock; `lib/rpmlock.c`, read, not
+/// measured on a running transaction). dpkg: `lock-frontend` and `lock` with `fcntl` too. dnf 5: `/run/dnf/rpmtransaction.lock`; which kind of lock
+/// it is, is not proven (`[nicht belegt]`), so every file is asked both ways (`fcntl` and `flock`: on Linux neither sees the other). The list is
+/// data, a name more is one line more.
 #[derive(Clone, Debug)]
 pub struct PackageLocks {
     pid_files: Vec<PathBuf>,
-    flock_files: Vec<PathBuf>,
+    lock_files: Vec<PathBuf>,
 }
 
 impl PackageLocks {
@@ -52,40 +55,57 @@ impl PackageLocks {
     pub fn standard() -> Self {
         Self {
             pid_files: vec!["/run/dnf.pid".into(), "/var/run/dnf.pid".into()],
-            flock_files: vec![
+            lock_files: vec![
                 "/var/lib/rpm/.rpm.lock".into(),
+                "/run/dnf/rpmtransaction.lock".into(),
                 "/var/lib/dpkg/lock-frontend".into(),
+                "/var/lib/dpkg/lock".into(),
             ],
         }
     }
 
     /// Other places (tests).
     #[must_use]
-    pub fn at(pid_files: Vec<PathBuf>, flock_files: Vec<PathBuf>) -> Self {
+    pub fn at(pid_files: Vec<PathBuf>, lock_files: Vec<PathBuf>) -> Self {
         Self {
             pid_files,
-            flock_files,
+            lock_files,
         }
     }
 }
 
 impl Transaction for PackageLocks {
     fn busy(&self) -> bool {
-        self.pid_files.iter().any(|p| p.exists()) || self.flock_files.iter().any(held)
+        self.pid_files.iter().any(|p| p.exists()) || self.lock_files.iter().any(held)
     }
 }
 
-/// A lock file that someone else holds: a try-lock fails. Opened read only (never created, never written); a file that is not there
-/// or cannot be opened is not held (a reader without rights cannot tell, and says "not busy": the file stability still has to hold).
+/// A lock file that another process holds, as `fcntl` (`F_GETLK`: asks, takes nothing, needs no write right) or as `flock` (try-lock). Opened
+/// read only, never created or written; a file that is not there or cannot be opened is not held (the file stability still has to hold).
+/// A small constant of `libc` as the `short` of `struct flock`.
+#[cfg(unix)]
+fn short(v: libc::c_int) -> libc::c_short {
+    libc::c_short::try_from(v).unwrap_or(libc::c_short::MAX)
+}
+
 #[cfg(unix)]
 fn held(path: &PathBuf) -> bool {
     use std::os::fd::AsRawFd;
     let Ok(f) = std::fs::File::open(path) else {
         return false;
     };
-    // SAFETY: a plain try-lock on a descriptor we own; it is released when `f` is dropped.
-    let got = unsafe { libc::flock(f.as_raw_fd(), libc::LOCK_SH | libc::LOCK_NB) };
-    got != 0 && std::io::Error::last_os_error().kind() == std::io::ErrorKind::WouldBlock
+    let fd = f.as_raw_fd();
+    // SAFETY: `flock` is plain data, zeroed is a valid start; `F_GETLK` only fills it in.
+    let mut probe: libc::flock = unsafe { std::mem::zeroed() };
+    probe.l_type = short(libc::F_WRLCK);
+    probe.l_whence = short(libc::SEEK_SET);
+    // SAFETY: a query on a descriptor we own; whole file (start 0, length 0); nothing is taken.
+    let by_fcntl = unsafe { libc::fcntl(fd, libc::F_GETLK, &raw mut probe) } == 0
+        && probe.l_type != short(libc::F_UNLCK);
+    // SAFETY: a try-lock on a descriptor we own; it is released when `f` is dropped.
+    let by_flock = unsafe { libc::flock(fd, libc::LOCK_SH | libc::LOCK_NB) } != 0
+        && std::io::Error::last_os_error().kind() == std::io::ErrorKind::WouldBlock;
+    by_fcntl || by_flock
 }
 
 #[cfg(not(unix))]
@@ -158,13 +178,60 @@ mod tests {
     fn a_flock_held_by_another_handle_means_busy() {
         use std::os::fd::AsRawFd;
         let dir = tempfile::tempdir().unwrap();
-        let lock = dir.path().join(".rpm.lock");
+        let lock = dir.path().join("flock");
         let holder = std::fs::File::create(&lock).unwrap();
         let locks = PackageLocks::at(vec![], vec![lock]);
         assert!(!locks.busy());
         // SAFETY: exclusive lock on our own descriptor, released with it.
         assert_eq!(unsafe { libc::flock(holder.as_raw_fd(), libc::LOCK_EX) }, 0);
         assert!(locks.busy());
+    }
+
+    /// What rpm and dpkg do: a POSIX lock (`fcntl`) of ANOTHER process (such a lock belongs to a process, so the holder is a child).
+    #[cfg(unix)]
+    #[test]
+    fn an_fcntl_lock_of_another_process_means_busy_and_ending_it_frees_it() {
+        use std::ffi::CString;
+        use std::os::unix::ffi::OsStrExt;
+        let dir = tempfile::tempdir().unwrap();
+        let lock = dir.path().join(".rpm.lock");
+        std::fs::write(&lock, "").unwrap();
+        let path = CString::new(lock.as_os_str().as_bytes()).unwrap();
+        let locks = PackageLocks::at(vec![], vec![lock]);
+        assert!(!locks.busy());
+        let (mut up, mut down) = ([0; 2], [0; 2]); // child to parent, parent to child
+        // SAFETY: plain system calls; the child only uses async-signal-safe ones (open, fcntl, write, read, _exit).
+        unsafe {
+            assert_eq!(libc::pipe(up.as_mut_ptr()), 0);
+            assert_eq!(libc::pipe(down.as_mut_ptr()), 0);
+            let pid = libc::fork();
+            assert!(pid >= 0);
+            if pid == 0 {
+                let fd = libc::open(path.as_ptr(), libc::O_RDWR);
+                let mut l: libc::flock = std::mem::zeroed();
+                l.l_type = super::short(libc::F_WRLCK);
+                l.l_whence = super::short(libc::SEEK_SET);
+                let ok = fd >= 0 && libc::fcntl(fd, libc::F_SETLK, &raw mut l) == 0;
+                let mark = [u8::from(ok)];
+                libc::write(up[1], mark.as_ptr().cast(), 1);
+                let mut hold = [0_u8; 1];
+                libc::read(down[0], hold.as_mut_ptr().cast(), 1); // until the parent lets go
+                libc::_exit(0);
+            }
+            let mut mark = [0_u8; 1];
+            libc::read(up[0], mark.as_mut_ptr().cast(), 1);
+            assert_eq!(mark[0], 1, "the child holds the lock");
+            let busy = locks.busy();
+            let go = [1_u8];
+            libc::write(down[1], go.as_ptr().cast(), 1);
+            let mut status = 0;
+            libc::waitpid(pid, &raw mut status, 0);
+            for fd in up.into_iter().chain(down) {
+                libc::close(fd);
+            }
+            assert!(busy, "an fcntl lock of another process must be seen");
+        }
+        assert!(!locks.busy(), "free again after the holder ended");
     }
 
     #[test]

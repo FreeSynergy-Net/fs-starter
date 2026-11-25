@@ -16,6 +16,9 @@ use super::watch::Act;
 /// How long the service may take to save.
 const SAVE_LIMIT: Duration = Duration::from_secs(10);
 
+/// How long ending it may take (the call of fs-rpc has none of its own; `fs-rpc` `handshake.rs` wraps it the same way).
+const STOP_LIMIT: Duration = Duration::from_secs(5);
+
 /// The act of the host.
 pub struct RpcAct {
     /// The own program file as it was at the start (never `current_exe` later: after a replacement it can read `... (deleted)`).
@@ -39,8 +42,9 @@ impl Act for RpcAct {
         local.block_on(&runtime, async {
             match ask_save(&socket, SAVE_LIMIT).await {
                 Ok(Saved::Failed) => Err("save-failed".to_owned()),
-                Ok(saved) => stop_server(&socket)
+                Ok(saved) => tokio::time::timeout(STOP_LIMIT, stop_server(&socket))
                     .await
+                    .map_err(|_| "end-timeout".to_owned())?
                     .map(|()| Some(saved))
                     .map_err(|e| format!("end-{:?}", e.kind())),
                 Err(e) if is_not_running(&e) => Ok(None),
