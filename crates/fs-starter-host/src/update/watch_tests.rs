@@ -1,4 +1,6 @@
 //! Tests of the watcher: a made-up clock, a recording `Act`, files replaced by rename in a temporary folder.
+//!
+//! Pattern: Observer – the files are watched, what happens is a replaceable strategy.
 
 use super::*;
 use crate::update::quiet::NoSignal;

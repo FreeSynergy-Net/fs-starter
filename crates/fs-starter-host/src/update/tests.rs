@@ -1,4 +1,6 @@
 //! The hook as a whole: the marker over two starts, and a real replacement of a file in a temporary folder.
+//!
+//! Pattern: Observer – the files are watched, what happens is a replaceable strategy.
 
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
