@@ -172,7 +172,7 @@ dependencies = [
  "objc2-foundation 0.3.2",
  "parking_lot",
  "percent-encoding",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
  "x11rb",
 ]
 
@@ -1372,7 +1372,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e35d6e78f4cebb90e51d543db8fe41528851d6deeef6ef21ebd4bfdc1e784776"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1820,7 +1820,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-bind"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91#8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=c270e2904ae120475fc3e367bf213ae6d1633380#c270e2904ae120475fc3e367bf213ae6d1633380"
 dependencies = [
  "fs-components-commands",
  "sha2 0.10.9",
@@ -1829,7 +1829,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91#8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=c270e2904ae120475fc3e367bf213ae6d1633380#c270e2904ae120475fc3e367bf213ae6d1633380"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1842,7 +1842,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91#8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=c270e2904ae120475fc3e367bf213ae6d1633380#c270e2904ae120475fc3e367bf213ae6d1633380"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1851,7 +1851,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91#8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=c270e2904ae120475fc3e367bf213ae6d1633380#c270e2904ae120475fc3e367bf213ae6d1633380"
 dependencies = [
  "semver",
  "sha2 0.10.9",
@@ -1860,7 +1860,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91#8042ed1cdf87ee5f0c69e92f05d8a43f35e26d91"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=c270e2904ae120475fc3e367bf213ae6d1633380#c270e2904ae120475fc3e367bf213ae6d1633380"
 dependencies = [
  "fs-components",
  "fs-components-app",
@@ -4930,7 +4930,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.12.1",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -5456,7 +5456,7 @@ dependencies = [
  "getrandom 0.4.3",
  "once_cell",
  "rustix 1.1.6",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -6613,7 +6613,7 @@ version = "0.1.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c2a7b1c03c876122aa43f3020e6c3c3ee5c05081c9a00739faf7503aeba10d22"
 dependencies = [
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]

@@ -131,7 +131,8 @@ async fn two_rows_entries_are_not_mixed_up_the_lane_source_gets_lanes_the_task_s
             let uids = board_with(&socket, &source.client, &["a", "b", "c"]).await;
             let got = read_pages(&source.client, "planning", &wires, &Limits::default())
                 .await
-                .unwrap();
+                .unwrap()
+                .forms;
             // the rows come back numbered as the layout numbers (from 1) and typed: the host of a window finds the lane list by this
             assert_eq!(
                 (got[lane].source, got[lane].data_type.as_str()),
@@ -208,7 +209,8 @@ async fn without_a_wish_the_task_entry_is_read_with_the_titles_and_the_lane_entr
                 &Limits::default(),
             )
             .await
-            .unwrap();
+            .unwrap()
+            .forms;
             let rows = &got[1];
             assert_eq!(rows.rows.len(), uids.len());
             assert!(rows.rows.iter().all(|r| {
@@ -216,6 +218,66 @@ async fn without_a_wish_the_task_entry_is_read_with_the_titles_and_the_lane_entr
                     .iter()
                     .any(|(c, v)| c == "label" && v.iter().any(|t| !t.is_empty()))
             }));
+        })
+        .await;
+}
+
+/// A source from number 2 that the service refuses (scope `lanes:bogus`: planning answers 404 unknown-scope) is a PROBLEM of that source,
+/// not the end of the read: the cards of source 1 come, `problems` says `(2, form-source-unknown-scope)`. A refusal of source 1 stays an error.
+#[tokio::test(flavor = "current_thread")]
+async fn a_refused_second_source_is_a_problem_and_the_cards_of_the_first_still_come() {
+    use fs_starter_host::sources::declared::parse_entries;
+    use fs_starter_host::sources::entries::{Wanted, select};
+    use fs_starter_host::sources::{Limits, pages::read_pages};
+
+    let forms = include_str!("../../../tests/data/planning-main-7db66a33/catalog/forms.json");
+    let entries = parse_entries(forms).unwrap();
+    let want = |n: u32, t: &str, s: &str| Wanted {
+        n,
+        data_type: t.into(),
+        scope: s.into(),
+    };
+    let wires = select(
+        &entries,
+        &[want(1, "Task", ""), want(2, "Lane", "lanes:bogus")],
+    )
+    .wires;
+    let dir = tempfile::Builder::new().prefix("fp").tempdir().unwrap();
+    LocalSet::new()
+        .run_until(async {
+            let (socket, _stop) = serve(dir.path()).await;
+            let source = fs_rpc::connect::<form_source::Client>(&socket)
+                .await
+                .unwrap();
+            let uids = board_with(&socket, &source.client, &["a", "b", "c"]).await;
+            let got = read_pages(&source.client, "planning", &wires, &Limits::default())
+                .await
+                .expect("a refused source 2 must not fail the read");
+            let cards = got
+                .forms
+                .iter()
+                .find(|f| f.source == 1 && f.declared.form.name == "rows")
+                .expect("the task rows of source 1");
+            assert_eq!(cards.rows.len(), uids.len());
+            assert!(got.forms.iter().all(|f| f.source == 1), "no lane rows");
+            let codes: Vec<_> = got
+                .problems
+                .iter()
+                .map(|(n, c)| (*n, c.code.clone(), c.params.clone()))
+                .collect();
+            assert_eq!(got.problems.len(), 1, "{codes:?}");
+            assert_eq!(got.problems[0].0, 2);
+            assert!(
+                got.problems[0].1.code.contains("unknown-scope"),
+                "{codes:?}"
+            );
+            // the first source refused stays an error (nothing to draw)
+            let first = select(&entries, &[want(1, "Task", "no-such")]).wires;
+            assert!(
+                read_pages(&source.client, "planning", &first, &Limits::default())
+                    .await
+                    .is_err()
+            );
         })
         .await;
 }

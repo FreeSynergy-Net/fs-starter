@@ -153,7 +153,8 @@ async fn read_up(
     Ok((
         FormRecords {
             provider,
-            forms: out,
+            forms: out.forms,
+            problems: out.problems,
             ..FormRecords::default()
         },
         Levels {

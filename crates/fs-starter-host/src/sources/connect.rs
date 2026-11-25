@@ -64,6 +64,17 @@ impl StarterSources {
         wanted: &[Wanted],
         say: impl Fn(String) + Send + 'static,
     ) -> Result<HeldRecords, Coded> {
+        self.connect_with(range, wanted, Vec::new(), say)
+    }
+
+    /// [`Self::connect_for`] with `foreign`: sources the caller already set aside (another module), put in the `problems` of the records.
+    fn connect_with(
+        &self,
+        range: &str,
+        wanted: &[Wanted],
+        foreign: Vec<(u32, Coded)>,
+        say: impl Fn(String) + Send + 'static,
+    ) -> Result<HeldRecords, Coded> {
         // a source that is not there is said on stderr too (the window shows it as a notice): never silent
         let said = |code: Coded| {
             eprintln!("fs-starter: {}", line(&code));
@@ -73,6 +84,7 @@ impl StarterSources {
         let chosen = select(&entries, wanted);
         chosen.say(&known.name);
         let forms = chosen.wires;
+        let unserved = chosen.problems;
         let began = std::time::Instant::now();
         // a one-time run reads WITHOUT ending: it holds the module like a window, and the guard ends what it started itself
         let (got, started) = if self.end_started {
@@ -83,7 +95,10 @@ impl StarterSources {
         let end = started
             .then(|| socket_of(&known.name).ok().map(EndOnDrop::new))
             .flatten();
-        let (records, levels) = got.map_err(said)?;
+        let (mut records, levels) = got.map_err(said)?;
+        // a source that could not be placed or read is a problem of that source, shown by the window (never a silent empty block)
+        records.problems.extend(foreign);
+        records.problems.extend(unserved);
         // what was read, never silent: an empty picture can be told from a service that gave nothing
         for line in read_lines(known.name.as_str(), &records, began.elapsed()) {
             eprintln!("{line}");
@@ -135,6 +150,7 @@ impl Sources for StarterSources {
             .ok_or_else(|| Coded::new("host-notice-source-unknown"))?;
         let module = name_of(&first.range);
         let mut wanted = Vec::new();
+        let mut foreign = Vec::new();
         for w in wants {
             if name_of(&w.range) == module {
                 wanted.push(Wanted {
@@ -143,6 +159,12 @@ impl Sources for StarterSources {
                     scope: w.scope.clone(),
                 });
             } else {
+                foreign.push((
+                    w.n,
+                    Coded::new("host-notice-source-other-module")
+                        .with("source", w.n.to_string())
+                        .with("contract", name_of(&w.range)),
+                ));
                 eprintln!(
                     "fs-starter: forms module={module} source {} names another module ({}); not read",
                     w.n,
@@ -150,7 +172,7 @@ impl Sources for StarterSources {
                 );
             }
         }
-        self.connect_for(&first.range, &wanted, |line| eprintln!("{line}"))
+        self.connect_with(&first.range, &wanted, foreign, |line| eprintln!("{line}"))
             .map(|held| Arc::new(held) as Arc<dyn Records>)
     }
 

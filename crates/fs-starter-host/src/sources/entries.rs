@@ -6,6 +6,7 @@
 //! Pattern: Registry – Formeinträge nach Schlüssel (Form, Typ)
 
 use fs_forms_bind::ModuleForm;
+use fs_forms_run::Coded;
 
 /// One entry of `forms.json`: the form the module keeps and the data type of its records.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -47,6 +48,8 @@ pub struct Selection {
     pub wires: Vec<Wire>,
     /// What was not read or not found, one line each.
     pub notices: Vec<String>,
+    /// The same for a typed source that no entry serves, as `(source number, code)`: the window shows it, never a silent empty block.
+    pub problems: Vec<(u32, Coded)>,
 }
 
 impl Selection {
@@ -92,6 +95,12 @@ pub fn select(entries: &[Entry], wanted: &[Wanted]) -> Selection {
             }
         }
         if !found {
+            out.problems.push((
+                w.n,
+                Coded::new("host-notice-source-type-unserved")
+                    .with("source", w.n.to_string())
+                    .with("type", w.data_type.clone()),
+            ));
             out.notices.push(format!(
                 "source {} type {} has no entry in forms.json; not read",
                 w.n, w.data_type

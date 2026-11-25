@@ -120,4 +120,8 @@ fn a_source_type_no_entry_has_is_said() {
     let got = select(&[entry("rows", "Task")], &[want(3, "Ghost", "x")]);
     assert_eq!(got.wires, []);
     assert!(got.notices[0].contains("Ghost"), "{:?}", got.notices);
+    // and it is a problem of THAT source (shown by the window), not only a line on stderr
+    assert_eq!(got.problems.len(), 1);
+    assert_eq!(got.problems[0].0, 3);
+    assert_eq!(got.problems[0].1.code, "host-notice-source-type-unserved");
 }

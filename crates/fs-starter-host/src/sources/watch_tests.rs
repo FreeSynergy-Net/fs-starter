@@ -125,6 +125,17 @@ async fn two_scopes_on_the_same_key_are_two_watches_that_do_not_mix() {
             settle().await;
             // each watch counts for itself: no sharing of a counter, no merging of two watches on one key
             assert_eq!((only_work.get(), both.get(), none.get()), (2, 4, 0));
+            // a card made on the board "other": planning holds a card for EVERY board without a label (`scope.rs holds`), so the watch of
+            // "work" gets it too (observed 3/6/0); what the host must keep: each watch counts alone (both = 2 x only_work) and the unknown
+            // scope stays silent. A board with a label would separate; the fixture has none.
+            create(&writer.client, "other", "three").await;
+            settle().await;
+            eprintln!(
+                "AFTER-OTHER {} {} {}",
+                only_work.get(),
+                both.get(),
+                none.get()
+            );
             drop((held, conns));
         })
         .await;
