@@ -26,7 +26,7 @@ pub(super) fn failed<C: ErrorCode>(what: &str, e: &fs_types::coded::Coded<C>) ->
         c = match v {
             Param::Text(t) => c.with(k, t.clone()),
             Param::Number(n) => c.with(k, n.to_string()),
-            _ => c,
+            other => c.with(k, format!("{other:?}")),
         };
     }
     c

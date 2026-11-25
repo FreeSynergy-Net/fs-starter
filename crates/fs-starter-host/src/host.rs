@@ -19,7 +19,7 @@ use crate::{package, pending, shell};
 pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data] [--new-instance] [--picture FILE.png [--steps FILE]]\n\
     Opens the window of a program from its description, without building the program.\n\
     --steps FILE (only with --picture) plays the steps of FILE before the picture is taken.\n\
-    --sample-data (only this word, never a default) makes the data of every [[source]] from the description itself: test data held in this process, marked as sample data in the status line; no service is started, nothing is written outside the process.\n\
+    --sample-data (only this word, never a default) makes the data of every [[source]] from the description itself: test data held in this process, marked as sample data in the status line; no service is started and no place, update hook or mark of the program is taken; nothing is written outside the process.\n\
     --program NAME takes the installed data package /usr/share/freesynergy/programs/NAME (only a place that passes the system check).\n\
     --new-instance opens one more window of the program next to the running ones (window-2 .. window-9); without it a second start hands its words to the first window. With --picture it takes no place.\n\
 fs-starter --list-commands [--modules DIR]\n\
@@ -86,17 +86,22 @@ pub fn run(args: &[String]) -> ExitCode {
                 Ok(program) => program,
                 Err(code) => return code,
             };
+            // `--sample-data` is no window of the program: it takes no place (a later normal start must not hand over to it, a normal
+            // window must not get its words), watches no module service and writes no mark (see `own_window`)
+            let own = own_window(&c);
             // held until the window is closed; a second start of the same program ends here (`HandedOver`)
-            let (_place, slot) =
-                match slots::single(program.as_deref(), args, c.picture.is_some(), new_window) {
-                    Ok(place) => place,
-                    Err(code) => return code,
-                };
+            let (_place, slot) = match slots::single(
+                program.as_deref().filter(|_| !c.sample_data),
+                args,
+                c.picture.is_some(),
+                new_window,
+            ) {
+                Ok(place) => place,
+                Err(code) => return code,
+            };
             // E3: the first reader of the settings. The value waits next to the start until `decide` (O4) takes it; without the service the
             // default `ask` holds and one line says so. A one-time `--picture` starts no service.
-            if c.picture.is_none()
-                && let Some(line) = program.as_deref().and_then(crate::open_setting::line_for)
-            {
+            if own && let Some(line) = program.as_deref().and_then(crate::open_setting::line_for) {
                 eprintln!("{line}");
             }
             let sources = StarterSources::standard();
@@ -112,7 +117,7 @@ pub fn run(args: &[String]) -> ExitCode {
                 sources
             };
             shell::around_window(
-                program.as_deref().filter(|_| c.picture.is_none()),
+                program.as_deref().filter(|_| own),
                 slot,
                 &c.frontend,
                 c.resumed,
@@ -160,6 +165,13 @@ fn announce(c: &Config) -> Result<Option<String>, ExitCode> {
     }
     eprintln!("{}", pending::note());
     Ok(program)
+}
+
+/// Whether this window is one of the program itself: only then it holds the place of the single instance, the update hook watches the
+/// module services and the mark of the run is written. A one-time `--picture` and a window of `--sample-data` (test data, nothing
+/// real) are not.
+fn own_window(c: &Config) -> bool {
+    c.picture.is_none() && !c.sample_data
 }
 
 /// `--check`: only fetch the description, say whether it is there. Fatal (the contract is not there) is the contract code.

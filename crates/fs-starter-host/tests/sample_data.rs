@@ -2,9 +2,12 @@
 //! process. Three conditions of C1:
 //! A. only the flag asks for them (without it the same description goes the road of a real module);
 //! B. the window says "Sample data" (the records are sample records, `is_sample`), and a real module never does;
-//! C. a command stays in the process: no socket is made, no module of the registry is needed, the change is in the memory of the window.
+//! C. a command stays in the process: no module is asked (no door knocked), no network socket is made, no registry folder is read, the change is in the memory of the window.
 //!
-//! Pattern: Spy (what the process opened: the sockets of `/proc/self/fd`) + Test through the port `open` of `fs-forms-run`, as the window calls it.
+//! Pattern: none - tests through the port `open` of `fs-forms-run`, as the window calls it. What they can and cannot see: the doors count every
+//! connection to the socket of a module (also one that is closed again), the net count sees tcp and udp sockets; a unix socket that is not a
+//! door of a module (a `socketpair`, a connect to some other path) is NOT seen, and no test proves "no network" in general (the structure
+//! does: the sample code has no outgoing port).
 #![cfg(unix)]
 
 use std::path::Path;
@@ -29,15 +32,15 @@ fn layout(text: &str) -> Layout {
         .expect("checks")
 }
 
-/// Sources that know no module at all (an empty folder): a real read cannot succeed, so whatever works came from the sample.
-fn no_modules() -> (tempfile::TempDir, StarterSources) {
-    let dir = tempfile::tempdir().unwrap();
+/// Sources that know no module at all and whose folders do not exist: a real read cannot succeed and nothing of a registry is read, so
+/// whatever works came from the sample.
+fn no_modules() -> StarterSources {
     let modules = Modules::load(
-        dir.path(),
-        Path::new("/nonexistent"),
+        Path::new("/nonexistent/bundled"),
+        Path::new("/nonexistent/system"),
         &SystemPackaged::new(),
     );
-    (dir, StarterSources::new(modules, Borders::default()))
+    StarterSources::new(modules, Borders::default())
 }
 
 fn opened(text: &str, flag: bool, sources: &StarterSources) -> Opened {
@@ -58,9 +61,10 @@ fn opened(text: &str, flag: bool, sources: &StarterSources) -> Opened {
     )
 }
 
-/// The sockets of this process that reach somewhere: a network socket (tcp, udp) or a unix socket with a path (`/proc/net/*`). The
-/// private pair of the async runtime (a `socketpair` without a path) is no way out of the process and is not counted.
-fn sockets() -> usize {
+/// The network sockets of this process (tcp, udp; `/proc/net/*` against `/proc/self/fd`). A unix socket is NOT counted here: the
+/// private `socketpair` of every async runtime has no path and cannot be told from a client that connected out (a `connect` shows no
+/// path in `/proc/net/unix`), so the way to a module is watched by [`Doors`] instead.
+fn net_sockets() -> usize {
     let mine: Vec<String> = std::fs::read_dir("/proc/self/fd")
         .expect("procfs")
         .flatten()
@@ -72,26 +76,58 @@ fn sockets() -> usize {
                 .map(str::to_owned)
         })
         .collect();
-    let table = |name: &str, inode: usize, path: bool| -> Vec<String> {
+    let inodes = |name: &str| -> Vec<String> {
         std::fs::read_to_string(format!("/proc/net/{name}"))
             .unwrap_or_default()
             .lines()
             .skip(1)
-            .filter_map(|l| {
-                let f: Vec<&str> = l.split_whitespace().collect();
-                (!path || f.len() > 7).then(|| f.get(inode).map(|s| (*s).to_owned()))?
-            })
+            .filter_map(|l| l.split_whitespace().nth(9).map(str::to_owned))
             .collect()
     };
-    let reaching: Vec<String> = [
-        table("tcp", 9, false),
-        table("tcp6", 9, false),
-        table("udp", 9, false),
-        table("udp6", 9, false),
-        table("unix", 6, true),
-    ]
-    .concat();
-    mine.iter().filter(|i| reaching.contains(i)).count()
+    let net: Vec<String> = ["tcp", "tcp6", "udp", "udp6"]
+        .iter()
+        .flat_map(|n| inodes(n))
+        .collect();
+    mine.iter().filter(|i| net.contains(i)).count()
+}
+
+/// The doors of the modules a window could connect to: for each name a listener on exactly the socket `fs_rpc::default_socket(name)`
+/// gives (in a runtime folder of this test), so every try to reach that module is counted, also one that is closed again before the
+/// test looks (what a count of the open sockets would miss). Counts connections, never closes one.
+struct Doors {
+    _dir: tempfile::TempDir,
+    listeners: Vec<std::os::unix::net::UnixListener>,
+}
+
+impl Doors {
+    /// Doors for `names`. Sets `XDG_RUNTIME_DIR` of the process once (the tests that use it run one after the other, [`SPY`]).
+    fn new(names: &[&str]) -> Self {
+        let dir = tempfile::tempdir().unwrap();
+        // SAFETY: the tests that read the runtime folder hold SPY; the others of this binary never read it.
+        unsafe { std::env::set_var("XDG_RUNTIME_DIR", dir.path()) };
+        let listeners = names
+            .iter()
+            .map(|n| {
+                let path = fs_rpc::default_socket(n).expect("a socket path");
+                std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+                let l = std::os::unix::net::UnixListener::bind(path).unwrap();
+                l.set_nonblocking(true).unwrap();
+                l
+            })
+            .collect();
+        Self {
+            _dir: dir,
+            listeners,
+        }
+    }
+
+    /// How many connections the doors took since the last look.
+    fn callers(&self) -> usize {
+        self.listeners
+            .iter()
+            .map(|l| std::iter::from_fn(|| l.accept().ok()).count())
+            .sum()
+    }
 }
 
 fn cards(records: &Arc<dyn Records>) -> Vec<(String, Vec<String>)> {
@@ -118,7 +154,7 @@ fn cards(records: &Arc<dyn Records>) -> Vec<(String, Vec<String>)> {
 /// A: with the flag the data come from the sample and `[sample]` decides (5 records); a description without the section gets the defaults.
 #[test]
 fn with_the_flag_and_only_with_it_the_window_gets_sample_records() {
-    let (_dir, sources) = no_modules();
+    let sources = no_modules();
     let o = opened(BOARD, true, &sources);
     assert!(o.notice.is_none(), "{:?}", o.notice);
     assert!(!o.connected, "sample data are no connected module");
@@ -141,7 +177,7 @@ fn with_the_flag_and_only_with_it_the_window_gets_sample_records() {
 /// B: sample records say so (the window puts "Sample data" in its status line), real or missing ones do not.
 #[test]
 fn the_records_with_the_flag_are_marked_sample_and_without_it_nothing_is() {
-    let (_dir, sources) = no_modules();
+    let sources = no_modules();
     assert!(opened(BOARD, true, &sources).records.is_sample());
     assert!(!opened(BOARD, false, &sources).records.is_sample());
     // the wording of the status line exists (fs-forms-run holds it; the key must not vanish)
@@ -152,7 +188,7 @@ fn the_records_with_the_flag_are_marked_sample_and_without_it_nothing_is() {
 /// A description without a layout (a view from memory) cannot make test data: said, never invented.
 #[test]
 fn without_a_description_the_flag_says_so() {
-    let (_dir, sources) = no_modules();
+    let sources = no_modules();
     let view = fs_forms_run::View {
         sources: vec!["planning@>=0.0.1, <0.1.0".into()],
         ..fs_forms_run::View::default()
@@ -175,15 +211,18 @@ fn without_a_description_the_flag_says_so() {
     );
 }
 
-/// C: a write runs in the process. No module is known (so no service could answer), no socket is made, the card moved in the window,
-/// and the undo takes it back.
+/// C: a write runs in the process. No module is known and the folders of the modules do not exist (so no service could answer and
+/// nothing of the registry is read), nobody knocks at the door of a module (`planning`, the contract of the description, and `sample`),
+/// no network socket is made, the card moved in the window, and the undo takes it back. The doors are checked while the records
+/// still live (the hold of the module is open) and after the last command.
 #[test]
-fn a_command_stays_in_the_process_no_socket_no_module() {
+fn a_command_stays_in_the_process_no_door_knocked_no_net_socket() {
     let _one = SPY
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    let (_dir, sources) = no_modules();
-    let before = sockets();
+    let doors = Doors::new(&["planning", "sample", "tasks"]);
+    let sources = no_modules();
+    let net = net_sockets();
     let o = opened(BOARD, true, &sources);
     let records = o.records;
     let (key, columns) = cards(&records).remove(0);
@@ -208,28 +247,26 @@ fn a_command_stays_in_the_process_no_socket_no_module() {
         .find(|(k, _)| *k == key)
         .unwrap();
     assert_eq!(back.1, columns, "undone");
-    assert_eq!(sockets(), before, "the sample made no socket");
-    assert!(
-        fs_rpc::default_socket("sample").is_none_or(|p| !p.exists()),
-        "no service socket of a module `sample`"
-    );
+    assert_eq!(doors.callers(), 0, "nobody knocked at a door of a module");
+    assert_eq!(net_sockets(), net, "the sample made no network socket");
+    drop(records);
 }
 
-/// The counter-check of the spy: it SEES a socket when one is made, so "unchanged" above means something.
+/// The counter-checks of the spies: each SEES what it is there for, so "nothing" above means something. A client that connects to a
+/// door and closes at once is seen (a count of open sockets would not), and so is a network socket.
 #[test]
-fn the_spy_sees_a_socket_when_one_is_made() {
+fn the_spies_see_a_knock_at_a_door_and_a_network_socket() {
     let _one = SPY
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
-    let before = sockets();
+    let doors = Doors::new(&["planning"]);
+    assert_eq!(doors.callers(), 0);
+    let path = fs_rpc::default_socket("planning").unwrap();
+    drop(std::os::unix::net::UnixStream::connect(path).unwrap());
+    assert_eq!(doors.callers(), 1, "a connect that is closed again");
+    let before = net_sockets();
     let listener = std::net::TcpListener::bind("127.0.0.1:0").unwrap();
-    assert_eq!(sockets(), before + 1);
+    assert_eq!(net_sockets(), before + 1);
     drop(listener);
-    assert_eq!(sockets(), before);
-    // a unix socket with a path (the way to a module service) is seen as well
-    let dir = tempfile::tempdir().unwrap();
-    let unix = std::os::unix::net::UnixListener::bind(dir.path().join("module.sock")).unwrap();
-    assert_eq!(sockets(), before + 1);
-    drop(unix);
-    assert_eq!(sockets(), before);
+    assert_eq!(net_sockets(), before);
 }

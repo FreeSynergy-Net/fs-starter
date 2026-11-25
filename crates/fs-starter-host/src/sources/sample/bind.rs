@@ -3,7 +3,7 @@
 //! (`form-channel-unmapped`). The host binds a records channel to the data type of the source and a command channel to its own name,
 //! the name `SampleModule` runs.
 //!
-//! Pattern: Decorator (the declaration of the set, plus what a block and a writer need). Card for C2: the set should declare it itself.
+//! Pattern: none - one function that completes a declaration in place (it wraps no trait, so no Decorator). Card for C2: the set should declare it itself.
 
 use fs_forms_testdata::SampleSet;
 use fs_interfaces::forms::{Art, Channel, catalog};

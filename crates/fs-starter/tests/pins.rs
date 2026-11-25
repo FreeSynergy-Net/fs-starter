@@ -85,6 +85,14 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
             "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
         ),
         (
+            "fs-forms-layout",
+            "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
+        ),
+        (
+            "fs-forms-exchange",
+            "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
+        ),
+        (
             "fs-components",
             "REV:81367489094efee62ec16194be67df4a588045a0",
         ),
