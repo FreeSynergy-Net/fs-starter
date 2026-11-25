@@ -6,6 +6,9 @@
 //! `single-instance-off`; t8 hung first instance -> `instance-not-answering`; t9 `--picture` against a held package; t10 unknown
 //! words refused; t11 a word too long refused.
 //!
+//! t3 and the two tests that start a child (t7, t9) share one lock: a fork copies the open lock file of a place that a parallel test
+//! holds, and the place would look held after its guard was dropped (cause of the old "instance t3 wobbles").
+//!
 //! Mutants (documented, to be run in the review; each makes the named test red):
 //! - M1 `bind-over`: `claim_with` removes an existing socket file before binding (instead of letting `AddrInUse` mean "someone
 //!   holds it") -> a second start becomes First, nothing is handed over -> t1 red (`HandedOver` expected) and t8 red (the hung
@@ -21,6 +24,7 @@ use std::os::unix::fs::{DirBuilderExt, PermissionsExt};
 use std::os::unix::net::UnixListener;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::sync::{Mutex, MutexGuard};
 use std::time::Duration;
 
 use fs_starter_host::instance::{
@@ -28,6 +32,17 @@ use fs_starter_host::instance::{
 };
 
 mod support;
+
+/// A child process is forked from a thread of this test process (t7, t9) while another test thread may hold a lock file: until the
+/// child has exec'd it owns a copy of that open file, and `flock` ends only when the last copy is closed. So a place that was
+/// freed by dropping its guard could still look held (`AddrInUse`) to t3. Whoever forks, and t3 which re-claims, take this one lock.
+static FORK_VS_RECLAIM: Mutex<()> = Mutex::new(());
+
+fn no_fork_meanwhile() -> MutexGuard<'static, ()> {
+    FORK_VS_RECLAIM
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
 
 fn words(w: &[&str]) -> Vec<String> {
     w.iter().map(ToString::to_string).collect()
@@ -83,6 +98,7 @@ fn t2_two_programs_are_both_first() {
 
 #[test]
 fn t3_after_the_guard_is_dropped_a_new_claim_is_first() {
+    let _no_fork = no_fork_meanwhile();
     let dir = tempfile::tempdir().unwrap();
     let path = at(dir.path(), "tasks");
     drop(first(claim(Some(&path), &[], times())));
@@ -187,6 +203,7 @@ fn t11_a_word_too_long_is_refused() {
 fn t7_without_a_runtime_folder_the_program_starts_and_says_single_instance_off() {
     let home = tempfile::tempdir().unwrap();
     let png = home.path().join("a.png");
+    let _no_reclaim = no_fork_meanwhile();
     let out = Command::new(env!("CARGO_BIN_EXE_fs-starter"))
         .args([&support::tasks(), "--picture", png.to_str().unwrap()])
         .env("HOME", home.path())
@@ -210,6 +227,7 @@ fn t9_a_second_start_of_the_picture_against_a_held_package_hands_over_and_exits_
     let runtime = tempfile::tempdir().unwrap();
     let guard = first(claim(Some(&at(runtime.path(), "tasks")), &[], times()));
     let png = runtime.path().join("never.png");
+    let _no_reclaim = no_fork_meanwhile();
     let out = Command::new(env!("CARGO_BIN_EXE_fs-starter"))
         .args([&support::tasks(), "--picture", png.to_str().unwrap()])
         .env("HOME", runtime.path())
