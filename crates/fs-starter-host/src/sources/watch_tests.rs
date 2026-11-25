@@ -22,6 +22,7 @@ const KEY: &str = "cards-in-columns@1.4.0";
 
 async fn serve(dir: &Path) -> std::path::PathBuf {
     let owner = fs_objects::testing::owner();
+    let person = owner.clone();
     let options = fs_objects::OpenOptions::default().with_owner(owner.clone());
     let store = TursoStore::open_with(dir.join("objects.db"), options)
         .await
@@ -35,8 +36,12 @@ async fn serve(dir: &Path) -> std::path::PathBuf {
     let socket = dir.join("planning.sock");
     let bound = fs_rpc::bind_socket(&socket).await.unwrap();
     tokio::task::spawn_local(async move {
-        let _ =
-            fs_rpc::serve_callers(bound, Planning::new(repo, |_| {}), std::future::pending()).await;
+        let _ = fs_rpc::serve_callers(
+            bound,
+            Planning::new(repo, fs_rpc::FixedPerson(person), |_| {}),
+            std::future::pending(),
+        )
+        .await;
     });
     socket
 }

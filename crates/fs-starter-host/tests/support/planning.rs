@@ -27,6 +27,7 @@ const COMMANDS: &str =
 pub async fn serve(dir: &Path) -> (PathBuf, oneshot::Sender<()>) {
     // the store has an owner (fs-objects 0.0.11), as the service opens it
     let owner = fs_objects::testing::owner();
+    let person = owner.clone();
     let options = fs_objects::OpenOptions::default().with_owner(owner.clone());
     let store = TursoStore::open_with(dir.join("objects.db"), options)
         .await
@@ -41,9 +42,13 @@ pub async fn serve(dir: &Path) -> (PathBuf, oneshot::Sender<()>) {
     let bound = fs_rpc::bind_socket(&socket).await.unwrap();
     let (stop, stopped) = oneshot::channel::<()>();
     tokio::task::spawn_local(async move {
-        let _ = fs_rpc::serve_callers(bound, Planning::new(repo, |_| {}), async {
-            let _ = stopped.await;
-        })
+        let _ = fs_rpc::serve_callers(
+            bound,
+            Planning::new(repo, fs_rpc::FixedPerson(person), |_| {}),
+            async {
+                let _ = stopped.await;
+            },
+        )
         .await;
     });
     (socket, stop)

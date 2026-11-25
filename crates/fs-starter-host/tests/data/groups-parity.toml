@@ -1,0 +1,22 @@
+# The wish for the sample groups: the section `[sample]` of a description, nothing else.
+# A tree of two depths (two chains: four levels and two) and a member list of five. Read by `tests/sample_source/groups.rs`.
+[sample]
+seed = 9
+anchor = { month = "2026-11", zone = "Europe/Berlin" }
+
+[[sample.set]]
+source = 1
+form = "tree@^1.0.0"
+type = "Group"
+count = 6
+distinct = { edge-kind = 3 }
+empty = { edge-kind = 2 }
+cases = [ { case = "tree", depth = 4, roots = 1 }, { case = "tree", depth = 2, roots = 1 } ]
+
+[[sample.set]]
+source = 1
+form = "rows@^1.0.0"
+type = "Member"
+count = 5
+distinct = { columns = 3, state = 2 }
+empty = { state = 2 }

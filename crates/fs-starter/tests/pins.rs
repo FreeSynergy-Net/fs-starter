@@ -48,53 +48,53 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ),
         (
             "fs-interfaces",
-            "REV:6b02b138b3e55c290d6cbd957976013cc49dca5d",
+            "REV:4fcd013e60f8859ad70b203f2838d4b23912c1f4",
         ),
         ("fs-objects", "REV:e38093f1ec61b7c9faaa6f6046f65addb11dcf46"),
         (
             "fs-settings-rpc",
-            "REV:e3871c3b2438fae23fdc1eb6c72dd7c125f21abd",
+            "REV:63e3a4860b09c77a04e950d1451c85da0198a4ef",
         ),
         (
             "fs-settings",
-            "REV:81367489094efee62ec16194be67df4a588045a0",
+            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
         ),
         (
             "fs-components-commands",
-            "REV:81367489094efee62ec16194be67df4a588045a0",
+            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
         ),
-        ("fs-rpc", "REV:e3871c3b2438fae23fdc1eb6c72dd7c125f21abd"),
+        ("fs-rpc", "REV:63e3a4860b09c77a04e950d1451c85da0198a4ef"),
         (
             "fs-components-kanban",
-            "REV:81367489094efee62ec16194be67df4a588045a0",
+            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
         ),
         (
             "fs-trusted-path",
-            "REV:e3871c3b2438fae23fdc1eb6c72dd7c125f21abd",
+            "REV:63e3a4860b09c77a04e950d1451c85da0198a4ef",
         ),
         (
             "fs-forms-run",
-            "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
+            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
         ),
         (
             "fs-forms-bind",
-            "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
+            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
         ),
         (
             "fs-forms-testdata",
-            "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
+            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
         ),
         (
             "fs-forms-layout",
-            "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
+            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
         ),
         (
             "fs-forms-exchange",
-            "REV:7a93d24d46d08df7bd098f9d34704c0c0ccecc5a",
+            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
         ),
         (
             "fs-components",
-            "REV:81367489094efee62ec16194be67df4a588045a0",
+            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
         ),
     ] {
         let source = source_of(name);

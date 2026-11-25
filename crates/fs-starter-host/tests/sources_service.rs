@@ -72,8 +72,9 @@ fn the_window_from_the_service_is_the_sample_window_and_not_the_empty_one() {
     // the one-time command ends the service it started and fs-rpc REMOVES the socket file at the end of a run on purpose (fs-rpc
     // `serve.rs`: "The socket is removed on return"; `BoundSocket` drops it; CHANGELOG: "the socket file is removed (the bound socket drops)"), so the proof of the start is the read
     // line: the runtime folder of `i` is new, nobody else could have started the service that answered
+    // (6 records: the tree of the wish `tests/data/groups-parity.toml`, two chains of 4 and 2 nodes; the hand-built groups of the old fixture had 9)
     assert!(
-        said.contains("read module=groups form=tree records=9")
+        said.contains("read module=groups form=tree records=6")
             && said.contains("provider=\"fake\""),
         "the host started the service of the module and read it: {said}"
     );
@@ -278,7 +279,7 @@ fn the_level_gate_is_cumulative_and_the_negotiated_level_is_one_line() {
         assert_eq!(said.matches("fs-starter: level ").count(), 1, "{said}");
         assert!(said.contains(line), "{mode}: {said}");
         assert!(
-            said.contains("read module=groups form=tree records=9"),
+            said.contains("read module=groups form=tree records=6"),
             "{mode}: the records are read: {said}"
         );
     }

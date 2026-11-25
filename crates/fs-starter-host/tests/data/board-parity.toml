@@ -1,0 +1,13 @@
+# The wish for the sample board: the section `[sample]` of a description, nothing else.
+# Five cards in three columns (a column per category), a few cards without an assignee, labels as the text facts. Read by `tests/sample_source`.
+[sample]
+seed = 5
+anchor = { month = "2026-11", zone = "Europe/Berlin" }
+
+[[sample.set]]
+source = 1
+form = "cards-in-columns@^1.0.0"
+type = "Task"
+count = 5
+distinct = { column = 3, facts = 3 }
+empty = { assignee = 2 }

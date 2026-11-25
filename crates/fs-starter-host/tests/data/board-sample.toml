@@ -1,4 +1,4 @@
-# Copy of fs-forms crates/fs-forms-run/tests/fixtures/probe/board-sample.toml (fs-forms 7a93d24d): the description of the tasks board with a `[sample]` section (5 records, seed 7).
+# Copy of fs-forms crates/fs-forms-run/tests/fixtures/probe/board-sample.toml (fs-forms 7a93d24d; same file at 1beaea0c): the description of the tasks board with a `[sample]` section (5 records, seed 7).
 # Copy of the testdata fixture board.toml (fs-tasks 9f92c694) with a `[sample]` section added at the end; for the probe `sample_probe.rs` only
 # forms description of the fs-tasks frontend "board" (the start frontend). IMPORT FORM ONLY (ADR 0096 point 6): the description
 # lives as data in forms.db; this file is imported (Format 3, ids written into the file; export writes Format 3) and is never read at run time.

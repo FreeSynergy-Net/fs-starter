@@ -4,20 +4,24 @@
 //!
 //! The contract part is the strict `FakeSource` of the suite `fs-module` (fs-interfaces v0.1.0, crate `fs-module`: hello, blob, invoke and the
 //! form `cards-in-columns@1.0.0`, all rules of level 1); this file is only the process around it (socket, heartbeat, `FAKE_MODE`) and the made-up
-//! groups data of the other forms. Refusals leave as `fs-rpc` problems (type `form-source-<kind>`), as a real module does.
+//! groups data of the other forms (made by `fs-forms-testdata` from the wish `tests/data/groups-parity.toml`, served by its `SampleModule`). Refusals leave as `fs-rpc` problems (type `form-source-<kind>`), as a real module does.
 //!
 //! Started by the host as `<module folder>/service serve`. The module name is `FAKE_MODULE` (default `groups`). `FAKE_MODE` makes
 //! it misbehave for the tests of the borders: `real` (provider is not fake), `level` (a level the host does not know), `nobeat` (no
 //! heartbeat), `hostile` (control characters, an over-long text, more records than the limit), `slow` (does not answer a page in time).
 //!
-//! Pattern: Fixture (a fake service) + Decorator (the process around `FakeSource`); Unix only (the heartbeat of fs-rpc is Unix only).
+//! Pattern: Fixture (a fake service) + Decorator (the process around `FakeSource`) + Adapter (`SampleModule::page` -> the wire of `FormSource`); Unix only (the heartbeat of fs-rpc is Unix only).
+
+#[cfg(unix)]
+#[path = "fake_module/groups.rs"]
+mod groups;
 
 #[cfg(unix)]
 mod unix {
     use std::time::Duration;
 
+    use crate::groups::Groups;
     use capnp_rpc::new_client;
-    use fs_forms_run::sample_groups;
     use fs_interfaces::forms::{FORM_SOURCE_LEVEL, parse_key};
     use fs_interfaces::formsource_capnp::form_source;
     use fs_module::{FakeSource, Mode};
@@ -35,6 +39,8 @@ mod unix {
         mode: String,
         /// The contract: every rule of level 1 and 2 (version, scope, commands, arguments, rights, `result`, `invokeIf`, `revert`, `watch`).
         cards: Rc<FakeSource>,
+        /// The groups data of the other forms (one module for all connections, like the cards).
+        groups: Rc<Groups>,
     }
 
     /// The service: a new [`Fake`] for each connection, so two windows are two connections and `introduce` holds for one of them.
@@ -42,6 +48,7 @@ mod unix {
         mode: String,
         _beat: Option<Heartbeat>,
         cards: FakeSource,
+        groups: Rc<Groups>,
     }
 
     impl PerConnection for Per {
@@ -49,6 +56,7 @@ mod unix {
             let root: form_source::Client = new_client(Fake {
                 mode: self.mode.clone(),
                 cards: Rc::new(self.cards.connection()),
+                groups: Rc::clone(&self.groups),
             });
             root.client
         }
@@ -113,40 +121,28 @@ mod unix {
                     .await
                     .map_err(as_problem);
             }
-            let data = sample_groups();
-            let Some(d) = data.iter().find(|d| d.declared.form.name == name) else {
+            let Some(rows) = self.groups.read(name).await else {
                 return Err(unknown_form());
             };
+            let rows = rows.map_err(|detail| {
+                Problem::new("form-source-failed", "failed", &detail, 500).into_error()
+            })?;
             let hostile = self.is("hostile");
-            let count = if hostile { 5000 } else { d.rows.len() };
+            let count = if hostile { 5000 } else { rows.len() };
             let page = results.get().init_page();
             let mut list = page.init_records(u32::try_from(count).unwrap_or(0));
             for i in 0..count {
-                let row = &d.rows[i % d.rows.len()];
+                let row = &rows[i % rows.len()];
                 let mut rec = list.reborrow().get(u32::try_from(i).unwrap_or(0));
-                rec.set_id(row.key.as_str());
-                let n: usize = row.values.iter().map(|(_, v)| v.len()).sum();
-                let mut values = rec.init_values(u32::try_from(n).unwrap_or(0));
-                let mut at = 0;
-                for (channel, vals) in &row.values {
-                    let field = d
-                        .declared
-                        .map
-                        .iter()
-                        .find(|(c, _)| c == channel)
-                        .and_then(|(_, f)| f.first())
-                        .cloned()
-                        .unwrap_or_default();
-                    for v in vals {
-                        let mut value = values.reborrow().get(at);
-                        value.set_path(field.as_str());
-                        if hostile && channel == "label" {
-                            value
-                                .set_text(format!("{v}\u{1b}[31m\nX{}", "y".repeat(5000)).as_str());
-                        } else {
-                            value.set_text(v.as_str());
-                        }
-                        at += 1;
+                rec.set_id(row.0.as_str());
+                let mut values = rec.init_values(u32::try_from(row.1.len()).unwrap_or(0));
+                for (at, (field, channel, text)) in row.1.iter().enumerate() {
+                    let mut value = values.reborrow().get(u32::try_from(at).unwrap_or(0));
+                    value.set_path(field.as_str());
+                    if hostile && channel == "label" {
+                        value.set_text(format!("{text}\u{1b}[31m\nX{}", "y".repeat(5000)).as_str());
+                    } else {
+                        value.set_text(text.as_str());
                     }
                 }
             }
@@ -269,6 +265,7 @@ mod unix {
                 mode,
                 _beat: beat,
                 cards,
+                groups: Rc::new(Groups::new()),
             })
         })
     }
