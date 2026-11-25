@@ -65,8 +65,9 @@ fn a_module_that_is_not_there_is_yellow_and_says_so() {
 #[test]
 fn a_form_no_component_draws_is_yellow_not_red() {
     let i = Install::new();
-    let forms = r#"[{"name":"checklist","version":"1.0","type":"Group",
-        "map":{"items":"Group","done":"closed","label":"name"},"fields":{"closed":"bool","name":"text"}}]"#;
+    // `members@1.0.0` is a form of the interface catalog (frozen) that no component of the catalog draws any more (they draw `rows`)
+    let forms = r#"[{"name":"members","version":"1.0","type":"Member",
+        "map":{"records":"Member","person":"person","role":"role"},"fields":{"person":"reference","role":"reference"}}]"#;
     i.module("groups", "0.1.0", forms, &Service::None);
     let (rc, out) = check(&i);
     assert_eq!(rc, Some(0), "{out}");
