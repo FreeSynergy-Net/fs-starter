@@ -1,7 +1,12 @@
 # cargo-nextest profiles for fs-starter (workflow testlauf, CLAUDE.md §4: little but often). Naming convention as fs-forms/fs-components.
-# Geprüft mit `cargo nextest list` (C4 Batch 3). Zuordnung nach Binary-Namen.
-# Stufen: quick (Unit/Modell, ohne picture) | picture (gezeichnete Bilder, GPU/Software-Vulkan, nie in quick) | release (nur CI, alles).
-# Weitere Stufen (time/socket/security/platform) bewusst nicht definiert: kein belegter eindeutiger Treffer; Handprüfung siehe BERICHT-nextest-b3.md.
+# Checked with `cargo nextest list` (C4 Batch 3). Assignment by binary name.
+# Stages (each chooses a subset; quick and security overlap on purpose, new stages are additive):
+#   quick    unit/model tests, without picture (never drawn pictures)
+#   picture  drawn pictures (GPU/software Vulkan), never in quick
+#   security trust of install places (xdg_trust; CLAUDE.md §4 hard limit 2)
+#   release  CI only, everything
+# time/socket/platform are deliberately not defined: no unique hit on Linux (nextest refuses an empty set). `system_windows` is
+# cfg(windows) and appears in `nextest list` only on Windows; a `platform` profile needs a Windows list first.
 
 [profile.default]
 fail-fast = false
@@ -14,6 +19,12 @@ slow-timeout = { period = "30s", terminate-after = 4 }
 
 [profile.picture]
 default-filter = "binary_id(/picture|theme/)"
+fail-fast = false
+retries = 0
+slow-timeout = { period = "60s", terminate-after = 5 }
+
+[profile.security]
+default-filter = "binary_id(/^fs-starter::xdg_trust$/)"
 fail-fast = false
 retries = 0
 slow-timeout = { period = "60s", terminate-after = 5 }
