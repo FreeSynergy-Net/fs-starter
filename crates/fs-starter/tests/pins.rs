@@ -48,54 +48,64 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ),
         (
             "fs-interfaces",
-            "REV:4fcd013e60f8859ad70b203f2838d4b23912c1f4",
+            "REV:4f6c3281cab594a76640c50abaedb4f7c4e79d97",
         ),
         ("fs-objects", "REV:e38093f1ec61b7c9faaa6f6046f65addb11dcf46"),
         (
             "fs-settings-rpc",
-            "REV:63e3a4860b09c77a04e950d1451c85da0198a4ef",
+            "REV:b279f4285da84110f36a5e62a17262b7aab2b2d4",
         ),
         (
             "fs-settings",
-            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
+            "REV:508a25f3915270e28ea6a306411fa336e563d9e1",
         ),
         (
             "fs-components-commands",
-            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
+            "REV:508a25f3915270e28ea6a306411fa336e563d9e1",
         ),
-        ("fs-rpc", "REV:63e3a4860b09c77a04e950d1451c85da0198a4ef"),
+        ("fs-rpc", "REV:b279f4285da84110f36a5e62a17262b7aab2b2d4"),
         (
             "fs-components-kanban",
-            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
+            "REV:508a25f3915270e28ea6a306411fa336e563d9e1",
         ),
         (
             "fs-trusted-path",
-            "REV:63e3a4860b09c77a04e950d1451c85da0198a4ef",
+            "REV:b279f4285da84110f36a5e62a17262b7aab2b2d4",
         ),
         (
             "fs-forms-run",
-            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
+            "REV:7ab7b0cac090cf9464e1f19515ffe52234576eaf",
         ),
         (
             "fs-forms-bind",
-            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
+            "REV:7ab7b0cac090cf9464e1f19515ffe52234576eaf",
         ),
         (
             "fs-forms-testdata",
-            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
+            "REV:7ab7b0cac090cf9464e1f19515ffe52234576eaf",
         ),
         (
             "fs-forms-layout",
-            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
+            "REV:7ab7b0cac090cf9464e1f19515ffe52234576eaf",
         ),
         (
             "fs-forms-exchange",
-            "REV:1beaea0c50e3e7628ea12d135e9a441d2445bf2b",
+            "REV:7ab7b0cac090cf9464e1f19515ffe52234576eaf",
         ),
         (
             "fs-components",
-            "REV:be580b10d1701c3932a92b73ee43f57fbe252261",
+            "REV:508a25f3915270e28ea6a306411fa336e563d9e1",
         ),
+        ("fs-module", "REV:4f6c3281cab594a76640c50abaedb4f7c4e79d97"),
+        (
+            "fs-modules-planning",
+            "REV:d975ed198694244da931c18a3cc97917cd6ddf0a",
+        ),
+        (
+            "fs-tasks-core",
+            "REV:d975ed198694244da931c18a3cc97917cd6ddf0a",
+        ),
+        ("fs-person", "REV:544d5283eb12b0c88c02a8b7fa0edb4e2a50db45"),
     ] {
         let source = source_of(name);
         let want = match tag.strip_prefix("REV:") {
