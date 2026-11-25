@@ -22,7 +22,10 @@ mod session;
 mod starter;
 mod watch;
 mod watch_resume;
+#[cfg(all(test, unix))]
+mod watch_resume_fake;
 mod watch_seen;
+mod watch_sink;
 mod writer;
 
 pub use answer::Limits;
