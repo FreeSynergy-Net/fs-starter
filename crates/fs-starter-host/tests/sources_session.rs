@@ -39,9 +39,13 @@ fn mv(w: &HeldRecords, card: &str, column: &str) {
 }
 
 fn waits_for(what: &str, ok: impl Fn() -> bool) {
+    waits_within(what, Duration::from_secs(5), ok);
+}
+
+fn waits_within(what: &str, limit: Duration, ok: impl Fn() -> bool) {
     let began = Instant::now();
     while !ok() {
-        assert!(began.elapsed() < Duration::from_secs(5), "{what}");
+        assert!(began.elapsed() < limit, "{what}");
         std::thread::sleep(Duration::from_millis(20));
     }
 }
@@ -148,21 +152,25 @@ fn a_one_time_run_has_a_history_and_ends_the_service_it_started_itself() {
     assert_eq!(w.answer_app("app.undo"), Some(Answer::Accepted));
     assert_eq!((w.history().undoable, w.history().redoable), (0, 1));
     drop(w);
-    waits_for("the started service ended with the drop", || !up(&s));
+    // well below the idle time of the fake (5000 ms): only the guard can have ended it, not the idle end
+    waits_within(
+        "the started service ended with the drop",
+        Duration::from_secs(2),
+        || !up(&s),
+    );
 }
 
+/// The SAME process must go on: the log of the fake lives in its memory, so an undo over the older window only works if the service
+/// was never ended (a restart by the hold of `other` would give an empty log; `up()` alone cannot tell, the hold starts it again).
+/// Mutant: the guard ends a service that was up before = the undo is refused, red.
 #[test]
 fn a_one_time_run_leaves_a_service_that_was_up_before() {
     let (_turn, s) = module();
     down(&s);
     let other = window(&s);
+    mv(&other, "c1", "done");
     let w = one_time(&s);
-    assert_eq!(
-        w.answer_app("app.undo"),
-        Some(Answer::Refused(Reason::new("host-notice-undo-empty", "")))
-    );
     drop(w);
     std::thread::sleep(Duration::from_millis(500));
-    assert!(up(&s), "a service that was up before is not ended");
-    drop(other);
+    assert_eq!(other.answer_app("app.undo"), Some(Answer::Accepted));
 }

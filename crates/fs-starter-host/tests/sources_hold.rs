@@ -2,7 +2,7 @@
 //! by itself after its idle time, so it must live while the records live and end after they dropped. The fake ends after 300 ms
 //! without a connection (`FAKE_IDLE_MS`). The lines the hold says are given to the test (`connect_saying`), the same ones stderr gets.
 //!
-//! Mutant: no hold in `connect` (`end_started` branch always) = the fake ends during the wait, the first assert is red.
+//! Mutant: no hold in `connect` (no `hold_module` call) = the fake ends during the wait, the first assert is red. (A one-time run holds too; its end is the guard `EndOnDrop`, tested in `sources_session`.)
 #![cfg(unix)]
 
 mod support;

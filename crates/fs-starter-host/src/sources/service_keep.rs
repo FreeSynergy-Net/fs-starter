@@ -1,4 +1,4 @@
-//! The read of a held one-time run: like `fetch_level`, but the service it started is NOT ended (the guard [`super::end`] does it).
+//! The read of a held one-time run: like `fetch_level` of `service`, but the service it started is NOT ended (the guard [`super::end`] does it).
 //!
 //! Pattern: Facade over `read_all` of [`super::service`] (the same read, one flag more).
 
@@ -10,11 +10,12 @@ use super::known::Known;
 use super::level::Levels;
 use super::service::{UNREACHABLE, cause, read_all};
 
-/// [`fetch_level`] that never ends the service: the third part says whether THIS read started it (the caller then owns its end).
-/// Even a failed read says it: the service it started is still up.
+/// `fetch_level` that never ends the service: the second part of the tuple says whether THIS read started it (the caller then owns its
+/// end, the guard [`super::end`]). Even a failed read says it: the service it started is still up. A `writer()` of the records that
+/// outlives them holds the service again (its hold starts it); for `--picture` that is harmless.
 ///
 /// # Errors
-/// As [`fetch_level`]; the flag is given with the error too.
+/// As `fetch_level`; the flag is given with the error too.
 pub fn fetch_keeping(
     known: &Known,
     forms: &[ModuleForm],
