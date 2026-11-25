@@ -10,6 +10,12 @@ use fs_starter_host::registry::{Actor, ModuleSet, Refusal, Registry, Unbound, Ve
 
 #[test]
 fn the_shell_commands_come_from_the_command_model_and_a_module_adds_its_own() {
+    // The pin of fs-components 06a77a6a brings `app.undo` / `app.redo` itself: each id stands once (not once from there and once from the host).
+    let all = ids(&Registry::new());
+    let mut once = all.clone();
+    once.sort();
+    once.dedup();
+    assert_eq!(all.len(), once.len(), "an id twice: {all:?}");
     let mut r = Registry::new();
     assert_eq!(
         ids(&r),

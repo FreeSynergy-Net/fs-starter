@@ -67,19 +67,10 @@ pub struct Registry {
     entries: Vec<Entry>,
 }
 
-/// The commands of the host itself next to the standard ones: one step back and forward in the history of the person (`app.undo`,
-/// `app.redo`). They are answered by the records of the window (`HeldRecords::answer_app`), never by a module.
-fn history_commands() -> [Command; 2] {
-    [
-        Command::new(UNDO, "shell-undo").icon("edit-undo"),
-        Command::new(REDO, "shell-redo").icon("edit-redo"),
-    ]
-}
-
-/// The command: one step back in the history.
-pub const UNDO: &str = "app.undo";
-/// The command: one step forward again.
-pub const REDO: &str = "app.redo";
+/// The commands `app.undo` / `app.redo` (one step back and forward in the history of the person) come from the command model
+/// (`standard_commands()`: one source for ids, texts, icons and shortcuts); the records of the window answer them (`HeldRecords::answer_app`),
+/// never a module.
+pub use fs_components_commands::standard::{REDO, UNDO};
 
 impl Registry {
     /// The shared commands `app.*` of the shell, read from the command model (not a list of the host).
@@ -88,7 +79,6 @@ impl Registry {
         let entries = standard_commands()
             .iter()
             .cloned()
-            .chain(history_commands())
             .map(|c| Entry {
                 command: c,
                 module: "app".to_owned(),

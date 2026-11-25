@@ -9,7 +9,7 @@ permissions:
   packages: write
 jobs:
   release:
-    uses: FreeSynergy-Net/fs-release/.github/workflows/release.yml@07e37b1d17478a9962a8bf0275a4f56ba49db60d
+    uses: FreeSynergy-Net/fs-release/.github/workflows/release.yml@ccb018e91d8ee12e4b804225b8226b50a129ab6e
     with:
       # `fs-starter` is the host binary of the package `fs-starter-host` (the library `fs-starter` has none).
       binaries: fs-starter
