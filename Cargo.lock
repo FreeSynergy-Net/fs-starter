@@ -1203,6 +1203,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9e9de72ce2ad1f90dc62fa25f0f430ef85eb4b0d8fa0be4f30373bc40a21d28e"
 
 [[package]]
+name = "deunicode"
+version = "1.6.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "abd57806937c9cc163efc8ea3910e00a62e2aeb0b8119f1793a978088f8f6b04"
+
+[[package]]
 name = "digest"
 version = "0.10.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1388,6 +1394,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f1a05365e3b1c6d1650318537c7460c6923f1abdd272ad6842baa2b509957a06"
 dependencies = [
  "num-traits",
+]
+
+[[package]]
+name = "fake"
+version = "5.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ea6be833b323a56361118a747470a45a1bcd5c52a2ec9b1e40c83dafe687e453"
+dependencies = [
+ "deunicode",
+ "rand 0.10.4",
 ]
 
 [[package]]
@@ -1837,7 +1853,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-bind"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=58469f216d6aa789d41925b02c759da64978a471#58469f216d6aa789d41925b02c759da64978a471"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7a93d24d46d08df7bd098f9d34704c0c0ccecc5a#7a93d24d46d08df7bd098f9d34704c0c0ccecc5a"
 dependencies = [
  "fs-components-commands",
  "sha2 0.10.9",
@@ -1846,7 +1862,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=58469f216d6aa789d41925b02c759da64978a471#58469f216d6aa789d41925b02c759da64978a471"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7a93d24d46d08df7bd098f9d34704c0c0ccecc5a#7a93d24d46d08df7bd098f9d34704c0c0ccecc5a"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1859,7 +1875,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=58469f216d6aa789d41925b02c759da64978a471#58469f216d6aa789d41925b02c759da64978a471"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7a93d24d46d08df7bd098f9d34704c0c0ccecc5a#7a93d24d46d08df7bd098f9d34704c0c0ccecc5a"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1868,7 +1884,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=58469f216d6aa789d41925b02c759da64978a471#58469f216d6aa789d41925b02c759da64978a471"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7a93d24d46d08df7bd098f9d34704c0c0ccecc5a#7a93d24d46d08df7bd098f9d34704c0c0ccecc5a"
 dependencies = [
  "semver",
  "sha2 0.10.9",
@@ -1877,7 +1893,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=58469f216d6aa789d41925b02c759da64978a471#58469f216d6aa789d41925b02c759da64978a471"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7a93d24d46d08df7bd098f9d34704c0c0ccecc5a#7a93d24d46d08df7bd098f9d34704c0c0ccecc5a"
 dependencies = [
  "fs-components",
  "fs-components-app",
@@ -1902,6 +1918,27 @@ dependencies = [
  "fs-types",
  "percent-encoding",
  "tokio",
+]
+
+[[package]]
+name = "fs-forms-testdata"
+version = "0.1.0"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=7a93d24d46d08df7bd098f9d34704c0c0ccecc5a#7a93d24d46d08df7bd098f9d34704c0c0ccecc5a"
+dependencies = [
+ "chrono",
+ "fake",
+ "fs-forms-bind",
+ "fs-forms-layout",
+ "fs-interfaces",
+ "fs-jscalendar",
+ "fs-objects",
+ "fs-types",
+ "rand 0.10.4",
+ "semver",
+ "serde",
+ "serde_json",
+ "toml",
+ "uuid",
 ]
 
 [[package]]
@@ -2127,7 +2164,10 @@ dependencies = [
  "fs-components-commands",
  "fs-components-kanban",
  "fs-forms-bind",
+ "fs-forms-exchange",
+ "fs-forms-layout",
  "fs-forms-run",
+ "fs-forms-testdata",
  "fs-interfaces",
  "fs-module",
  "fs-modules-planning",

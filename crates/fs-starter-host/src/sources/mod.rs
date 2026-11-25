@@ -15,6 +15,7 @@ pub mod pages;
 pub mod range;
 mod refusal;
 mod reply;
+mod sample;
 mod service;
 mod service_keep;
 mod session;

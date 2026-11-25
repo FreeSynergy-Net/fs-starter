@@ -7,7 +7,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use fs_forms_run::{Coded, FormRecords, Records, Sources, Want, name_of};
+use fs_forms_run::{Coded, Described, FormRecords, Records, Sources, Want, name_of};
 
 use super::end::EndOnDrop;
 use super::entries::{Wanted, select};
@@ -176,6 +176,18 @@ impl Sources for StarterSources {
             .map(|held| Arc::new(held) as Arc<dyn Records>)
     }
 
+    /// `--sample-data`: the sources are made from the description itself and held in this process ([`super::sample`]); no module is
+    /// looked up, no service is started, no socket is touched.
+    fn connect_sample(
+        &self,
+        _: &[Want],
+        described: &Described<'_>,
+        _: Option<&Path>,
+        _: &Path,
+    ) -> Result<Arc<dyn Records>, Coded> {
+        super::sample::connect(self, *described)
+    }
+
     /// The `socket` of the command line is NOT used: a module is reached only on its own socket (border 4).
     fn connect(&self, range: &str, _: Option<&Path>, _: &Path) -> Result<Arc<dyn Records>, Coded> {
         self.connect_saying(range, |line| eprintln!("{line}"))
@@ -183,7 +195,7 @@ impl Sources for StarterSources {
 }
 
 /// Who a window says it is: the program (or `fs-starter`) and `<program>#<k>` for a numbered window, else process id and counter.
-fn identity(program: Option<&str>, slot: Option<u8>) -> Identity {
+pub(super) fn identity(program: Option<&str>, slot: Option<u8>) -> Identity {
     let program = program.unwrap_or("fs-starter").to_owned();
     let instance = match slot {
         Some(k) => slots::label(&program, k),

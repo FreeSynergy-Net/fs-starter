@@ -19,6 +19,7 @@ use crate::{package, pending, shell};
 pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data] [--new-instance] [--picture FILE.png [--steps FILE]]\n\
     Opens the window of a program from its description, without building the program.\n\
     --steps FILE (only with --picture) plays the steps of FILE before the picture is taken.\n\
+    --sample-data (only this word, never a default) makes the data of every [[source]] from the description itself: test data held in this process, marked as sample data in the status line; no service is started, nothing is written outside the process.\n\
     --program NAME takes the installed data package /usr/share/freesynergy/programs/NAME (only a place that passes the system check).\n\
     --new-instance opens one more window of the program next to the running ones (window-2 .. window-9); without it a second start hands its words to the first window. With --picture it takes no place.\n\
 fs-starter --list-commands [--modules DIR]\n\

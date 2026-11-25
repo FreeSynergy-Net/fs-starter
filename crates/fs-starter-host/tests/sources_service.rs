@@ -77,7 +77,10 @@ fn the_window_from_the_service_is_the_sample_window_and_not_the_empty_one() {
             && said.contains("provider=\"fake\""),
         "the host started the service of the module and read it: {said}"
     );
-    let (sample, _) = draw(
+    // since package 4b the data of `--sample-data` are made from the description (not the hand-built groups of the old fixture), so the
+    // window is no longer pixel-equal to the one of the fake service; what stays true: it is read from a sample module (provider `fake`,
+    // no notice), says "Sample data" like the fake service does, and differs from the empty window
+    let (sample, said_sample) = draw(
         &i,
         &["--sample-data"],
         "light",
@@ -86,11 +89,15 @@ fn the_window_from_the_service_is_the_sample_window_and_not_the_empty_one() {
     )
     .unwrap();
     assert!(
-        same(&live, &sample),
-        "fake data = sample data: the window says \"Sample data\" and draws the sample groups"
+        said_sample.contains("read module=sample") && said_sample.contains("provider=\"fake\""),
+        "the sample window is read from a sample module: {said_sample}"
     );
     let none = Install::new();
     let (empty, said) = draw(&none, &[], "light", "groups-empty.png", &[]).unwrap();
+    assert!(
+        !same(&sample, &empty),
+        "the sample window is no empty window"
+    );
     assert!(said.contains("host-notice-source-unknown"), "{said}");
     assert!(!same(&live, &empty), "the empty window (no module) differs");
     let (dark, _) = draw(&i, &[], "dark", "groups-service-dark.png", &[]).unwrap();
@@ -102,7 +109,7 @@ fn the_window_from_the_service_is_the_sample_window_and_not_the_empty_one() {
         &[],
     )
     .unwrap();
-    assert!(same(&dark, &dark_sample) && !same(&dark, &live));
+    assert!(!same(&dark, &live) && !same(&dark_sample, &dark));
 }
 
 #[test]

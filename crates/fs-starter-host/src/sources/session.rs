@@ -80,10 +80,15 @@ impl Session {
         (self.me.instance.clone(), n.to_string())
     }
 
-    fn call(&self, job: Job<Reply>) -> Result<Reply, Coded> {
+    /// A job on the held connection, within the time of the window (`Hold::call`); an in-process source reads its pages the same way.
+    pub(super) fn run<T: Send + 'static>(&self, job: Job<T>) -> Result<T, Coded> {
         self.hold.call(job, self.limit).map_err(|e: io::Error| {
             cause(UNREACHABLE, &self.module, "hold").with("io", e.kind().to_string())
         })
+    }
+
+    fn call(&self, job: Job<Reply>) -> Result<Reply, Coded> {
+        self.run(job)
     }
 
     fn refusal(&self, r: &Reply, conflict_code: &str) -> Coded {
