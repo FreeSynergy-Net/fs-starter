@@ -145,7 +145,9 @@ impl StarterSources {
                 .with("cause", why)
         })?;
         let began = std::time::Instant::now();
-        let records = self.read(known, &select(&entries, &[]))?;
+        let chosen = select(&entries, &[]);
+        chosen.say(module);
+        let records = self.read(known, &chosen.wires)?;
         Ok(read_lines(module, &records, began.elapsed()))
     }
 

@@ -35,34 +35,116 @@ pub struct Wire {
     pub scope: String,
 }
 
-/// The reads for `wanted` out of `entries`: each wanted source takes every entry of its type (in the order of the file), once.
-/// Without any wish (a caller that cannot say the sources yet) each form of the file is read once, the first entry of its name and
-/// version, in scope `""`: a second entry of the same form (another type) never gets the rows of the first.
+/// What [`select`] chose: the reads, and one line for everything it left out or could not place (never silent).
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Selection {
+    /// The reads, in order.
+    pub wires: Vec<Wire>,
+    /// What was not read or not found, one line each.
+    pub notices: Vec<String>,
+}
+
+impl Selection {
+    /// The notices on stderr, next to the `read_lines` of the module.
+    pub fn say(&self, module: &str) {
+        for n in &self.notices {
+            eprintln!("fs-starter: forms module={module} {n}");
+        }
+    }
+}
+
+fn key(e: &Entry) -> String {
+    format!(
+        "{}@{}.{}",
+        e.form.form.name, e.form.form.major, e.form.form.minor
+    )
+}
+
+/// The reads for `wanted` out of `entries`: each wanted source takes every entry of its type (in the order of the file), once; a
+/// source whose type no entry has is said in the notices.
+///
+/// Without any wish (a caller that cannot say the sources yet) a form with ONE type is read once in scope `""`. A form that the
+/// module declares for several types (planning: `rows@1.0.0` for `Lane` and `Task`) is read only for the PRIMARY type of the module
+/// (the type most entries of the file have: the module's own default for scope `""`); with no single most frequent type, or when the
+/// primary type is not one of the form's, the form is not read. Every entry left out is said in the notices.
 #[must_use]
-pub fn select(entries: &[Entry], wanted: &[Wanted]) -> Vec<Wire> {
+pub fn select(entries: &[Entry], wanted: &[Wanted]) -> Selection {
     let wire = |e: &Entry, scope: &str| Wire {
         form: e.form.clone(),
         data_type: e.data_type.clone(),
         scope: scope.to_owned(),
     };
-    let mut out: Vec<Wire> = Vec::new();
+    let mut out = Selection::default();
     if wanted.is_empty() {
+        let primary = primary_type(entries);
+        let mut seen: Vec<String> = Vec::new();
         for e in entries {
-            if !out.iter().any(|w| w.form.form == e.form.form) {
-                out.push(wire(e, ""));
+            let k = key(e);
+            if seen.contains(&k) {
+                continue;
+            }
+            seen.push(k.clone());
+            let mut types: Vec<&str> = Vec::new();
+            for x in entries.iter().filter(|x| key(x) == k) {
+                if !types.contains(&x.data_type.as_str()) {
+                    types.push(&x.data_type);
+                }
+            }
+            let chosen = if types.len() == 1 {
+                Some(e)
+            } else {
+                entries
+                    .iter()
+                    .find(|x| key(x) == k && Some(x.data_type.as_str()) == primary)
+            };
+            if let Some(c) = chosen {
+                out.wires.push(wire(c, ""));
+            }
+            if types.len() > 1 {
+                let listed = types.join(", ");
+                out.notices.push(match chosen {
+                    Some(c) => format!(
+                        "{k} is declared for {listed}; without a source type only {} is read (Paket R)",
+                        c.data_type
+                    ),
+                    None => format!("{k} is declared for {listed}; without a source type not read (Paket R)"),
+                });
             }
         }
         return out;
     }
     for w in wanted {
+        let mut found = false;
         for e in entries.iter().filter(|e| e.data_type == w.data_type) {
+            found = true;
             let one = wire(e, &w.scope);
-            if !out.contains(&one) {
-                out.push(one);
+            if !out.wires.contains(&one) {
+                out.wires.push(one);
             }
+        }
+        if !found {
+            out.notices.push(format!(
+                "source type {} has no entry in forms.json; not read",
+                w.data_type
+            ));
         }
     }
     out
+}
+
+/// The type most entries have; `None` when two types lead.
+fn primary_type(entries: &[Entry]) -> Option<&str> {
+    let mut counts: Vec<(&str, usize)> = Vec::new();
+    for e in entries {
+        match counts.iter_mut().find(|(t, _)| *t == e.data_type) {
+            Some((_, n)) => *n += 1,
+            None => counts.push((&e.data_type, 1)),
+        }
+    }
+    let top = counts.iter().map(|(_, n)| *n).max()?;
+    let mut leaders = counts.iter().filter(|(_, n)| *n == top);
+    let first = leaders.next()?;
+    leaders.next().is_none().then_some(first.0)
 }
 
 #[cfg(test)]
@@ -100,6 +182,7 @@ mod tests {
             &[want("Lane", "lanes:assignee"), want("Task", "")],
         );
         let got: Vec<_> = got
+            .wires
             .iter()
             .map(|w| (w.data_type.as_str(), w.scope.as_str()))
             .collect();
@@ -110,20 +193,46 @@ mod tests {
     fn a_type_nobody_asks_for_is_not_read() {
         let entries = [entry("rows", "Lane"), entry("rows", "Task")];
         let got = select(&entries, &[want("Task", "")]);
-        assert_eq!(got.len(), 1);
-        assert_eq!(got[0].data_type, "Task");
+        assert_eq!(got.wires.len(), 1);
+        assert_eq!(got.wires[0].data_type, "Task");
     }
 
     #[test]
-    fn without_a_wish_one_entry_per_form_is_read_in_the_empty_scope() {
+    fn without_a_wish_an_ambiguous_form_is_read_only_for_the_primary_type_and_says_so() {
         let entries = [
             entry("cards", "Task"),
             entry("rows", "Lane"),
             entry("rows", "Task"),
         ];
         let got = select(&entries, &[]);
-        assert_eq!(got.len(), 2);
-        assert!(got.iter().all(|w| w.scope.is_empty()));
-        assert_eq!(got[1].data_type, "Lane");
+        let read: Vec<_> = got
+            .wires
+            .iter()
+            .map(|w| {
+                (
+                    w.form.form.name.as_str(),
+                    w.data_type.as_str(),
+                    w.scope.as_str(),
+                )
+            })
+            .collect();
+        assert_eq!(read, [("cards", "Task", ""), ("rows", "Task", "")]);
+        assert_eq!(got.notices.len(), 1);
+        assert!(got.notices[0].contains("Lane, Task"), "{:?}", got.notices);
+    }
+
+    #[test]
+    fn without_a_wish_and_without_a_primary_type_an_ambiguous_form_is_not_read() {
+        let entries = [entry("rows", "Lane"), entry("rows", "Task")];
+        let got = select(&entries, &[]);
+        assert!(got.wires.is_empty());
+        assert!(got.notices[0].contains("not read"), "{:?}", got.notices);
+    }
+
+    #[test]
+    fn a_source_type_no_entry_has_is_said() {
+        let got = select(&[entry("rows", "Task")], &[want("Ghost", "x")]);
+        assert!(got.wires.is_empty());
+        assert!(got.notices[0].contains("Ghost"), "{:?}", got.notices);
     }
 }

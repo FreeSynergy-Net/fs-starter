@@ -69,7 +69,9 @@ impl StarterSources {
             code
         };
         let (known, entries) = self.declared_entries(range).map_err(said)?;
-        let forms = select(&entries, wanted);
+        let chosen = select(&entries, wanted);
+        chosen.say(&known.name);
+        let forms = chosen.wires;
         let began = std::time::Instant::now();
         // a one-time run reads WITHOUT ending: it holds the module like a window, and the guard ends what it started itself
         let (got, started) = if self.end_started {

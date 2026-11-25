@@ -104,7 +104,8 @@ async fn two_rows_entries_are_not_mixed_up_the_lane_source_gets_lanes_the_task_s
     let wires = select(
         &entries,
         &[want("Lane", "lanes:assignee"), want("Task", "")],
-    );
+    )
+    .wires;
     // the Task source also takes `cards-in-columns` (type Task): every entry of the type of a source
     assert_eq!(wires.len(), 3);
     let at = |t: &str| {
@@ -138,11 +139,71 @@ async fn two_rows_entries_are_not_mixed_up_the_lane_source_gets_lanes_the_task_s
             // the task source: one row per card
             assert_eq!(got[task].declared.form.name, "rows");
             assert_eq!(keys(task).len(), uids.len(), "the task rows");
+            assert!(
+                got[task].rows.iter().all(|r| r
+                    .values
+                    .iter()
+                    .any(|(c, v)| c == "label" && v.iter().any(|t| !t.is_empty()))),
+                "a task row without its title"
+            );
             // the lane source: the lanes of the axis, never the cards
             for k in keys(lane) {
                 assert!(!uids.contains(&k), "a lane row carries a task: {k}");
             }
             assert_ne!(keys(lane), keys(task), "Lane and Task got the same rows");
+        })
+        .await;
+}
+
+/// Without a wish (what the window passes today) the host never gives the Lane entry the task rows: planning's `rows@1.0.0` is
+/// declared twice, only the primary type (`Task`, the type of most entries) is read in scope "", and the Lane entry is said, not read.
+#[tokio::test(flavor = "current_thread")]
+async fn without_a_wish_the_task_entry_is_read_with_the_titles_and_the_lane_entry_is_said() {
+    use fs_starter_host::sources::declared::parse_entries;
+    use fs_starter_host::sources::entries::select;
+    use fs_starter_host::sources::{Limits, pages::read_pages};
+
+    let forms = include_str!("../../../tests/data/planning-main-7db66a33/catalog/forms.json");
+    let chosen = select(&parse_entries(forms).unwrap(), &[]);
+    let names: Vec<_> = chosen
+        .wires
+        .iter()
+        .map(|w| (w.form.form.name.as_str(), w.data_type.as_str()))
+        .collect();
+    assert_eq!(
+        names,
+        [("cards-in-columns", "Task"), ("rows", "Task")],
+        "the Lane entry must not be read in scope \"\""
+    );
+    assert!(
+        chosen.notices.iter().any(|n| n.contains("Lane, Task")),
+        "{:?}",
+        chosen.notices
+    );
+
+    let dir = tempfile::Builder::new().prefix("fp").tempdir().unwrap();
+    LocalSet::new()
+        .run_until(async {
+            let (socket, _stop) = serve(dir.path()).await;
+            let source = fs_rpc::connect::<form_source::Client>(&socket)
+                .await
+                .unwrap();
+            let uids = board_with(&socket, &source.client, &["a", "b", "c"]).await;
+            let got = read_pages(
+                &source.client,
+                "planning",
+                &chosen.wires,
+                &Limits::default(),
+            )
+            .await
+            .unwrap();
+            let rows = &got[1];
+            assert_eq!(rows.rows.len(), uids.len());
+            assert!(rows.rows.iter().all(|r| {
+                r.values
+                    .iter()
+                    .any(|(c, v)| c == "label" && v.iter().any(|t| !t.is_empty()))
+            }));
         })
         .await;
 }
