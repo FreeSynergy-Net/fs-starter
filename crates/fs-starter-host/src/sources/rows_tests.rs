@@ -11,6 +11,7 @@ use super::rows;
 
 fn form() -> ModuleForm {
     ModuleForm {
+        data_type: String::new(),
         form: FormRef {
             name: "tree".into(),
             major: 1,

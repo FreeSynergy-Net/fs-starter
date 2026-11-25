@@ -81,8 +81,9 @@ pub fn parse_entries(text: &str) -> Result<Vec<Entry>, &'static str> {
             Some(t) => t.as_str().ok_or("type")?.to_owned(),
         };
         out.push(Entry {
-            data_type,
+            data_type: data_type.clone(),
             form: ModuleForm {
+                data_type,
                 form: FormRef {
                     name: name.to_owned(),
                     major,

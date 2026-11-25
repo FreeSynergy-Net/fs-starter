@@ -8,6 +8,7 @@ use std::time::Duration;
 
 fn data(rows: usize) -> FormData {
     let declared = ModuleForm {
+        data_type: String::new(),
         form: FormRef {
             name: "board".to_owned(),
             major: 1,

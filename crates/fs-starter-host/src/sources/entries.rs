@@ -155,6 +155,7 @@ mod tests {
     fn entry(name: &str, data_type: &str) -> Entry {
         Entry {
             form: ModuleForm {
+                data_type: data_type.into(),
                 form: FormRef {
                     name: name.into(),
                     major: 1,
