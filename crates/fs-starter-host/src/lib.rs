@@ -25,8 +25,10 @@ pub mod registry;
 mod shell;
 pub mod slots;
 pub mod sources;
+pub mod update;
 
 pub use host::{HELP, run, version_line};
 pub use package::{Package, line as package_line, read as read_package};
-pub use pending::{CODE, PENDING, UPDATE_CODE, note};
+pub use pending::{CODE, PENDING, note};
 pub use shell::NoopHook;
+pub use update::ACTIVE_CODE;

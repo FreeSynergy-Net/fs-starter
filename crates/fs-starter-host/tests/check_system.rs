@@ -37,11 +37,11 @@ fn nothing_installed_is_yellow_and_every_pending_part_is_said_yellow_not_red() {
     assert_eq!(rc, Some(0), "{lines:?}");
     shaped(&lines);
     assert!(has(&lines, "yellow no-module-installed"), "{lines:?}");
-    for part in ["session", "update", "help", "mcp"] {
+    for part in ["session", "help", "mcp"] {
         let want = format!("yellow skeleton-part-pending part={part} note=\"not there yet\"");
         assert!(lines.contains(&want), "{part}: {lines:?}");
     }
-    assert!(has(&lines, "yellow update-binding-pending"), "{lines:?}");
+    assert!(has(&lines, "yellow update-hook-active"), "{lines:?}");
     assert!(lines.contains(&"ok mcp-disabled".to_owned()), "{lines:?}");
     assert!(
         lines

@@ -168,13 +168,7 @@ fn check_pending(r: &mut Report) {
             &format!("{} part={part} note=\"not there yet\"", pending::CODE),
         );
     }
-    r.say(
-        "yellow",
-        &format!(
-            "{} note=\"hook is a no-op, not there yet\"",
-            pending::UPDATE_CODE
-        ),
-    );
+    r.say("yellow", crate::update::ACTIVE_NOTE);
 }
 
 /// Every program the words name, else every installed data package: the `--check` match, no second start.

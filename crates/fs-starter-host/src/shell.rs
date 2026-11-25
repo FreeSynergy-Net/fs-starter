@@ -2,8 +2,7 @@
 //! around the window. Without this the host binary would not enforce "MCP is off after installation" (ADR 0097) and would not
 //! give the update probation (ADR 0069 addendum, item 5) a place to hook in.
 //!
-//! The hook is a no-op: where the one host binds `fs-update` is an open point (ADR 0105 Offen 9). It is named, not invented:
-//! the line `update-binding-pending` (see [`crate::pending`]) says it on every window start.
+//! The window gets the update hook (`crate::update`, UPD-4); `--picture` and a window of no program keep the no-op `NoopHook`.
 //!
 //! Pattern: Facade over the `fs-starter` library (its `Parts`, `run` and `StartHook` stay the one implementation).
 
@@ -137,8 +136,24 @@ pub fn run_library(words: &[OsString], out: &mut dyn io::Write) -> ExitCode {
 ///
 /// A panic in `open` or a signal that ends the process skips `after_end`: the hook sees only a window that returned. A fall back after a
 /// crash needs a mark that the next start reads, not this hook. A code outside 0..=255 ends the process with 1 (`Exit::of_frontend`).
-pub fn around_window(frontend: &str, resumed: bool, open: impl FnOnce() -> i32) -> ExitCode {
-    with_parts(|parts| run_around(parts, frontend, resumed, open))
+pub fn around_window(
+    program: Option<&str>,
+    frontend: &str,
+    resumed: bool,
+    open: impl FnOnce() -> i32,
+) -> ExitCode {
+    match program {
+        // UPD-4: the update hook watches the own file and the module services and keeps the mark of the run
+        Some(name) => {
+            let hook = crate::update::UpdateHook::standard(
+                name,
+                crate::sources::Modules::standard().known(),
+            );
+            with_hooks(&[&hook], |parts| run_around(parts, frontend, resumed, open))
+        }
+        // a one-time command (`--picture`) and a window of no program keep the no-op: nothing to watch, no mark
+        None => with_parts(|parts| run_around(parts, frontend, resumed, open)),
+    }
 }
 
 fn run_around(

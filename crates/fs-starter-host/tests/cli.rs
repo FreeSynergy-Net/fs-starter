@@ -154,10 +154,10 @@ fn mcp_is_off_in_the_host_binary_and_the_actor_is_never_taken_from_elsewhere() {
 }
 
 #[test]
-fn the_open_update_binding_is_visible_next_to_the_pending_parts() {
+fn the_update_hook_and_what_it_lacks_is_visible_next_to_the_pending_parts() {
     let out = host(&["--description", &tasks(), "--check"], "light");
     assert!(
-        text(&out.stderr).contains(fs_starter_host::UPDATE_CODE),
+        text(&out.stderr).contains(fs_starter_host::ACTIVE_CODE),
         "{}",
         text(&out.stderr)
     );

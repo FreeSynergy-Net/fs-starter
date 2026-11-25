@@ -110,9 +110,12 @@ pub fn run(args: &[String]) -> ExitCode {
             } else {
                 sources
             };
-            shell::around_window(&c.frontend, c.resumed, || {
-                fs_forms_run::run_code_with(args, &sources)
-            })
+            shell::around_window(
+                program.as_deref().filter(|_| c.picture.is_none()),
+                &c.frontend,
+                c.resumed,
+                || fs_forms_run::run_code_with(args, &sources),
+            )
         }
         // `Command` grows (`#[non_exhaustive]`): a command this host has no code for is said, never ignored
         Ok(other) => not_built(&other),
