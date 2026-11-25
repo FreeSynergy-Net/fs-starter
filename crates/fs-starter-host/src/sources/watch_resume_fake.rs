@@ -19,8 +19,10 @@ pub(super) struct Shared {
     pub(super) items: RefCell<Vec<Item>>,
     /// The next this many `watch` calls are refused 503 (the feed of the module is gone).
     pub(super) refuse: Cell<u32>,
-    /// `watch` and `changes` answer only after this long (a resume that takes time).
-    pub(super) delay: Cell<Duration>,
+    /// `watch` answers only after this long (the host is inside `subscribe`).
+    pub(super) watch_delay: Cell<Duration>,
+    /// `changes` answers only after this long (the host is inside the catch-up).
+    pub(super) changes_delay: Cell<Duration>,
 }
 
 pub(super) struct Fake(pub(super) Rc<Shared>);
@@ -41,7 +43,7 @@ impl form_source::Server for Fake {
         }
         self.0.sinks.borrow_mut().push(p.get()?.get_sink()?);
         // the sink is known to the fake, the answer is late: the host is still inside `subscribe`
-        tokio::time::sleep(self.0.delay.get()).await;
+        tokio::time::sleep(self.0.watch_delay.get()).await;
         r.get().set_subscription(capnp_rpc::new_client(Sub));
         Ok(())
     }
@@ -51,7 +53,7 @@ impl form_source::Server for Fake {
         p: form_source::ChangesParams,
         mut r: form_source::ChangesResults,
     ) -> Result<(), capnp::Error> {
-        tokio::time::sleep(self.0.delay.get()).await;
+        tokio::time::sleep(self.0.changes_delay.get()).await;
         let p = p.get()?;
         let skip: usize = std::str::from_utf8(p.get_cursor()?.get_opaque()?)
             .ok()

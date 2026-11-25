@@ -98,7 +98,7 @@ impl Watch {
     }
 
     /// 0: a watch stands; else the status of the last refusal ([`UNAVAILABLE`]: none stands and the host asks again).
-    #[cfg(test)]
+    #[cfg(all(test, unix))] // only the unix tests read it (the tests module is unix-only)
     pub(super) fn status(&self) -> u16 {
         self.status.get()
     }

@@ -157,7 +157,7 @@ async fn an_ended_during_the_catch_up_is_resumed_again_never_dropped() {
     LocalSet::new()
         .run_until(async {
             let s = setup().await;
-            s.shared.delay.set(Duration::from_millis(150));
+            s.shared.changes_delay.set(Duration::from_millis(150));
             end(&sink(&s, 0)).await;
             until("the second watch stands", || {
                 s.shared.sinks.borrow().len() == 2
@@ -178,7 +178,7 @@ async fn an_ended_during_the_subscribe_is_resumed_again_never_dropped() {
     LocalSet::new()
         .run_until(async {
             let s = setup().await;
-            s.shared.delay.set(Duration::from_millis(150));
+            s.shared.watch_delay.set(Duration::from_millis(150));
             end(&sink(&s, 0)).await;
             // the fake knows the new sink while its `watch` answers late: the sink ends inside `subscribe`
             until("the second watch stands", || {
