@@ -123,6 +123,7 @@ pub fn mcp_enabled() -> bool {
 }
 
 /// The words `mcp --as <actor>` go through the library: with `McpOff` they end in `mcp-disabled`, exit 1; the host never serves MCP.
+#[must_use = "the exit code is the result of the program"]
 pub fn run_library(words: &[OsString], out: &mut dyn io::Write) -> ExitCode {
     with_parts(|parts| ExitCode::from(fs_starter::run(parts, words, out).code()))
 }

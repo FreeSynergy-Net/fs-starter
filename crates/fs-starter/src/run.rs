@@ -118,6 +118,7 @@ fn written(parts: &Parts<'_>, r: io::Result<()>) -> Exit {
 }
 
 /// `run` with the process's words and stdout: the whole `main` of a program.
+#[must_use = "the exit code is the result of the program"]
 pub fn main_exit(parts: &Parts<'_>) -> ExitCode {
     let words: Vec<OsString> = std::env::args_os().skip(1).collect();
     ExitCode::from(run(parts, &words, &mut io::stdout().lock()).code())

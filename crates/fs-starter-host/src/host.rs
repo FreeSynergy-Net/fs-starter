@@ -35,6 +35,7 @@ pub fn version_line() -> String {
 }
 
 /// Run the words after the program name and return the exit code (0 done, 1 failed, 2 wrong words, 3 contract).
+#[must_use = "the exit code is the result of the program"]
 pub fn run(args: &[String]) -> ExitCode {
     // `mcp --as <actor>` is a word of the starter library, not of the window host: it ends in `mcp-disabled` (MCP is off).
     if args.first().map(String::as_str) == Some("mcp") {
