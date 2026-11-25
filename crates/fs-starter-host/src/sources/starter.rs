@@ -165,7 +165,7 @@ impl StarterSources {
         known: &Known,
         forms: &[ModuleForm],
     ) -> (Result<(FormRecords, Levels), Coded>, bool) {
-        let (got, started) = service::fetch_keeping(known, forms, &self.limits);
+        let (got, started) = super::service_keep::fetch_keeping(known, forms, &self.limits);
         let got = got.map(|(mut records, level)| {
             let keys = self.command_keys(&known.name);
             for data in &mut records.forms {

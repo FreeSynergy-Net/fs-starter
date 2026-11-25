@@ -14,6 +14,7 @@ pub mod range;
 mod refusal;
 mod reply;
 mod service;
+mod service_keep;
 mod session;
 mod starter;
 mod watch;
