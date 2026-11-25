@@ -70,7 +70,7 @@ impl change_sink::Server for Sink {
 pub(super) struct Attach {
     pub module: String,
     pub me: Identity,
-    pub forms: Vec<String>,
+    pub forms: Vec<(String, String)>,
     pub counter: ChangeCounter,
 }
 
@@ -87,12 +87,12 @@ impl OnAttach for Attach {
             }
             intro.send().promise.await.map_err(io::Error::other)?;
             let mut subscriptions = Vec::new();
-            for form in &self.forms {
+            for (form, scope) in &self.forms {
                 let mut request = source.watch_request();
                 {
                     let mut p = request.get();
                     p.set_form(form.as_str());
-                    p.set_scope("");
+                    p.set_scope(scope.as_str());
                     p.set_sink(capnp_rpc::new_client(Sink {
                         module: self.module.clone(),
                         me: self.me.clone(),

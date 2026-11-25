@@ -7,8 +7,8 @@
 
 use std::path::{Path, PathBuf};
 
-use fs_forms_bind::ModuleForm;
-use fs_forms_run::{Coded, FormData, FormRecords, FormRow};
+use super::entries::Wire;
+use fs_forms_run::{Coded, FormRecords};
 use fs_interfaces::forms::FORM_SOURCE_MIN_LEVEL;
 use fs_interfaces::formsource_capnp::form_source;
 use fs_rpc::{CommandStarter, Expected, ServerStarter, SingleTimes, ensure_single, stop_server};
@@ -16,12 +16,7 @@ use fs_rpc::{CommandStarter, Expected, ServerStarter, SingleTimes, ensure_single
 use super::answer::{Limits, clean};
 use super::known::Known;
 use super::level::{self, Levels};
-use super::range::Version;
-use super::refusal::refusal_or;
-
-#[cfg(test)]
-#[path = "rows_tests.rs"]
-mod rows_tests;
+use super::pages::read_pages;
 
 pub(super) const UNREACHABLE: &str = "host-notice-data-unreachable";
 const CONTRACT: &str = "host-notice-data-contract";
@@ -101,63 +96,6 @@ pub(super) fn text(t: capnp::Result<capnp::text::Reader<'_>>, max: usize) -> Res
     Ok(clean(t.map_err(|_| ())?.to_str().map_err(|_| ())?, max))
 }
 
-/// The commands a person may run (`may` of a record or of the page), as clean text; at most `limits.values` of them.
-fn may(
-    list: capnp::Result<capnp::text_list::Reader<'_>>,
-    limits: &Limits,
-) -> Result<Vec<String>, ()> {
-    let list = list.map_err(|_| ())?;
-    (0..list
-        .len()
-        .min(u32::try_from(limits.values).unwrap_or(u32::MAX)))
-        .map(|i| text(list.get(i), limits.text))
-        .collect()
-}
-
-/// One page of one form as rows by channel; the answer is refused (`Err`) when it is over a border.
-fn rows(
-    list: capnp::struct_list::Reader<'_, fs_interfaces::formsource_capnp::record_view::Owned>,
-    form: &ModuleForm,
-    limits: &Limits,
-    bytes: &mut usize,
-) -> Result<Vec<FormRow>, ()> {
-    if list.len() > limits.rows {
-        return Err(());
-    }
-    let mut out = Vec::new();
-    for record in list {
-        let key = text(record.get_id(), 256)?;
-        let values = record.get_values().map_err(|_| ())?;
-        let mut by_channel = Vec::new();
-        for (channel, fields) in &form.map {
-            let mut got: Vec<String> = Vec::new();
-            for field in fields {
-                for v in values {
-                    if v.get_path().map_err(|_| ())?.to_str().map_err(|_| ())? == field {
-                        got.push(text(v.get_text(), limits.text)?);
-                    }
-                }
-            }
-            got.truncate(limits.values);
-            *bytes += got.iter().map(String::len).sum::<usize>();
-            if !got.is_empty() {
-                by_channel.push((channel.clone(), got));
-            }
-        }
-        *bytes += key.len();
-        if *bytes > limits.bytes {
-            return Err(());
-        }
-        out.push(FormRow {
-            key,
-            values: by_channel,
-            // no statement = nothing may be written (the controls stay locked)
-            may: may(record.get_may(), limits)?,
-        });
-    }
-    Ok(out)
-}
-
 /// A one-time command (`--picture`, `--check-system`) ends the service it started itself: the service has no other user, and the
 /// deadline without a user (SB-3) is not there yet. A service that was up before is never ended.
 pub(super) async fn finish(socket: &Path, started: &std::cell::Cell<bool>, end: bool) {
@@ -168,7 +106,7 @@ pub(super) async fn finish(socket: &Path, started: &std::cell::Cell<bool>, end: 
 
 pub(super) async fn read_all(
     known: &Known,
-    forms: &[ModuleForm],
+    wires: &[Wire],
     limits: &Limits,
     end: bool,
 ) -> (Result<(FormRecords, Levels), Coded>, bool) {
@@ -177,14 +115,14 @@ pub(super) async fn read_all(
         Err(e) => return (Err(e), false),
     };
     let started = std::cell::Cell::new(false);
-    let got = read_up(known, forms, limits, &socket, &started).await;
+    let got = read_up(known, wires, limits, &socket, &started).await;
     finish(&socket, &started, end).await;
     (got, started.get())
 }
 
 async fn read_up(
     known: &Known,
-    forms: &[ModuleForm],
+    wires: &[Wire],
     limits: &Limits,
     socket: &Path,
     started: &std::cell::Cell<bool>,
@@ -211,38 +149,7 @@ async fn read_up(
     };
     let provider =
         text(hello.get_provider(), 64).map_err(|()| cause(ANSWER, &known.name, "provider"))?;
-    let mut bytes = 0;
-    let mut out = Vec::new();
-    for form in forms {
-        let mut request = client.page_request();
-        {
-            let mut p = request.get();
-            // ONE spelling on the wire: `name@x.y.z` (a form never raises its patch)
-            p.set_form(fs_interfaces::forms::key(
-                &form.form.name,
-                &Version::new(u64::from(form.form.major), u64::from(form.form.minor), 0),
-            ));
-            p.set_scope("");
-            p.set_limit(limits.rows);
-        }
-        let answer = request
-            .send()
-            .promise
-            .await
-            .map_err(|e| refusal_or(&e, &known.name, "page", UNREACHABLE))?;
-        let page = answer
-            .get()
-            .and_then(form_source::page_results::Reader::get_page)
-            .map_err(|_| cause(ANSWER, &known.name, "page"))?;
-        let list = page
-            .get_records()
-            .map_err(|_| cause(ANSWER, &known.name, "page"))?;
-        let rows = rows(list, form, limits, &mut bytes)
-            .map_err(|()| cause(ANSWER, &known.name, "limit"))?;
-        let mut data = FormData::read_only(form.clone(), rows);
-        data.may = may(page.get_may(), limits).map_err(|()| cause(ANSWER, &known.name, "may"))?;
-        out.push(data);
-    }
+    let out = read_pages(&client, &known.name, wires, limits).await?;
     Ok((
         FormRecords {
             provider,
@@ -281,11 +188,11 @@ pub(super) fn run<T>(
 /// started it (one-time commands).
 pub fn fetch_level(
     known: &Known,
-    forms: &[ModuleForm],
+    wires: &[Wire],
     limits: &Limits,
     end: bool,
 ) -> Result<(FormRecords, Levels), Coded> {
     run(limits, known, async {
-        read_all(known, forms, limits, end).await.0
+        read_all(known, wires, limits, end).await.0
     })
 }

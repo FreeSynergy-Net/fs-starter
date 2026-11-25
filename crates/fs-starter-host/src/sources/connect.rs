@@ -10,6 +10,7 @@ use std::sync::atomic::{AtomicU32, Ordering};
 use fs_forms_run::{Coded, FormRecords, Records, Sources};
 
 use super::end::EndOnDrop;
+use super::entries::{Wanted, select};
 use super::held::{Held, HeldRecords, Wish, hold_module};
 use super::level;
 use super::service::socket_of;
@@ -48,12 +49,27 @@ impl StarterSources {
         range: &str,
         say: impl Fn(String) + Send + 'static,
     ) -> Result<HeldRecords, Coded> {
+        self.connect_wanted(range, &[], say)
+    }
+
+    /// [`Self::connect_held`] for the sources a layout names: each `(type, scope)` reads the entries of `forms.json` of that type, in
+    /// its scope (an entry no source asks for is not read). Without sources every form is read once, in scope `""`.
+    ///
+    /// # Errors
+    /// As [`Self::connect_saying`].
+    pub fn connect_wanted(
+        &self,
+        range: &str,
+        wanted: &[Wanted],
+        say: impl Fn(String) + Send + 'static,
+    ) -> Result<HeldRecords, Coded> {
         // a source that is not there is said on stderr too (the window shows it as a notice): never silent
         let said = |code: Coded| {
             eprintln!("fs-starter: {}", line(&code));
             code
         };
-        let (known, forms) = self.declared(range).map_err(said)?;
+        let (known, entries) = self.declared_entries(range).map_err(said)?;
+        let forms = select(&entries, wanted);
         let began = std::time::Instant::now();
         // a one-time run reads WITHOUT ending: it holds the module like a window, and the guard ends what it started itself
         let (got, started) = if self.end_started {

@@ -7,8 +7,8 @@
 
 use std::sync::{Arc, PoisonError};
 
+use super::entries::Wire;
 use fs_components_kanban::{Answer, Reason};
-use fs_forms_bind::ModuleForm;
 use fs_forms_run::{ChangeCounter, Coded, FormData, FormRecords, Records, SideItem, UndoState};
 use fs_rpc::{Hold, HoldEvent, HoldSpec, ReconnectTimes, hold, hold_calling};
 
@@ -183,7 +183,7 @@ pub(super) fn event_line(module: &str, event: &HoldEvent) -> Option<String> {
 /// What the hold of one window needs besides the module: the negotiated level, the forms to watch and who this window is.
 pub(super) struct Wish<'a> {
     pub level: u32,
-    pub forms: &'a [ModuleForm],
+    pub forms: &'a [Wire],
     pub me: Identity,
 }
 
@@ -224,12 +224,17 @@ pub(super) fn hold_module(
         forms: wish
             .forms
             .iter()
-            .map(|f| {
-                // ONE spelling on the wire: `name@x.y.z` (a form never raises its patch)
-                fs_interfaces::forms::key(
-                    &f.form.name,
-                    &Version::new(u64::from(f.form.major), u64::from(f.form.minor), 0),
-                )
+            .map(|w| {
+                // ONE spelling on the wire: `name@x.y.z` (a form never raises its patch); the scope is the one of its source
+                let key = fs_interfaces::forms::key(
+                    &w.form.form.name,
+                    &Version::new(
+                        u64::from(w.form.form.major),
+                        u64::from(w.form.form.minor),
+                        0,
+                    ),
+                );
+                (key, w.scope.clone())
             })
             .collect(),
         counter: counter.clone(),

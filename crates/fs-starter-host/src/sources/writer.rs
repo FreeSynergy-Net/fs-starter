@@ -4,7 +4,7 @@
 //!
 //! Pattern: Adapter - the port `fs_forms_run::Writer` on `FormSource.invoke` (args, problem, result).
 
-use fs_forms_bind::ModuleForm;
+use super::entries::Wire;
 use fs_forms_run::{Coded, FormData, Invocation, Writer};
 
 use std::sync::Arc;
@@ -17,7 +17,7 @@ use super::starter::StarterSources;
 pub(super) struct ModuleWriter {
     sources: StarterSources,
     module: String,
-    forms: Vec<ModuleForm>,
+    forms: Vec<Wire>,
     /// The held connection of a window at level 2: a write goes as `invokeIf` over it and is part of the history.
     session: Option<Arc<Session>>,
 }
@@ -26,7 +26,7 @@ impl ModuleWriter {
     pub(super) fn new(
         sources: StarterSources,
         module: &str,
-        forms: Vec<ModuleForm>,
+        forms: Vec<Wire>,
         session: Option<Arc<Session>>,
     ) -> Self {
         Self {

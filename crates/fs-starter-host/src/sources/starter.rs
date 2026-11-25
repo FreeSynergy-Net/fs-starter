@@ -23,6 +23,7 @@ use super::{
 use fs_forms_bind::ModuleForm;
 use fs_forms_run::{Coded, FormData, FormRecords, name_of};
 
+use super::entries::{Entry, Wire, select};
 use super::invoke::Written;
 
 /// The sources of the starter.
@@ -71,6 +72,15 @@ impl StarterSources {
     /// `host-notice-source-unknown` (no such module), `host-notice-data-contract` (version outside the range, unreadable range or
     /// `forms.json` that cannot be read).
     pub fn declared(&self, range: &str) -> Result<(&Known, Vec<ModuleForm>), Coded> {
+        let (known, entries) = self.declared_entries(range)?;
+        Ok((known, entries.into_iter().map(|e| e.form).collect()))
+    }
+
+    /// [`Self::declared`] with the `type` of each entry: the registry the sources of a layout choose from ([`select`]).
+    ///
+    /// # Errors
+    /// As [`Self::declared`].
+    pub fn declared_entries(&self, range: &str) -> Result<(&Known, Vec<Entry>), Coded> {
         // the blank form (`groups >=0.1 <0.2`) has no `@`: its first word still names the module, so the refusal below says how a need is
         // written instead of "unknown source"
         let name = name_of(range).split_whitespace().next().unwrap_or("");
@@ -93,7 +103,7 @@ impl StarterSources {
             }
             Err(reason) => return Err(contract("range").with("reason", reason)),
         }
-        let forms = declared::read(&known.folder).map_err(contract)?;
+        let forms = declared::read_entries(&known.folder).map_err(contract)?;
         Ok((known, forms))
     }
 
@@ -129,29 +139,29 @@ impl StarterSources {
             .modules
             .find(module)
             .ok_or_else(|| Coded::new("host-notice-source-unknown").with("contract", module))?;
-        let forms = declared::read(&known.folder).map_err(|why| {
+        let entries = declared::read_entries(&known.folder).map_err(|why| {
             Coded::new("host-notice-data-contract")
                 .with("contract", module)
                 .with("cause", why)
         })?;
         let began = std::time::Instant::now();
-        let records = self.read(known, &forms)?;
+        let records = self.read(known, &select(&entries, &[]))?;
         Ok(read_lines(module, &records, began.elapsed()))
     }
 
     /// Read every form of `known` through the service, with the command set of the module on each form (what `allowed` asks).
-    pub(super) fn read(&self, known: &Known, forms: &[ModuleForm]) -> Result<FormRecords, Coded> {
-        self.read_level(known, forms).map(|(records, _)| records)
+    pub(super) fn read(&self, known: &Known, wires: &[Wire]) -> Result<FormRecords, Coded> {
+        self.read_level(known, wires).map(|(records, _)| records)
     }
 
     /// [`Self::read`] and the level the host works with for this service.
     pub(super) fn read_level(
         &self,
         known: &Known,
-        forms: &[ModuleForm],
+        wires: &[Wire],
     ) -> Result<(FormRecords, Levels), Coded> {
         let (mut records, level) =
-            service::fetch_level(known, forms, &self.limits, self.end_started)?;
+            service::fetch_level(known, wires, &self.limits, self.end_started)?;
         let keys = self.command_keys(&known.name);
         for data in &mut records.forms {
             data.commands.clone_from(&keys);
@@ -163,9 +173,9 @@ impl StarterSources {
     pub(super) fn read_keeping(
         &self,
         known: &Known,
-        forms: &[ModuleForm],
+        wires: &[Wire],
     ) -> (Result<(FormRecords, Levels), Coded>, bool) {
-        let (got, started) = super::service_keep::fetch_keeping(known, forms, &self.limits);
+        let (got, started) = super::service_keep::fetch_keeping(known, wires, &self.limits);
         let got = got.map(|(mut records, level)| {
             let keys = self.command_keys(&known.name);
             for data in &mut records.forms {
@@ -180,16 +190,12 @@ impl StarterSources {
     ///
     /// # Errors
     /// `host-notice-source-unknown`, else the codes of the connection.
-    pub(super) fn read_forms(
-        &self,
-        module: &str,
-        forms: &[ModuleForm],
-    ) -> Result<Vec<FormData>, Coded> {
+    pub(super) fn read_forms(&self, module: &str, wires: &[Wire]) -> Result<Vec<FormData>, Coded> {
         let known = self
             .modules
             .find(module)
             .ok_or_else(|| Coded::new("host-notice-source-unknown").with("contract", module))?;
-        Ok(self.read(known, forms)?.forms)
+        Ok(self.read(known, wires)?.forms)
     }
 
     /// The raw contract keys of the command set of `module` (what a form may bind a command channel to).
@@ -279,19 +285,6 @@ pub fn line(c: &Coded) -> String {
     format!("{} {}", c.code, params.join(" "))
         .trim_end()
         .to_owned()
-}
-
-/// The declared forms as records without rows: what `form_report` matches (no service needed).
-#[must_use]
-pub fn bare(forms: Vec<ModuleForm>) -> FormRecords {
-    FormRecords {
-        provider: String::new(),
-        forms: forms
-            .into_iter()
-            .map(|declared| FormData::read_only(declared, Vec::new()))
-            .collect(),
-        ..FormRecords::default()
-    }
 }
 
 #[cfg(test)]

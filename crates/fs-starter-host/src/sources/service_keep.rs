@@ -2,7 +2,7 @@
 //!
 //! Pattern: Facade over `read_all` of [`super::service`] (the same read, one flag more).
 
-use fs_forms_bind::ModuleForm;
+use super::entries::Wire;
 use fs_forms_run::{Coded, FormRecords};
 
 use super::answer::Limits;
@@ -18,7 +18,7 @@ use super::service::{UNREACHABLE, cause, read_all};
 /// As `fetch_level`; the flag is given with the error too.
 pub fn fetch_keeping(
     known: &Known,
-    forms: &[ModuleForm],
+    wires: &[Wire],
     limits: &Limits,
 ) -> (Result<(FormRecords, Levels), Coded>, bool) {
     let none = |e| (Err(e), false);
@@ -33,7 +33,7 @@ pub fn fetch_keeping(
     let local = tokio::task::LocalSet::new();
     local
         .block_on(&runtime, async {
-            tokio::time::timeout(limits.time, read_all(known, forms, limits, false)).await
+            tokio::time::timeout(limits.time, read_all(known, wires, limits, false)).await
         })
         .unwrap_or_else(|_| (Err(cause(UNREACHABLE, &known.name, "time")), false))
 }

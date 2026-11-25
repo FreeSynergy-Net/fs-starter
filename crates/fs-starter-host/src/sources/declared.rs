@@ -8,8 +8,10 @@ use std::io::Read;
 use std::path::Path;
 
 use fs_forms_bind::{Basic, FormRef, ModuleForm};
+use fs_forms_run::{FormData, FormRecords};
 use serde_json::Value;
 
+use super::entries::Entry;
 use crate::registry::read::{MAX_BYTES, check, open_plain};
 
 fn basic(word: &str) -> Option<Basic> {
@@ -39,11 +41,11 @@ fn form_version(text: &str) -> Option<(u32, u32)> {
     Some((u32::try_from(v.major).ok()?, u32::try_from(v.minor).ok()?))
 }
 
-/// The forms of the text of a `forms.json`.
+/// The entries (form and `type`) of the text of a `forms.json`.
 ///
 /// # Errors
-/// A cause word: `json`, `list`, `name`, `version`, `map`, `fields`, `basic`.
-pub fn parse(text: &str) -> Result<Vec<ModuleForm>, &'static str> {
+/// A cause word: `json`, `list`, `name`, `version`, `type`, `map`, `fields`, `basic`.
+pub fn parse_entries(text: &str) -> Result<Vec<Entry>, &'static str> {
     let doc: Value = serde_json::from_str(text).map_err(|_| "json")?;
     let list = doc.as_array().ok_or("list")?;
     let mut out = Vec::new();
@@ -73,24 +75,40 @@ pub fn parse(text: &str) -> Result<Vec<ModuleForm>, &'static str> {
                     .ok_or("basic")
             })
             .collect::<Result<Vec<_>, _>>()?;
-        out.push(ModuleForm {
-            form: FormRef {
-                name: name.to_owned(),
-                major,
-                minor,
+        // a missing `type` is the empty word (an older file); a `type` that is not text is a flaw
+        let data_type = match f.get("type") {
+            None => String::new(),
+            Some(t) => t.as_str().ok_or("type")?.to_owned(),
+        };
+        out.push(Entry {
+            data_type,
+            form: ModuleForm {
+                form: FormRef {
+                    name: name.to_owned(),
+                    major,
+                    minor,
+                },
+                map,
+                fields,
             },
-            map,
-            fields,
         });
     }
     Ok(out)
 }
 
-/// The forms of the module in `folder` (`catalog/forms.json`). A module without the file offers no form (an empty list).
+/// The forms of the text of a `forms.json`, without their types (what the check shows).
+///
+/// # Errors
+/// As [`parse_entries`].
+pub fn parse(text: &str) -> Result<Vec<ModuleForm>, &'static str> {
+    parse_entries(text).map(|e| e.into_iter().map(|e| e.form).collect())
+}
+
+/// The entries of the module in `folder` (`catalog/forms.json`). A module without the file offers no form (an empty list).
 ///
 /// # Errors
 /// A cause word: the ones of [`parse`], `symlink` / `too-large` / `read-failed` for the file.
-pub fn read(folder: &Path) -> Result<Vec<ModuleForm>, &'static str> {
+pub fn read_entries(folder: &Path) -> Result<Vec<Entry>, &'static str> {
     let file = folder.join("catalog").join("forms.json");
     match check(folder, &file) {
         Ok(false) => return Ok(Vec::new()),
@@ -111,7 +129,20 @@ pub fn read(folder: &Path) -> Result<Vec<ModuleForm>, &'static str> {
     if bytes.len() as u64 > MAX_BYTES {
         return Err("too-large");
     }
-    parse(&String::from_utf8(bytes).map_err(|_| "read-failed")?)
+    parse_entries(&String::from_utf8(bytes).map_err(|_| "read-failed")?)
+}
+
+/// The declared forms as records without rows: what `form_report` matches (no service needed).
+#[must_use]
+pub fn bare(forms: Vec<ModuleForm>) -> FormRecords {
+    FormRecords {
+        provider: String::new(),
+        forms: forms
+            .into_iter()
+            .map(|declared| FormData::read_only(declared, Vec::new()))
+            .collect(),
+        ..FormRecords::default()
+    }
 }
 
 #[cfg(test)]
@@ -176,5 +207,23 @@ mod version_tests {
         for bad in ["1", "x.y", "1.2.3-beta", ""] {
             assert_eq!(form_version(bad), None, "{bad:?}");
         }
+    }
+}
+
+#[cfg(test)]
+mod type_tests {
+    use super::parse_entries;
+
+    #[test]
+    fn the_type_of_each_entry_is_read_and_two_entries_of_one_form_stay_two() {
+        let text = r#"[
+            {"name":"rows","version":"1.0.0","type":"Lane","map":{},"fields":{}},
+            {"name":"rows","version":"1.0.0","type":"Task","map":{},"fields":{}},
+            {"name":"old","version":"1.0","map":{},"fields":{}}]"#;
+        let got = parse_entries(text).unwrap();
+        let types: Vec<_> = got.iter().map(|e| e.data_type.as_str()).collect();
+        assert_eq!(types, ["Lane", "Task", ""]);
+        let bad = r#"[{"name":"t","version":"1.0","type":3,"map":{},"fields":{}}]"#;
+        assert_eq!(parse_entries(bad), Err("type"));
     }
 }
