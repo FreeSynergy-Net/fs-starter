@@ -225,14 +225,14 @@ mod tests {
     fn without_a_wish_and_without_a_primary_type_an_ambiguous_form_is_not_read() {
         let entries = [entry("rows", "Lane"), entry("rows", "Task")];
         let got = select(&entries, &[]);
-        assert!(got.wires.is_empty());
+        assert_eq!(got.wires, []);
         assert!(got.notices[0].contains("not read"), "{:?}", got.notices);
     }
 
     #[test]
     fn a_source_type_no_entry_has_is_said() {
         let got = select(&[entry("rows", "Task")], &[want("Ghost", "x")]);
-        assert!(got.wires.is_empty());
+        assert_eq!(got.wires, []);
         assert!(got.notices[0].contains("Ghost"), "{:?}", got.notices);
     }
 }
