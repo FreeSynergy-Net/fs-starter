@@ -108,6 +108,7 @@ fn t3_after_the_guard_is_dropped_a_new_claim_is_first() {
 
 #[test]
 fn t4_a_stale_socket_file_without_a_process_is_first() {
+    let _no_fork = no_fork_meanwhile(); // same window as t3: a forked child holds the listener fd until exec
     let dir = tempfile::tempdir().unwrap();
     let path = at(dir.path(), "tasks");
     std::fs::DirBuilder::new()
