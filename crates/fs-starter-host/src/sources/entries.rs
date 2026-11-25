@@ -1,5 +1,6 @@
 //! The form entries a module declares (`catalog/forms.json`) as a registry by the key (form, type), and the choice of what a window
-//! reads: a layout source says `(type, scope)`, and ONLY the entries of that type are read, each with the scope of its source. A form
+//! reads: a layout source says `(number, type, scope)` (`Sources::connect_wanted` of fs-forms-run hands them over, numbered from 1 like
+//! `source` of a block), and ONLY the entries of that type are read, each with the scope of its source. A form
 //! name alone is not a key: planning declares `rows@1.0.0` twice (type `Lane` and type `Task`) and the scope decides which rows come.
 //!
 //! Pattern: Registry – Formeinträge nach Schlüssel (Form, Typ)
@@ -15,10 +16,12 @@ pub struct Entry {
     pub data_type: String,
 }
 
-/// What one layout source asks for: the data type and the scope word that goes to the module as it is.
+/// What one layout source asks for: its number, the data type and the scope word that goes to the module as it is.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Wanted {
-    /// The data type of the source (`type` of the `[[source]]`).
+    /// The number of the source in the layout (`Want::n` of fs-forms-run: counts from 1, like `source` of a block and a binding).
+    pub n: u32,
+    /// The data type of the source (`type` of the `[[source]]`); empty = the layout does not say (a view made by hand).
     pub data_type: String,
     /// The scope on the wire: `""` for all and for the selected list (host words), else the word of the module as it stands.
     pub scope: String,
@@ -27,6 +30,8 @@ pub struct Wanted {
 /// One read: an entry and the scope its page is asked in (also the scope its changes are watched in).
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Wire {
+    /// The number of the source of the layout this read is for (counts from 1); `0` = no layout asked (`probe`, `connect`).
+    pub source: u32,
     /// The entry to read.
     pub form: ModuleForm,
     /// The data type of the entry.
@@ -60,76 +65,93 @@ fn key(e: &Entry) -> String {
     )
 }
 
-/// The reads for `wanted` out of `entries`: each wanted source takes every entry of its type (in the order of the file), once; a
-/// source whose type no entry has is said in the notices.
+/// The reads for `wanted` out of `entries`: each wanted source takes every entry of ITS type (in the order of the file), with its
+/// own scope and its own number, so two sources of the same type but another scope are two reads. A source whose type no entry has is
+/// said in the notices.
 ///
-/// Without any wish (a caller that cannot say the sources yet) a form with ONE type is read once in scope `""`. A form that the
-/// module declares for several types (planning: `rows@1.0.0` for `Lane` and `Task`) is read only for the PRIMARY type of the module
-/// (the type most entries of the file have: the module's own default for scope `""`); with no single most frequent type, or when the
-/// primary type is not one of the form's, the form is not read. Every entry left out is said in the notices.
+/// Only a source that names no type (a caller without a layout: `probe`, `connect`, a view made by hand) is placed by
+/// [`unwished`]: the stop-gap that reads a form of several types only for the primary type, in scope `""`.
 #[must_use]
 pub fn select(entries: &[Entry], wanted: &[Wanted]) -> Selection {
-    let wire = |e: &Entry, scope: &str| Wire {
-        form: e.form.clone(),
-        data_type: e.data_type.clone(),
-        scope: scope.to_owned(),
-    };
     let mut out = Selection::default();
     if wanted.is_empty() {
-        let primary = primary_type(entries);
-        let mut seen: Vec<String> = Vec::new();
-        for e in entries {
-            let k = key(e);
-            if seen.contains(&k) {
-                continue;
-            }
-            seen.push(k.clone());
-            let mut types: Vec<&str> = Vec::new();
-            for x in entries.iter().filter(|x| key(x) == k) {
-                if !types.contains(&x.data_type.as_str()) {
-                    types.push(&x.data_type);
-                }
-            }
-            let chosen = if types.len() == 1 {
-                Some(e)
-            } else {
-                entries
-                    .iter()
-                    .find(|x| key(x) == k && Some(x.data_type.as_str()) == primary)
-            };
-            if let Some(c) = chosen {
-                out.wires.push(wire(c, ""));
-            }
-            if types.len() > 1 {
-                let listed = types.join(", ");
-                out.notices.push(match chosen {
-                    Some(c) => format!(
-                        "{k} is declared for {listed}; without a source type only {} is read (Paket R)",
-                        c.data_type
-                    ),
-                    None => format!("{k} is declared for {listed}; without a source type not read (Paket R)"),
-                });
-            }
-        }
+        unwished(entries, 0, &mut out);
         return out;
     }
     for w in wanted {
+        if w.data_type.is_empty() {
+            unwished(entries, w.n, &mut out);
+            continue;
+        }
         let mut found = false;
         for e in entries.iter().filter(|e| e.data_type == w.data_type) {
             found = true;
-            let one = wire(e, &w.scope);
+            let one = wire(e, w.n, &w.scope);
             if !out.wires.contains(&one) {
                 out.wires.push(one);
             }
         }
         if !found {
             out.notices.push(format!(
-                "source type {} has no entry in forms.json; not read",
-                w.data_type
+                "source {} type {} has no entry in forms.json; not read",
+                w.n, w.data_type
             ));
         }
     }
     out
+}
+
+fn wire(e: &Entry, source: u32, scope: &str) -> Wire {
+    Wire {
+        source,
+        form: e.form.clone(),
+        data_type: e.data_type.clone(),
+        scope: scope.to_owned(),
+    }
+}
+
+/// A form with ONE type is read once in scope `""`. A form the module declares for several types (planning: `rows@1.0.0` for `Lane`
+/// and `Task`) is read only for the PRIMARY type of the module (the type most entries of the file have); with no single most frequent
+/// type, or when the primary type is not one of the form's, the form is not read. Every entry left out is said in the notices.
+fn unwished(entries: &[Entry], source: u32, out: &mut Selection) {
+    let primary = primary_type(entries);
+    let mut seen: Vec<String> = Vec::new();
+    for e in entries {
+        let k = key(e);
+        if seen.contains(&k) {
+            continue;
+        }
+        seen.push(k.clone());
+        let mut types: Vec<&str> = Vec::new();
+        for x in entries.iter().filter(|x| key(x) == k) {
+            if !types.contains(&x.data_type.as_str()) {
+                types.push(&x.data_type);
+            }
+        }
+        let chosen = if types.len() == 1 {
+            Some(e)
+        } else {
+            entries
+                .iter()
+                .find(|x| key(x) == k && Some(x.data_type.as_str()) == primary)
+        };
+        if let Some(c) = chosen {
+            let one = wire(c, source, "");
+            if !out.wires.contains(&one) {
+                out.wires.push(one);
+            }
+        }
+        if types.len() > 1 {
+            let listed = types.join(", ");
+            out.notices.push(match chosen {
+                Some(c) => format!(
+                    "{k} is declared for {listed}; without a source type only {} is read",
+                    c.data_type
+                ),
+                None => format!("{k} is declared for {listed}; without a source type not read"),
+            });
+        }
+    }
 }
 
 /// The type most entries have; `None` when two types lead.
@@ -148,92 +170,5 @@ fn primary_type(entries: &[Entry]) -> Option<&str> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use fs_forms_bind::FormRef;
-
-    fn entry(name: &str, data_type: &str) -> Entry {
-        Entry {
-            form: ModuleForm {
-                data_type: data_type.into(),
-                form: FormRef {
-                    name: name.into(),
-                    major: 1,
-                    minor: 0,
-                },
-                map: Vec::new(),
-                fields: Vec::new(),
-            },
-            data_type: data_type.into(),
-        }
-    }
-
-    fn want(t: &str, s: &str) -> Wanted {
-        Wanted {
-            data_type: t.into(),
-            scope: s.into(),
-        }
-    }
-
-    #[test]
-    fn a_source_takes_only_the_entries_of_its_type_with_its_own_scope() {
-        let entries = [entry("rows", "Lane"), entry("rows", "Task")];
-        let got = select(
-            &entries,
-            &[want("Lane", "lanes:assignee"), want("Task", "")],
-        );
-        let got: Vec<_> = got
-            .wires
-            .iter()
-            .map(|w| (w.data_type.as_str(), w.scope.as_str()))
-            .collect();
-        assert_eq!(got, [("Lane", "lanes:assignee"), ("Task", "")]);
-    }
-
-    #[test]
-    fn a_type_nobody_asks_for_is_not_read() {
-        let entries = [entry("rows", "Lane"), entry("rows", "Task")];
-        let got = select(&entries, &[want("Task", "")]);
-        assert_eq!(got.wires.len(), 1);
-        assert_eq!(got.wires[0].data_type, "Task");
-    }
-
-    #[test]
-    fn without_a_wish_an_ambiguous_form_is_read_only_for_the_primary_type_and_says_so() {
-        let entries = [
-            entry("cards", "Task"),
-            entry("rows", "Lane"),
-            entry("rows", "Task"),
-        ];
-        let got = select(&entries, &[]);
-        let read: Vec<_> = got
-            .wires
-            .iter()
-            .map(|w| {
-                (
-                    w.form.form.name.as_str(),
-                    w.data_type.as_str(),
-                    w.scope.as_str(),
-                )
-            })
-            .collect();
-        assert_eq!(read, [("cards", "Task", ""), ("rows", "Task", "")]);
-        assert_eq!(got.notices.len(), 1);
-        assert!(got.notices[0].contains("Lane, Task"), "{:?}", got.notices);
-    }
-
-    #[test]
-    fn without_a_wish_and_without_a_primary_type_an_ambiguous_form_is_not_read() {
-        let entries = [entry("rows", "Lane"), entry("rows", "Task")];
-        let got = select(&entries, &[]);
-        assert_eq!(got.wires, []);
-        assert!(got.notices[0].contains("not read"), "{:?}", got.notices);
-    }
-
-    #[test]
-    fn a_source_type_no_entry_has_is_said() {
-        let got = select(&[entry("rows", "Task")], &[want("Ghost", "x")]);
-        assert_eq!(got.wires, []);
-        assert!(got.notices[0].contains("Ghost"), "{:?}", got.notices);
-    }
-}
+#[path = "entries_tests.rs"]
+mod tests;

@@ -7,7 +7,7 @@ use std::path::Path;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
-use fs_forms_run::{Coded, FormRecords, Records, Sources};
+use fs_forms_run::{Coded, FormRecords, Records, Sources, Want, name_of};
 
 use super::end::EndOnDrop;
 use super::entries::{Wanted, select};
@@ -49,15 +49,16 @@ impl StarterSources {
         range: &str,
         say: impl Fn(String) + Send + 'static,
     ) -> Result<HeldRecords, Coded> {
-        self.connect_wanted(range, &[], say)
+        self.connect_for(range, &[], say)
     }
 
-    /// [`Self::connect_held`] for the sources a layout names: each `(type, scope)` reads the entries of `forms.json` of that type, in
-    /// its scope (an entry no source asks for is not read). Without sources every form is read once, in scope `""`.
+    /// [`Self::connect_held`] for the sources a layout names: each `(number, type, scope)` reads the entries of `forms.json` of that
+    /// type, in its scope, and the rows come back numbered with that source (an entry no source asks for is not read). Without
+    /// sources (or a source without a type) the stop-gap of [`select`] applies: a form of several types is read for the primary type only.
     ///
     /// # Errors
     /// As [`Self::connect_saying`].
-    pub fn connect_wanted(
+    pub fn connect_for(
         &self,
         range: &str,
         wanted: &[Wanted],
@@ -120,6 +121,39 @@ impl StarterSources {
 }
 
 impl Sources for StarterSources {
+    /// The sources of a layout: the module is the one of the FIRST source (the window draws from one module); every source brings its
+    /// number, type and scope, so each read is numbered and scoped for ITS source ([`select`]). A source that names another module is
+    /// said and not read (never silent).
+    fn connect_wanted(
+        &self,
+        wants: &[Want],
+        _: Option<&Path>,
+        _: &Path,
+    ) -> Result<Arc<dyn Records>, Coded> {
+        let first = wants
+            .first()
+            .ok_or_else(|| Coded::new("host-notice-source-unknown"))?;
+        let module = name_of(&first.range);
+        let mut wanted = Vec::new();
+        for w in wants {
+            if name_of(&w.range) == module {
+                wanted.push(Wanted {
+                    n: w.n,
+                    data_type: w.data_type.clone(),
+                    scope: w.scope.clone(),
+                });
+            } else {
+                eprintln!(
+                    "fs-starter: forms module={module} source {} names another module ({}); not read",
+                    w.n,
+                    name_of(&w.range)
+                );
+            }
+        }
+        self.connect_for(&first.range, &wanted, |line| eprintln!("{line}"))
+            .map(|held| Arc::new(held) as Arc<dyn Records>)
+    }
+
     /// The `socket` of the command line is NOT used: a module is reached only on its own socket (border 4).
     fn connect(&self, range: &str, _: Option<&Path>, _: &Path) -> Result<Arc<dyn Records>, Coded> {
         self.connect_saying(range, |line| eprintln!("{line}"))

@@ -1,5 +1,6 @@
-//! What happens FIRST on every connection the window holds (level 2): `introduce(program, instance, device)` and `watch(form, "", sink)`
-//! for every form of the module. One per CONNECTION (= window): never per account or process, so a change that window A made reaches
+//! What happens FIRST on every connection the window holds (level 2): `introduce(program, instance, device)` and `watch(form, scope, sink)`
+//! for every read of the window: the SAME key under two scopes (the lane list and the cards of a board) are two watches with their own sink;
+//! a form the module cannot watch (planning: `rows@1.0.0`) is said (`watch ... unavailable`) and left out, the other watches stay. One per CONNECTION (= window): never per account or process, so a change that window A made reaches
 //! window B as an event; only the changes of THIS connection (same program and instance) are left out, never "from the same person".
 //! `device` stays empty in stage 3 (no stand-in key). The sink counts the change ([`ChangeCounter`]) and says
 //! `fs-starter: watch module=M change=<activity> by=<program>` on stderr.
@@ -158,3 +159,7 @@ mod tests {
         );
     }
 }
+
+#[cfg(all(test, unix))]
+#[path = "watch_tests.rs"]
+mod scoped_tests;

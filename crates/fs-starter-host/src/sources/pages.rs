@@ -115,6 +115,9 @@ pub async fn read_pages(
         let rows =
             rows(list, form, limits, &mut bytes).map_err(|()| cause(ANSWER, module, "limit"))?;
         let mut data = FormData::read_only(form.clone(), rows);
+        // the rows say which source of the layout they are for: the lanes of a grouping are found by this number and type
+        data.source = wire.source;
+        data.data_type.clone_from(&wire.data_type);
         data.may = may(page.get_may(), limits).map_err(|()| cause(ANSWER, module, "may"))?;
         out.push(data);
     }

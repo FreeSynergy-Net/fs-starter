@@ -17,6 +17,14 @@ contract = "groups@>=0.1.0, <0.2.0"
 type = "Group"
 scope = "all"
 
+# Source 2: the member table takes the rows of type Member (a source reads only the entries of ITS type: Paket T).
+[[source]]
+elem = "source:2"
+n = 2
+contract = "groups@>=0.1.0, <0.2.0"
+type = "Member"
+scope = "all"
+
 [[menu]]
 elem = "menu:0"
 kind = "standard-program"
@@ -42,7 +50,7 @@ title = "groups-tree-title"
 elem = "block:groups/main"
 at = "main"
 block = "table"
-source = 1
+source = 2
 title = "groups-members-title"
 
 [[message]]

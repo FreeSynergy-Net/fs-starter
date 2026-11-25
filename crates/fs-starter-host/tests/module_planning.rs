@@ -97,13 +97,14 @@ async fn two_rows_entries_are_not_mixed_up_the_lane_source_gets_lanes_the_task_s
         .map(|e| e.data_type.as_str())
         .collect();
     assert_eq!(rows, ["Lane", "Task"], "planning declares both entries");
-    let want = |t: &str, s: &str| Wanted {
+    let want = |n: u32, t: &str, s: &str| Wanted {
+        n,
         data_type: t.into(),
         scope: s.into(),
     };
     let wires = select(
         &entries,
-        &[want("Lane", "lanes:assignee"), want("Task", "")],
+        &[want(2, "Lane", "lanes:assignee"), want(1, "Task", "")],
     )
     .wires;
     // the Task source also takes `cards-in-columns` (type Task): every entry of the type of a source
@@ -117,6 +118,8 @@ async fn two_rows_entries_are_not_mixed_up_the_lane_source_gets_lanes_the_task_s
     let (lane, task) = (at("Lane"), at("Task"));
     assert_eq!(wires[lane].scope, "lanes:assignee");
     assert_eq!(wires[task].scope, "");
+    // numbered as the layout numbers (from 1): the lane source is 2, the task source 1
+    assert_eq!((wires[lane].source, wires[task].source), (2, 1));
 
     let dir = tempfile::Builder::new().prefix("fp").tempdir().unwrap();
     LocalSet::new()
@@ -129,6 +132,15 @@ async fn two_rows_entries_are_not_mixed_up_the_lane_source_gets_lanes_the_task_s
             let got = read_pages(&source.client, "planning", &wires, &Limits::default())
                 .await
                 .unwrap();
+            // the rows come back numbered as the layout numbers (from 1) and typed: the host of a window finds the lane list by this
+            assert_eq!(
+                (got[lane].source, got[lane].data_type.as_str()),
+                (2, "Lane")
+            );
+            assert_eq!(
+                (got[task].source, got[task].data_type.as_str()),
+                (1, "Task")
+            );
             let keys = |at: usize| {
                 got[at]
                     .rows

@@ -127,8 +127,10 @@ impl StarterSources {
         &self.modules
     }
 
-    /// Start the service of `module` (the one road of the window: `ensure_single`, version handshake, heartbeat), read every form it
-    /// declares, and answer what was read as `read_lines`. A one-time command builds the sources with
+    /// Start the service of `module` (the one road of the window: `ensure_single`, version handshake, heartbeat), read the forms it
+    /// declares WITHOUT a layout (no source says a type: a form declared for several types is read for the primary type only, the
+    /// rest is said; [`select`]), and answer what was read as `read_lines`. A window reads by the `(number, type, scope)` of its
+    /// layout sources instead (`Sources::connect_wanted`). A one-time command builds the sources with
     /// [`Self::ending_what_it_started`], so a service this call started is ended again.
     ///
     /// # Errors
