@@ -13,6 +13,7 @@ use fs_forms_run::{ChangeCounter, Coded, FormData, FormRecords, Records, SideIte
 use fs_rpc::{Hold, HoldEvent, HoldSpec, ReconnectTimes, hold, hold_calling};
 
 use super::answer::Limits;
+use super::end::EndOnDrop;
 use super::known::Known;
 use super::level::HISTORY_FROM;
 use super::range::Version;
@@ -22,16 +23,17 @@ use super::watch::{Attach, Identity};
 
 /// What `connect` gives the window: the records of the read and, as long as they live, the hold of the module.
 ///
-/// `hold` is `None` only for a one-time command (`--picture`, `--check-system`): it ends the service it started, so nothing may
-/// hold it again.
+/// A one-time command (`--picture`) holds too (with history at level 2); the service it started itself ends when these records are
+/// dropped, one that was up before stays.
 pub struct HeldRecords {
     records: FormRecords,
     held: Held,
+    /// Last field: dropped after the hold, so the service ends when nobody holds it any more.
+    _end: Option<EndOnDrop>,
 }
 
 /// How the module is held: level 1 only keeps the connection; level 2 is a [`Session`] (history, watch).
 pub(super) enum Held {
-    None,
     /// RAII: the handle is the registration, only dropping it matters.
     Plain(#[allow(dead_code)] Hold),
     Session(Arc<Session>),
@@ -40,14 +42,18 @@ pub(super) enum Held {
 impl HeldRecords {
     /// The records of a read, held by `hold` (if any).
     #[must_use]
-    pub(super) fn new(records: FormRecords, held: Held) -> Self {
-        Self { records, held }
+    pub(super) fn new(records: FormRecords, held: Held, end: Option<EndOnDrop>) -> Self {
+        Self {
+            records,
+            held,
+            _end: end,
+        }
     }
 
     fn session(&self) -> Option<&Arc<Session>> {
         match &self.held {
             Held::Session(s) => Some(s),
-            _ => None,
+            Held::Plain(_) => None,
         }
     }
 

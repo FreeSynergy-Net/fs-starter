@@ -9,8 +9,10 @@ use std::sync::atomic::{AtomicU32, Ordering};
 
 use fs_forms_run::{Coded, FormRecords, Records, Sources};
 
+use super::end::EndOnDrop;
 use super::held::{Held, HeldRecords, Wish, hold_module};
 use super::level;
+use super::service::socket_of;
 use super::starter::{StarterSources, line, read_lines};
 use super::watch::Identity;
 use super::writer::ModuleWriter;
@@ -53,38 +55,48 @@ impl StarterSources {
         };
         let (known, forms) = self.declared(range).map_err(said)?;
         let began = std::time::Instant::now();
-        let (records, levels) = self.read_level(known, &forms).map_err(said)?;
+        // a one-time run reads WITHOUT ending: it holds the module like a window, and the guard ends what it started itself
+        let (got, started) = if self.end_started {
+            self.read_keeping(known, &forms)
+        } else {
+            (self.read_level(known, &forms), false)
+        };
+        let end = started
+            .then(|| socket_of(&known.name).ok().map(EndOnDrop::new))
+            .flatten();
+        let (records, levels) = got.map_err(said)?;
         // what was read, never silent: an empty picture can be told from a service that gave nothing
         for line in read_lines(known.name.as_str(), &records, began.elapsed()) {
             eprintln!("{line}");
         }
         // the ONE line of the negotiated level (the service says its own; the host works with min(level, its own))
         eprintln!("{}", level::line(&known.name, levels.service, levels.used));
-        // a window holds its module (the module ends by itself after its idle time once the records are dropped); a one-time command
-        // ended the service it started and must not start it again. At level 2 the window also introduces itself and watches.
-        let held = if self.end_started {
-            Held::None
-        } else {
-            let me = identity(self.program.as_deref(), self.slot);
-            let wish = Wish {
-                level: levels.used,
-                forms: &forms,
-                me,
-            };
-            hold_module(known, &self.limits, wish, say).map_err(said)?
+        // every run holds its module (a window until it is dropped; the module ends by itself after its idle time). At level 2 the run
+        // also introduces itself and watches, so its writes are in the history (`app.undo`). A failed hold drops `end` and ends the
+        // service this run started.
+        let me = identity(self.program.as_deref(), self.slot);
+        let wish = Wish {
+            level: levels.used,
+            forms: &forms,
+            me,
         };
+        let held = hold_module(known, &self.limits, wish, say).map_err(said)?;
         // a gesture of the window goes back to this module through the port `Writer`
         let session = match &held {
             Held::Session(s) => Some(Arc::clone(s)),
-            _ => None,
+            Held::Plain(_) => None,
         };
-        let writer = ModuleWriter::new(self.clone(), &known.name, forms, session);
+        // the writer never ends a service: the hold stands and the guard of the records does it
+        let mut sources = self.clone();
+        sources.end_started = false;
+        let writer = ModuleWriter::new(sources, &known.name, forms, session);
         Ok(HeldRecords::new(
             FormRecords {
                 writer: Some(Arc::new(writer)),
                 ..records
             },
             held,
+            end,
         ))
     }
 }

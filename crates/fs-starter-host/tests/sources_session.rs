@@ -109,3 +109,60 @@ fn an_undo_after_another_window_changed_the_card_is_a_conflict_and_keeps_the_ste
     // B can still take back its own change
     assert_eq!(b.answer_app("app.undo"), Some(Answer::Accepted));
 }
+
+fn up(s: &support::inproc::InProc) -> bool {
+    std::os::unix::net::UnixStream::connect(&s.socket).is_ok()
+}
+
+/// The service is down: a stop (if it runs) and the wait until the socket does not answer.
+fn down(s: &support::inproc::InProc) {
+    if up(s) {
+        let runtime = tokio::runtime::Builder::new_current_thread()
+            .enable_all()
+            .build()
+            .unwrap();
+        let local = tokio::task::LocalSet::new();
+        let _ = local.block_on(&runtime, fs_rpc::stop_server(&s.socket));
+    }
+    waits_for("the service is down", || !up(s));
+}
+
+fn one_time(s: &support::inproc::InProc) -> HeldRecords {
+    s.sources
+        .clone()
+        .ending_what_it_started()
+        .connect_held("cards@>=0.1.0, <0.2.0", |_| {})
+        .expect("read and hold at level 2")
+}
+
+/// Mutant: `end_started` gives no session (the old `Held::None`) = `answer_app` is `Refused(unsupported)`, the first assert is red;
+/// no guard = the socket still answers after the drop, the second is red; a guard that ends a service that was up = the third is red.
+#[test]
+fn a_one_time_run_has_a_history_and_ends_the_service_it_started_itself() {
+    let (_turn, s) = module();
+    down(&s);
+    let w = one_time(&s);
+    assert!(up(&s), "the one-time run holds the service it started");
+    mv(&w, "c1", "done");
+    assert_eq!((w.history().undoable, w.history().redoable), (1, 0));
+    assert_eq!(w.answer_app("app.undo"), Some(Answer::Accepted));
+    assert_eq!((w.history().undoable, w.history().redoable), (0, 1));
+    drop(w);
+    waits_for("the started service ended with the drop", || !up(&s));
+}
+
+#[test]
+fn a_one_time_run_leaves_a_service_that_was_up_before() {
+    let (_turn, s) = module();
+    down(&s);
+    let other = window(&s);
+    let w = one_time(&s);
+    assert_eq!(
+        w.answer_app("app.undo"),
+        Some(Answer::Refused(Reason::new("host-notice-undo-empty", "")))
+    );
+    drop(w);
+    std::thread::sleep(Duration::from_millis(500));
+    assert!(up(&s), "a service that was up before is not ended");
+    drop(other);
+}

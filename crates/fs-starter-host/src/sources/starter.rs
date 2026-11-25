@@ -159,6 +159,23 @@ impl StarterSources {
         Ok((records, level))
     }
 
+    /// [`Self::read_level`] for a held one-time run: the service is NOT ended; the flag says that this read started it.
+    pub(super) fn read_keeping(
+        &self,
+        known: &Known,
+        forms: &[ModuleForm],
+    ) -> (Result<(FormRecords, Levels), Coded>, bool) {
+        let (got, started) = service::fetch_keeping(known, forms, &self.limits);
+        let got = got.map(|(mut records, level)| {
+            let keys = self.command_keys(&known.name);
+            for data in &mut records.forms {
+                data.commands.clone_from(&keys);
+            }
+            (records, level)
+        });
+        (got, started)
+    }
+
     /// The forms of `module` read again (after an accepted call): what the port `Writer` gives the window to show.
     ///
     /// # Errors
