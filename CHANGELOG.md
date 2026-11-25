@@ -6,6 +6,8 @@ Version = tag.
 
 ### English
 
+- Pins (pin-3 wave): fs-forms f254fd4, fs-rpc / fs-trusted-path / fs-settings-rpc 9585ed18, fs-components (all crates, fs-settings with it) 2ffa1c4d, fs-modules-planning 7db66a33 (dev), fs-modules-person 36604aa5 (through the libraries), fs-interfaces stays 83b96e30 (the one stand all pins share; main ba53042a only adds the nextest profile); dev-dependencies first; the planning catalog copy of the tests is `tests/data/planning-main-7db66a33` (same files as 908f1c1f). `cargo tree -d` has no fs-* twice. Test fix `instance` t4: holds the no-fork mutex too (as t3).
+
 - Pins (pin-2 wave): fs-forms 2b6e3f15, fs-rpc / fs-trusted-path / fs-settings-rpc 56f5cc39, fs-components (all crates) 06a77a6a, fs-interfaces 83b96e30, fs-modules-planning 908f1c1f (dev), fs-modules-person eee2508a (through the libraries), workflows on fs-release ccb018e9; `cargo tree -d` has no fs-* twice. `app.undo` / `app.redo` now come only from `standard_commands()` of fs-components (same ids, texts, icons; new: shortcuts Primary+Z, Primary+Shift+Z, Primary+Y): `history_commands()` is gone, `registry::UNDO` / `REDO` are re-exports, `Registry::new()` has the six standard commands once (with the new pin they would have stood twice).
 
 - S3-9 A: a one-time run (`--picture`) holds its module like a window and has a history at level 2 (`app.undo` works); the service it started itself ends when the records are dropped (guard `EndOnDrop`), a service that was up before stays. `--check-system` is unchanged.

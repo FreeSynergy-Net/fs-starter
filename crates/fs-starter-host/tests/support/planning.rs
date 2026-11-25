@@ -1,6 +1,6 @@
 //! The real planning service (fs-modules-planning, one fixed commit) in this process behind a real Unix socket in a temporary folder,
 //! with a board `work` and three cards, and the fixture of the suite for it: forms and commands are the REAL catalog files of that commit
-//! (`tests/data/planning-main-908f1c1f/catalog/`, a copy, never edited).
+//! (`tests/data/planning-main-7db66a33/catalog/`, a copy, never edited).
 //!
 //! Pattern: Template Method (the suite's rules; this is the fixture) + Fixture (a service in a temporary folder).
 
@@ -19,9 +19,9 @@ use tokio::sync::oneshot;
 
 pub const FORM: &str = "cards-in-columns@1.4.0";
 const FORMS: &str =
-    include_str!("../../../../tests/data/planning-main-908f1c1f/catalog/forms.json");
+    include_str!("../../../../tests/data/planning-main-7db66a33/catalog/forms.json");
 const COMMANDS: &str =
-    include_str!("../../../../tests/data/planning-main-908f1c1f/catalog/commands.json");
+    include_str!("../../../../tests/data/planning-main-7db66a33/catalog/commands.json");
 
 /// The service on a socket in `dir` (data and socket there); ends when the sender is dropped or used.
 pub async fn serve(dir: &Path) -> (PathBuf, oneshot::Sender<()>) {
