@@ -1,0 +1,95 @@
+[
+  {
+    "name": "cards-in-columns",
+    "version": "1.4.0",
+    "type": "Task",
+    "map": {
+      "cards": "Task",
+      "column": "column",
+      "column-label": "column-label",
+      "title": "title",
+      "facts": ["due", "participants", "keywords"],
+      "lane": "board",
+      "progress": "percentComplete",
+      "order": "index",
+      "after": "after",
+      "before": "before",
+      "description": "description",
+      "color": "color",
+      "estimated": "estimatedDuration",
+      "priority": "priority",
+      "column-limit": "column-limit",
+      "state": "progress",
+      "assignee": "assignee",
+      "time-zone": "timeZone",
+      "move": "card.move",
+      "create": "task.create",
+      "remove": "task.delete"
+    },
+    "fields": {
+      "column": "text",
+      "column-label": "text",
+      "column-limit": "number",
+      "percentComplete": "number",
+      "title": "text",
+      "due": "date-time",
+      "board": "text",
+      "index": "number",
+      "after": "reference",
+      "before": "reference",
+      "priority": "number",
+      "participants": "text",
+      "keywords": "text",
+      "description": "text",
+      "color": "text",
+      "estimatedDuration": "text",
+      "progress": "text",
+      "assignee": "reference",
+      "timeZone": "text"
+    }
+  },
+  {
+    "name": "rows",
+    "version": "1.0.0",
+    "type": "Lane",
+    "map": {
+      "items": "Lane",
+      "label": "label",
+      "order": "order",
+      "state": "axis"
+    },
+    "fields": {
+      "label": "text",
+      "order": "number",
+      "axis": "text"
+    }
+  },
+  {
+    "name": "rows",
+    "version": "1.0.0",
+    "type": "Task",
+    "map": {
+      "items": "Task",
+      "label": "title",
+      "order": "index",
+      "state": "progress",
+      "columns": ["due", "timeZone", "priority", "progress", "taskStatus", "percentComplete", "estimatedDuration", "keywords", "participants", "recurrenceRule", "relatedTo", "privacy"]
+    },
+    "fields": {
+      "title": "text",
+      "index": "number",
+      "due": "date-time",
+      "timeZone": "text",
+      "priority": "number",
+      "progress": "text",
+      "taskStatus": "text",
+      "percentComplete": "number",
+      "estimatedDuration": "text",
+      "keywords": "text",
+      "participants": "text",
+      "recurrenceRule": "text",
+      "relatedTo": "reference",
+      "privacy": "text"
+    }
+  }
+]

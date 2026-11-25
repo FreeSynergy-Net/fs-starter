@@ -48,41 +48,41 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ),
         (
             "fs-interfaces",
-            "REV:2bb70d826681403894ec6d65a7fad9d3a3f51ac2",
+            "REV:83b96e30ae3f8a04a222fa5a34dc4ad29306cdf2",
         ),
         ("fs-objects", "REV:e38093f1ec61b7c9faaa6f6046f65addb11dcf46"),
         (
             "fs-settings-rpc",
-            "REV:9cbce63c73045a2ea32b88038fd35732c4762624",
+            "REV:56f5cc399bbbb566f74d59d4c5b76005ce653697",
         ),
         (
             "fs-settings",
-            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
+            "REV:06a77a6a052b5fa23c81d81d0866ad0b59f8bec9",
         ),
         (
             "fs-components-commands",
-            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
+            "REV:06a77a6a052b5fa23c81d81d0866ad0b59f8bec9",
         ),
-        ("fs-rpc", "REV:9cbce63c73045a2ea32b88038fd35732c4762624"),
+        ("fs-rpc", "REV:56f5cc399bbbb566f74d59d4c5b76005ce653697"),
         (
             "fs-components-kanban",
-            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
+            "REV:06a77a6a052b5fa23c81d81d0866ad0b59f8bec9",
         ),
         (
             "fs-trusted-path",
-            "REV:9cbce63c73045a2ea32b88038fd35732c4762624",
+            "REV:56f5cc399bbbb566f74d59d4c5b76005ce653697",
         ),
         (
             "fs-forms-run",
-            "REV:e3b7da13e4d96d7778e691d62efb8c74f56be7b3",
+            "REV:2b6e3f157fde622b9074859a0955aa60fbc97a68",
         ),
         (
             "fs-forms-bind",
-            "REV:e3b7da13e4d96d7778e691d62efb8c74f56be7b3",
+            "REV:2b6e3f157fde622b9074859a0955aa60fbc97a68",
         ),
         (
             "fs-components",
-            "REV:9ab4ac280fb2354d41fdbc15bdbed92664a016de",
+            "REV:06a77a6a052b5fa23c81d81d0866ad0b59f8bec9",
         ),
     ] {
         let source = source_of(name);
