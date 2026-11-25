@@ -1,5 +1,5 @@
 //! A window with `--sample-data` is no window of the program: it takes no place of the single instance (a normal start is not handed
-//! over to it and does not hand its words to it), starts no update hook and writes no mark `<state>/freesynergy/<program>.update`.
+//! over to it and does not hand its words to it), starts no update hook, writes no mark in `<state>/freesynergy` and does not ask the settings service of the person.
 //! The program is named by the blueprint folder (`tests/data/fs-tasks`, program `tasks`); the place of `tasks` is held by this test.
 //! The child is killed after a short time: where a graphics adapter exists the window would stay open.
 //!
@@ -61,11 +61,34 @@ fn run(runtime: &Path, words: &[&str]) -> (String, Option<i32>) {
     (err, code)
 }
 
-fn marker(runtime: &Path) -> PathBuf {
-    runtime
-        .join("state")
-        .join("freesynergy")
-        .join("tasks.update")
+/// The marks of the program the run wrote: the names in `<state>/freesynergy` (the name is read from the run, never guessed: the first
+/// window writes `tasks-1.update`, see `Marker::standard`). A missing folder is no mark.
+fn marks(runtime: &Path) -> Vec<String> {
+    std::fs::read_dir(runtime.join("state").join("freesynergy"))
+        .map(|d| {
+            d.flatten()
+                .map(|e| e.file_name().to_string_lossy().into_owned())
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// A listener at the socket of the settings service of the person (`<runtime>/freesynergy/settings.sock`, the one `open_setting` asks): it
+/// counts who knocks, also a client that closes again.
+struct Door(std::os::unix::net::UnixListener);
+
+fn door(runtime: &Path) -> Door {
+    let path = runtime.join("freesynergy").join("settings.sock");
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    let listener = std::os::unix::net::UnixListener::bind(path).unwrap();
+    listener.set_nonblocking(true).unwrap();
+    Door(listener)
+}
+
+impl Door {
+    fn callers(&self) -> usize {
+        std::iter::from_fn(|| self.0.accept().ok()).count()
+    }
 }
 
 /// The control: the same start WITHOUT the flag against the held place is handed over (so the setup sees a hand-over when there is one).
@@ -79,18 +102,45 @@ fn control_a_normal_start_is_handed_over_to_the_held_place() {
     assert!(guard.starts.recv_timeout(Duration::from_secs(2)).is_ok());
 }
 
-/// Test data: nothing is handed over, the held place gets no words, no mark is written.
+/// The control of the two checks below: a normal start WITHOUT the flag and without a held place writes the mark of the run (it comes
+/// from the update hook, so a mark is also the proof of the hook) and asks the settings service of the person.
 #[test]
-fn a_sample_data_window_takes_no_place_hands_nothing_over_and_writes_no_mark() {
+fn control_a_normal_start_writes_the_mark_and_asks_the_settings() {
+    let runtime = tempfile::tempdir().unwrap();
+    let (err, _) = run(runtime.path(), &[&support::tasks()]);
+    let marks = marks(runtime.path());
+    assert!(
+        marks
+            .iter()
+            .any(|m| m.starts_with("tasks") && m.ends_with(".update")),
+        "a mark of the program: {marks:?} / {err}"
+    );
+    // the line of the setting is said only when the service of the person was asked (it says `no-server` here: the door only listens)
+    assert!(
+        err.contains("fs.open.when-open"),
+        "the settings are asked: {err}"
+    );
+}
+
+/// Test data: nothing is handed over, the held place gets no words, no hook writes a mark (the folder of the marks is empty or missing,
+/// whatever the file is called), and the settings service of the person is not asked.
+#[test]
+fn a_sample_data_window_takes_no_place_asks_no_service_and_writes_no_mark() {
     let runtime = tempfile::tempdir().unwrap();
     let guard = held(runtime.path());
+    let settings = door(runtime.path());
     let (err, _) = run(runtime.path(), &[&support::tasks(), "--sample-data"]);
     assert!(!err.contains("instance-handed-over"), "{err}");
     assert!(
         guard.starts.try_recv().is_err(),
         "the held window got no words"
     );
-    assert!(!marker(runtime.path()).exists(), "no mark of the program");
+    assert_eq!(marks(runtime.path()), Vec::<String>::new(), "no mark");
+    assert!(
+        !err.contains("fs.open.when-open"),
+        "no settings line: {err}"
+    );
+    assert_eq!(settings.callers(), 0, "the settings service is not asked");
     // the held place is still the held one: it was not taken over or removed
     assert!(
         runtime

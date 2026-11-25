@@ -100,10 +100,10 @@ struct Doors {
 }
 
 impl Doors {
-    /// Doors for `names`. Sets `XDG_RUNTIME_DIR` of the process once (the tests that use it run one after the other, [`SPY`]).
+    /// Doors for `names`. Sets `XDG_RUNTIME_DIR` of the process once (every test of this file holds [`SPY`], so they run one after the other).
     fn new(names: &[&str]) -> Self {
         let dir = tempfile::tempdir().unwrap();
-        // SAFETY: the tests that read the runtime folder hold SPY; the others of this binary never read it.
+        // SAFETY: every test of this binary holds SPY, so none runs while the variable is written (the others read the environment, e.g. the locale).
         unsafe { std::env::set_var("XDG_RUNTIME_DIR", dir.path()) };
         let listeners = names
             .iter()
@@ -154,6 +154,9 @@ fn cards(records: &Arc<dyn Records>) -> Vec<(String, Vec<String>)> {
 /// A: with the flag the data come from the sample and `[sample]` decides (5 records); a description without the section gets the defaults.
 #[test]
 fn with_the_flag_and_only_with_it_the_window_gets_sample_records() {
+    let _one = SPY
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let sources = no_modules();
     let o = opened(BOARD, true, &sources);
     assert!(o.notice.is_none(), "{:?}", o.notice);
@@ -177,6 +180,9 @@ fn with_the_flag_and_only_with_it_the_window_gets_sample_records() {
 /// B: sample records say so (the window puts "Sample data" in its status line), real or missing ones do not.
 #[test]
 fn the_records_with_the_flag_are_marked_sample_and_without_it_nothing_is() {
+    let _one = SPY
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let sources = no_modules();
     assert!(opened(BOARD, true, &sources).records.is_sample());
     assert!(!opened(BOARD, false, &sources).records.is_sample());
@@ -188,6 +194,9 @@ fn the_records_with_the_flag_are_marked_sample_and_without_it_nothing_is() {
 /// A description without a layout (a view from memory) cannot make test data: said, never invented.
 #[test]
 fn without_a_description_the_flag_says_so() {
+    let _one = SPY
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
     let sources = no_modules();
     let view = fs_forms_run::View {
         sources: vec!["planning@>=0.0.1, <0.1.0".into()],
