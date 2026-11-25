@@ -21,10 +21,10 @@ path = "src/main.rs"
 [dependencies]
 fs-starter = { path = "../fs-starter", version = "0.0.8" }
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", rev = "722d3ce0156711d40cb278f2e835e865d9448290", version = "0.0.7" }
-fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7ab7b0cac090cf9464e1f19515ffe52234576eaf", version = "0.1.0" }
-fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7ab7b0cac090cf9464e1f19515ffe52234576eaf", version = "0.1.0" }
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "1f6173464047a385f959176ba1d81c753430dcda", version = "0.1.0" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "1f6173464047a385f959176ba1d81c753430dcda", version = "0.1.0" }
 # The test data of `--sample-data` (a `SampleModule` made from the description, held in this process; ADR: sample data are a module). Same repo and rev as fs-forms-run (one source).
-fs-forms-testdata = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7ab7b0cac090cf9464e1f19515ffe52234576eaf", version = "0.1.0" }
+fs-forms-testdata = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "1f6173464047a385f959176ba1d81c753430dcda", version = "0.1.0" }
 toml = "0.8"
 # The one reader of module versions (`Version`), already in the lock; ranges are `fs_types::interface::InterfaceReq`.
 semver = "1.0.28"
@@ -33,10 +33,10 @@ serde_json = "1"
 # The command model (no dependencies of its own); the same tag as the one the scaffold settings come from (one source, lock check).
 fs-components-commands = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "508a25f3915270e28ea6a306411fa336e563d9e1", version = "0.1.0" }
 # Single instance (ADR 0097): the contract `Instance` of fs-interfaces, served and called through fs-rpc (the same pins as fs-forms-run).
-fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "4f6c3281cab594a76640c50abaedb4f7c4e79d97", version = "0.3.0" }
-fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "b279f4285da84110f36a5e62a17262b7aab2b2d4", version = "0.1.4" }
+fs-interfaces = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "76df54074910e827ad556ff613335ada49c86de3", version = "0.3.0" }
+fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "459c1e8d1226896cca53c3140f5aa912f43a5305", version = "0.1.4" }
 # The client of the settings service (E3): `ensure_service` + `RpcSettingsStore`. Same repo and rev as fs-rpc (one source).
-fs-settings-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "b279f4285da84110f36a5e62a17262b7aab2b2d4", version = "0.1.4" }
+fs-settings-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "459c1e8d1226896cca53c3140f5aa912f43a5305", version = "0.1.4" }
 # `Settings::open`, `Catalog`, `CatalogFile` (E1): the same rev as fs-starter.
 fs-settings = { git = "https://github.com/FreeSynergy-Net/fs-components", rev = "508a25f3915270e28ea6a306411fa336e563d9e1", version = "0.1.0" }
 # Same file as an open handle (Unix: device + inode, Windows: volume + file index); instead of an own `same_file`. Already in the lock.
@@ -66,15 +66,15 @@ tempfile = "3"
 png = "0.18"
 tokio = { version = "1", features = ["rt", "macros", "sync", "time", "net"] }
 # Conformance suite of the contract module_v1 and its fake (fs-module of fs-interfaces 0.3.0; the same source as fs-interfaces above, checked in the lock).
-fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "4f6c3281cab594a76640c50abaedb4f7c4e79d97", version = "0.3.0" }
+fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "76df54074910e827ad556ff613335ada49c86de3", version = "0.3.0" }
 # Reading a description in the host tests (the layout `Described` carries): the same rev as fs-forms-run.
-fs-forms-layout = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7ab7b0cac090cf9464e1f19515ffe52234576eaf", version = "0.1.0" }
-fs-forms-exchange = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7ab7b0cac090cf9464e1f19515ffe52234576eaf", version = "0.1.0" }
+fs-forms-layout = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "1f6173464047a385f959176ba1d81c753430dcda", version = "0.1.0" }
+fs-forms-exchange = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "1f6173464047a385f959176ba1d81c753430dcda", version = "0.1.0" }
 
 # The real planning service in this process (Unix only: its tests use a Unix socket); every library on the same tag as above (one source each).
 [target.'cfg(unix)'.dev-dependencies]
-fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "d975ed198694244da931c18a3cc97917cd6ddf0a", version = "0.0.5" }
-fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "d975ed198694244da931c18a3cc97917cd6ddf0a", version = "0.0.5" }
+fs-modules-planning = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "158b68add6bb5ae3cadc92d4d20ce4fb033445ec", version = "0.0.5" }
+fs-tasks-core = { git = "https://github.com/FreeSynergy-Net/fs-modules-planning", rev = "158b68add6bb5ae3cadc92d4d20ce4fb033445ec", version = "0.0.5" }
 fs-objects = { git = "https://github.com/FreeSynergy-Net/fs-objects", rev = "e38093f1ec61b7c9faaa6f6046f65addb11dcf46", version = "0.0.11", features = ["testing"] }
 
 # RPM (cargo-generate-rpm, built by the release CI only). The package is called `fs-starter` (the host crate keeps its name) and replaces the

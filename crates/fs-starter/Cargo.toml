@@ -15,9 +15,9 @@ test-support = ["fs-trusted-path/test-support"]
 conformance = ["dep:fs-conformance", "dep:async-trait"]
 
 [dependencies]
-fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "b279f4285da84110f36a5e62a17262b7aab2b2d4", version = "0.1.4" }
+fs-rpc = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "459c1e8d1226896cca53c3140f5aa912f43a5305", version = "0.1.4" }
 # The check of one part of a way "is this the system's" (Unix and Windows), one module for all programs (WIN-HOST WH3). Same repo as fs-rpc, rev 11cdf714.
-fs-trusted-path = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "b279f4285da84110f36a5e62a17262b7aab2b2d4", version = "0.1.4" }
+fs-trusted-path = { git = "https://github.com/FreeSynergy-Net/fs-rpc", rev = "459c1e8d1226896cca53c3140f5aa912f43a5305", version = "0.1.4" }
 # `coded` (error codes with typed parameters) comes from here (`fs_types::coded`).
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", rev = "722d3ce0156711d40cb278f2e835e865d9448290", version = "0.0.7" }
 # The scaffold declares its own settings (ADR 0100 item 3); the library comes from fs-components, one tag.
