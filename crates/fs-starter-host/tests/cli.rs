@@ -133,7 +133,7 @@ fn without_a_server_and_without_a_description_the_check_ends_with_the_contract_c
 #[test]
 fn the_pending_parts_are_listed_in_one_place() {
     assert_eq!(fs_starter_host::CODE, "skeleton-part-pending");
-    assert_eq!(fs_starter_host::PENDING.len(), 4);
+    assert_eq!(fs_starter_host::PENDING.len(), 3);
     assert!(!fs_starter_host::PENDING.contains(&"single-instance"));
     assert!(fs_starter_host::note().contains(fs_starter_host::CODE));
 }

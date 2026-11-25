@@ -10,7 +10,7 @@ use std::time::Duration;
 
 use fs_rpc::{Saved, ask_save, stop_server};
 
-use super::marker::{Mark, Marker, State};
+use super::marker::Marker;
 use super::watch::Act;
 
 /// How long the service may take to save.
@@ -51,6 +51,7 @@ impl Act for RpcAct {
 
     #[cfg(unix)]
     fn restart_own(&self) -> Result<(), String> {
+        use super::marker::{Mark, State};
         use std::os::unix::process::CommandExt;
         if let Some(m) = &self.marker {
             let mut mark = Mark::running(&self.version, true);
