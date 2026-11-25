@@ -102,6 +102,9 @@ impl Records for HeldRecords {
     fn stale(&self) -> Option<String> {
         self.records.stale()
     }
+    fn source_problems(&self) -> Vec<(u32, Coded)> {
+        self.records.source_problems()
+    }
     fn history(&self) -> UndoState {
         self.session()
             .map_or_else(UndoState::default, |s| s.state())
