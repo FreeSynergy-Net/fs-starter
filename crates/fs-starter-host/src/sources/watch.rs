@@ -5,6 +5,8 @@
 //! `device` stays empty in stage 3 (no stand-in key). The sink counts the change ([`ChangeCounter`]) and says
 //! `fs-starter: watch module=M change=<activity> by=<program>` on stderr.
 //!
+//! When the service ENDS a watch (410) the watch is built again and what was missed is read: [`super::watch_resume`].
+//!
 //! Pattern: Observer (`ChangeSink` of the module, the counter is the window's side) + Template Method (`OnAttach`: runs again after every reconnect).
 
 use std::any::Any;
@@ -12,28 +14,18 @@ use std::io;
 
 use capnp::capability::{Client, FromClientHook};
 use fs_forms_run::ChangeCounter;
-use fs_interfaces::formsource_capnp::{change_sink, form_source};
+use fs_interfaces::formsource_capnp::form_source;
 use fs_rpc::OnAttach;
 use futures::future::LocalBoxFuture;
 
-use super::reply::{Change, change_of};
+use super::reply::Change;
+use super::watch_resume::{UNAVAILABLE, Watch};
 
 /// Who this connection says it is (`introduce`). `device` is not here: it stays empty.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub(super) struct Identity {
     pub program: String,
     pub instance: String,
-}
-
-/// NOT yet the hub: the `generation` of a `RecordGrip` (fs-forms-run `RecordHub`) is counted only by the `ChangeSink` the hub itself gives to
-/// `Module::connect`, and the hub has no write path nor `history`/`step_back`. This host holds its module directly (no `Module`/`Link` adapter
-/// yet), so only `changed` is counted here. `invokeIf` sends `expect` empty: the page carries no revision and `Link::writer` does not hand the
-/// seen one on (REVIEW-s6-r3 S1, S2).
-/// The receiver of the changes of one connection.
-struct Sink {
-    module: String,
-    me: Identity,
-    counter: ChangeCounter,
 }
 
 /// The line one change says on stderr.
@@ -50,21 +42,6 @@ pub(super) fn watch_line(module: &str, change: &Change) -> String {
 #[must_use]
 pub(super) fn is_mine(change: &Change, me: &Identity) -> bool {
     change.program == me.program && change.instance == me.instance
-}
-
-impl change_sink::Server for Sink {
-    #[allow(clippy::unused_async_trait_impl)] // the generated trait wants an async method
-    async fn changed(
-        self: std::rc::Rc<Self>,
-        p: change_sink::ChangedParams,
-    ) -> Result<(), capnp::Error> {
-        let change = change_of(p.get()?.get_change()?)?;
-        if !is_mine(&change, &self.me) {
-            self.counter.bump();
-            eprintln!("{}", watch_line(&self.module, &change));
-        }
-        Ok(())
-    }
 }
 
 /// The registration on a new connection.
@@ -87,39 +64,28 @@ impl OnAttach for Attach {
                 p.set_device("");
             }
             intro.send().promise.await.map_err(io::Error::other)?;
-            let mut subscriptions = Vec::new();
-            for (form, scope) in &self.forms {
-                let mut request = source.watch_request();
-                {
-                    let mut p = request.get();
-                    p.set_form(form.as_str());
-                    p.set_scope(scope.as_str());
-                    p.set_sink(capnp_rpc::new_client(Sink {
-                        module: self.module.clone(),
-                        me: self.me.clone(),
-                        counter: self.counter.clone(),
-                    }));
-                }
-                // a form the module cannot watch is said and left out (never silent, never the end of the hold)
-                match request
-                    .send()
-                    .promise
-                    .await
-                    .map_err(|e| e.to_string())
-                    .and_then(|a| {
-                        a.get()
-                            .and_then(fs_interfaces::formsource_capnp::form_source::watch_results::Reader::get_subscription)
-                            .map_err(|e| e.to_string())
-                    }) {
-                    Ok(subscription) => subscriptions.push(subscription),
+            let mut watches = Vec::new();
+            for form in &self.forms {
+                let watch = Watch::new(&self.module, &self.me, form, &self.counter, &source);
+                match watch.subscribe().await {
+                    Ok(()) => {
+                        watch.baseline().await;
+                        watches.push(watch);
+                    }
+                    // the feed of the module is gone: the watch is kept and asks again until one stands (503, never 410)
+                    Err((UNAVAILABLE, _)) => {
+                        watch.start_resume();
+                        watches.push(watch);
+                    }
+                    // a form the module cannot watch is said and left out (never silent, never the end of the hold)
                     Err(_) => eprintln!(
-                        "fs-starter: watch module={} form={form} unavailable",
-                        self.module
+                        "fs-starter: watch module={} form={} unavailable",
+                        self.module, form.0
                     ),
                 }
             }
             // dropping the answer ends the subscriptions (the connection is gone or the hold ended)
-            Ok(Box::new(subscriptions) as Box<dyn Any>)
+            Ok(Box::new(watches) as Box<dyn Any>)
         })
     }
 }
