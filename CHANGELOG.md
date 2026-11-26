@@ -6,7 +6,7 @@ Version = tag.
 
 ### English
 
-- Work in progress: a pre-release, parts are missing (session, help, MCP and the update source are still placeholders; `--check-system` reports them yellow). It can change between 0.0.x versions. Not for production use. `--sample-now` has no effect until F4b.
+- Work in progress: a pre-release, parts are missing (session, help, MCP and the update source are still placeholders; `--check-system` reports them yellow). It can change between 0.0.x versions. Not for production use. `--sample-now` has no effect until the clock of the sample data is wired. On Windows the host does not find or start a module service yet; programs with modules do not run there.
 
 - Pins (pin-10 wave): fs-forms 7c8498b9 (fs-forms-run, -bind, -testdata; dev: -layout, -exchange; contains the clock port F4a, not wired here), fs-rpc / fs-trusted-path / fs-settings-rpc cde5b025, fs-interfaces 71809eaa (`fs-module` with it), fs-components 33550c61 (fs-settings with it), fs-modules-planning / fs-tasks-core 409da183 (dev), fs-modules-person 904282c8 (through planning, in the lock); dev-dependencies first; every pin as the full 40-character SHA. `cargo tree -d` has no fs-* or forms-* twice, no `[patch]`. No code change was needed.
 
@@ -56,7 +56,7 @@ Version = tag.
 
 ### Deutsch
 
-- Arbeitsversion: Vorabversion, Teile fehlen (Sitzung, Hilfe, MCP und Update-Quelle sind noch Platzhalter; `--check-system` meldet sie gelb), kann sich zwischen 0.0.x-Versionen ändern; nicht für den Produktivbetrieb. `--sample-now` hat bis F4b keine Wirkung.
+- Arbeitsversion: Vorabversion, Teile fehlen (Sitzung, Hilfe, MCP und Update-Quelle sind noch Platzhalter; `--check-system` meldet sie gelb), kann sich zwischen 0.0.x-Versionen ändern; nicht für den Produktivbetrieb. `--sample-now` hat keine Wirkung, bis die Uhr der Beispieldaten angeschlossen ist. Unter Windows findet und startet der Host noch keinen Modul-Dienst; Programme mit Modulen laufen dort noch nicht.
 
 - Pins (Welle pin-10): fs-forms 7c8498b9 (fs-forms-run, -bind, -testdata; dev: -layout, -exchange; enthält den Uhr-Anschluss F4a, hier nicht verdrahtet), fs-rpc / fs-trusted-path / fs-settings-rpc cde5b025, fs-interfaces 71809eaa (`fs-module` mit), fs-components 33550c61 (fs-settings mit), fs-modules-planning / fs-tasks-core 409da183 (dev), fs-modules-person 904282c8 (über planning, im Lock); Dev-Abhängigkeiten zuerst; jeder Pin als volle 40-stellige SHA. `cargo tree -d` zeigt kein fs-* oder forms-* doppelt, kein `[patch]`. Keine Codeänderung nötig.
 
