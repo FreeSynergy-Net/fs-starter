@@ -3,7 +3,7 @@ resolver = "2"
 members = ["crates/fs-starter", "crates/fs-starter-host"]
 
 [workspace.package]
-version = "0.0.9"
+version = "0.0.10"
 authors = ["FreeSynergy <support@freesynergy.net>"]
 edition = "2024"
 license = "MIT OR Apache-2.0"
