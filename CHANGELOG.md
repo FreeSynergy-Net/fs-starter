@@ -2,9 +2,11 @@
 
 Version = tag.
 
-## Unreleased
+## 0.0.9
 
 ### English
+
+- Work in progress: a pre-release, parts are missing (session, help, MCP and the update source are still placeholders; `--check-system` reports them yellow). It can change between 0.0.x versions. Not for production use. `--sample-now` has no effect until F4b.
 
 - Pins (pin-10 wave): fs-forms 7c8498b9 (fs-forms-run, -bind, -testdata; dev: -layout, -exchange; contains the clock port F4a, not wired here), fs-rpc / fs-trusted-path / fs-settings-rpc cde5b025, fs-interfaces 71809eaa (`fs-module` with it), fs-components 33550c61 (fs-settings with it), fs-modules-planning / fs-tasks-core 409da183 (dev), fs-modules-person 904282c8 (through planning, in the lock); dev-dependencies first; every pin as the full 40-character SHA. `cargo tree -d` has no fs-* or forms-* twice, no `[patch]`. No code change was needed.
 
@@ -53,6 +55,8 @@ Version = tag.
 - SB-2, `fs-starter --check-system [--modules DIR] [--program NAME]... [--description PATH]...` (a word of the host like `--list-commands`, read before `fs_forms_run::parse`; it draws nothing): one line per finding, `ok|yellow|red code key=value`, exit 0 (only ok and yellow), 3 (any red), 2 (wrong words). It reads the registry (bundled and system modules; a refused module is `red module-refused`), starts every module service through the road of the window (`ensure_single`, version handshake, heartbeat; `ok module-up module=M version=V heartbeat=ok ms=T`, else `red module-down`), writes the `read` line of every form it reads (`ok read module=M form=F records=N ms=T provider=P`), asks the MCP switch of the host (`ok mcp-disabled`, `red mcp-enabled` if it were on), and runs the `--check` match for every installed program (`--program NAME`, `--description PATH`; without both, every data package in the system place). The parts that are not built are said `yellow skeleton-part-pending part=<session|update|help|mcp> note="not there yet"` and `yellow update-binding-pending`, never red and never silently green. Like `--picture`, it ends the services it started itself (one that was up before is left alone). New: `check_system.rs`, `tests/check_system.rs` (run in CI only); `--check` prints the same lines as before (its findings now come from one function).
 
 ### Deutsch
+
+- Arbeitsversion: Vorabversion, Teile fehlen (Sitzung, Hilfe, MCP und Update-Quelle sind noch Platzhalter; `--check-system` meldet sie gelb), kann sich zwischen 0.0.x-Versionen ändern; nicht für den Produktivbetrieb. `--sample-now` hat bis F4b keine Wirkung.
 
 - Pins (Welle pin-10): fs-forms 7c8498b9 (fs-forms-run, -bind, -testdata; dev: -layout, -exchange; enthält den Uhr-Anschluss F4a, hier nicht verdrahtet), fs-rpc / fs-trusted-path / fs-settings-rpc cde5b025, fs-interfaces 71809eaa (`fs-module` mit), fs-components 33550c61 (fs-settings mit), fs-modules-planning / fs-tasks-core 409da183 (dev), fs-modules-person 904282c8 (über planning, im Lock); Dev-Abhängigkeiten zuerst; jeder Pin als volle 40-stellige SHA. `cargo tree -d` zeigt kein fs-* oder forms-* doppelt, kein `[patch]`. Keine Codeänderung nötig.
 

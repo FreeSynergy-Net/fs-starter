@@ -2194,7 +2194,7 @@ dependencies = [
 
 [[package]]
 name = "fs-starter"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "async-trait",
  "capnp",
@@ -2213,7 +2213,7 @@ dependencies = [
 
 [[package]]
 name = "fs-starter-host"
-version = "0.0.8"
+version = "0.0.9"
 dependencies = [
  "capnp",
  "capnp-rpc",

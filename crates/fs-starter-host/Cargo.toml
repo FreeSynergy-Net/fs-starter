@@ -19,7 +19,7 @@ path = "src/main.rs"
 # Only git pins (rev of the landed heads, until the tags exist) and the sibling crate. `fs-forms-run` 0.1.0 (the window of a description) brings fs-components, fs-forms-client
 # (fs-rpc, fs-interfaces: the same revs as here, one source each) and the description reader; `fs-forms-bin` is NOT a dependency (it depends on `fs-starter`: a cycle).
 [dependencies]
-fs-starter = { path = "../fs-starter", version = "0.0.8" }
+fs-starter = { path = "../fs-starter", version = "0.0.9" }
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", rev = "722d3ce0156711d40cb278f2e835e865d9448290", version = "0.0.7" }
 fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7c8498b9de6e7d66e2e35a50cc5a160fee1222fc", version = "0.1.0" }
 fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "7c8498b9de6e7d66e2e35a50cc5a160fee1222fc", version = "0.1.0" }
@@ -61,7 +61,7 @@ path = "examples/fake_module.rs"
 # Picture tests: the host binary draws the window without a window (`--picture`), the test reads the PNG back.
 [dev-dependencies]
 # The tests use `SystemPlaces::for_test` (the feature only here: a program never builds its own circle of trust).
-fs-starter = { path = "../fs-starter", version = "0.0.8", features = ["test-support"] }
+fs-starter = { path = "../fs-starter", version = "0.0.9", features = ["test-support"] }
 tempfile = "3"
 png = "0.18"
 tokio = { version = "1", features = ["rt", "macros", "sync", "time", "net"] }

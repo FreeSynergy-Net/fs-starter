@@ -38,6 +38,6 @@ windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_System_
 
 [dev-dependencies]
 # Its own tests use `SystemPlaces::for_test`.
-fs-starter = { path = ".", version = "0.0.8", features = ["test-support"] }
+fs-starter = { path = ".", version = "0.0.9", features = ["test-support"] }
 tokio = { version = "1", features = ["rt", "macros"] }
 tempfile = "3"
