@@ -27,6 +27,7 @@ Version = tag.
 
 
 - Pins (level-1ff2e850): the workflow callers (check, release, package-probe, windows) now use fs-release 1ff2e85094271fb0d5859c7f1fd6ae109fc678e6 (was ccb018e9), set with `scripts/pin-refs.sh` (`pin-chain green`).
+- The rpm now `Provides: freesynergy-form-source = 2` (`[package.metadata.generate-rpm.provides]`), so module packages can require the form-source level; `tests/form_source_level.rs` keeps the number equal to `FORM_SOURCE_LEVEL` of fs-interfaces. Not checked in a built rpm yet (no cargo-generate-rpm locally).
 
 ### Deutsch
 
@@ -51,6 +52,7 @@ Version = tag.
 
 
 - Pins (Stand level-1ff2e850): die Workflow-Aufrufer (check, release, package-probe, windows) nutzen fs-release 1ff2e85094271fb0d5859c7f1fd6ae109fc678e6 (vorher ccb018e9), gesetzt mit `scripts/pin-refs.sh` (`pin-chain green`).
+- Das rpm bietet jetzt `Provides: freesynergy-form-source = 2` (`[package.metadata.generate-rpm.provides]`), damit Modulpakete den Stand der Formquelle verlangen können; `tests/form_source_level.rs` hält die Zahl gleich `FORM_SOURCE_LEVEL` aus fs-interfaces. Noch nicht in einem gebauten rpm geprüft (lokal kein cargo-generate-rpm).
 
 ## 0.0.9
 
