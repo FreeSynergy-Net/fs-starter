@@ -6,6 +6,8 @@ Version = tag.
 
 ### English
 
+- Tolerant reader (cards K2/K5): a `capability` in `catalog/commands.json` that the pinned contract list does not know (a command of a newer module) no longer refuses the whole module: only that command is left out (`ModuleSet::skipped`, `Registry::skipped`) and `--check-system` says it as `yellow command-refused module=M command=C why=capability-unknown`, once per command. A file with no known command left, and every flaw of the file (json, type, symlink, size), stays a refusal of the module (red). A module below the need of a program (`host-notice-data-contract` with `cause=version`, version under a lower bound) now names its package and the action: `package=fs-module-M action=update`; a version above the need is the program to update and gets no such hint. Newer form minors are matched by fs-forms-bind (other repo), not changed here. New test `tests/tolerant.rs`; `registry_planning` test renamed and turned (the module stays). Written with the help of Claude (Anthropic).
+
 - Work in progress: a pre-release, parts are missing (session, help, MCP and the update source are still placeholders; `--check-system` reports them yellow). It can change between 0.0.x versions. Not for production use. On Windows the host does not find or start a module service yet; programs with modules do not run there.
 
 - Fix: `--check-system` no longer reads a form of the kind `single-record` (its scope is always the id of one record; a module refuses any other scope with 404 `unknown-scope`, so the check showed `red module-down ... form-source-unknown-scope` for a healthy module such as person). `StarterSources::probe` reads only the forms that need no scope and says the others as `yellow single-record-not-probed module=M form=F` (never red, never silent). The form is not read with the id of the first row of the list form: the pairing of the two forms is the business of the layout. Written with help from Claude (AI), reviewed by the maintainers.
@@ -23,6 +25,8 @@ Version = tag.
 
 
 ### Deutsch
+
+- Toleranter Leser (Karten K2/K5): Eine `capability` in `catalog/commands.json`, die die gepinnte Vertragsliste nicht kennt (Befehl eines neueren Moduls), lehnt nicht mehr das ganze Modul ab: nur dieser Befehl wird weggelassen (`ModuleSet::skipped`, `Registry::skipped`), und `--check-system` meldet ihn je Befehl als `yellow command-refused module=M command=C why=capability-unknown`. Eine Datei ohne bekannten Befehl und jeder Fehler der Datei (JSON, Typ, Symlink, Größe) lehnen das Modul weiter ab (rot). Ein Modul unter dem Bedarf eines Programms (`host-notice-data-contract` mit `cause=version`, Version unter der Untergrenze) nennt jetzt sein Paket und die Handlung: `package=fs-module-M action=update`; eine Version über dem Bedarf heißt, das Programm ist zu aktualisieren, ohne diesen Hinweis. Neuere Form-Minors prüft fs-forms-bind (anderes Repo), hier unverändert. Neuer Test `tests/tolerant.rs`; der Test in `registry_planning` umbenannt und gedreht (das Modul bleibt). Mit Hilfe von Claude (Anthropic) geschrieben.
 
 - Arbeitsversion: Vorabversion, Teile fehlen (Sitzung, Hilfe, MCP und Update-Quelle sind noch Platzhalter; `--check-system` meldet sie gelb), kann sich zwischen 0.0.x-Versionen ändern; nicht für den Produktivbetrieb. Unter Windows findet und startet der Host noch keinen Modul-Dienst; Programme mit Modulen laufen dort noch nicht.
 

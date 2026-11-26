@@ -65,6 +65,8 @@ pub struct Entry {
 #[derive(Clone, Debug)]
 pub struct Registry {
     entries: Vec<Entry>,
+    /// `(module, raw key)` of the commands left out because this host does not know their capability (a newer module).
+    skipped: Vec<(String, String)>,
 }
 
 /// The commands `app.undo` / `app.redo` (one step back and forward in the history of the person) come from the command model
@@ -89,7 +91,16 @@ impl Registry {
                 key: None,
             })
             .collect();
-        Self { entries }
+        Self {
+            entries,
+            skipped: Vec::new(),
+        }
+    }
+
+    /// The commands of newer modules this host left out: `(module, raw key)`.
+    #[must_use]
+    pub fn skipped(&self) -> &[(String, String)] {
+        &self.skipped
     }
 
     /// All entries in order: the shell's first, then the modules' in the order they were added.
@@ -165,6 +176,8 @@ impl Registry {
         if !bad.is_empty() {
             return Err(bad);
         }
+        self.skipped
+            .extend(set.skipped.iter().map(|k| (set.module.clone(), k.clone())));
         self.entries.extend(set.items.into_iter().map(|i| Entry {
             command: i.command,
             key: Some(i.key),

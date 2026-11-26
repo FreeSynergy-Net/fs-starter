@@ -81,6 +81,7 @@ pub fn parse(text_in: &str, folder: &str) -> Result<ModuleSet, Refusal> {
         module: folder.to_owned(),
         version: version.to_owned(),
         items,
+        skipped: Vec::new(),
     })
 }
 
@@ -162,11 +163,19 @@ pub(super) fn read_handle(f: fs::File, name: &str) -> Result<ModuleSet, Refusal>
         return Err(bad("too-large"));
     }
     let text = String::from_utf8(bytes).map_err(|_| bad("read-failed"))?;
-    let set = parse(&text, name)?;
-    // A file read from disk: every `capability` must be a key of the contract list `capabilities.txt` of fs-interfaces (the one list,
-    // `fs_interfaces::capabilities`, the version this host is built with). Not in `parse`: that reads the syntax only.
-    match unknown_capability(&set) {
-        Some(_) => Err(bad("command-capability-unknown")),
-        None => Ok(set),
+    let mut set = parse(&text, name)?;
+    // A file read from disk: a `capability` that is not a key of the contract list `capabilities.txt` of fs-interfaces (the one list,
+    // `fs_interfaces::capabilities`, the version this host is built with) is a command of a NEWER module: only that command is left
+    // out and kept in `skipped` (said by `--check-system`, never silent). Not in `parse`: that reads the syntax only. A file with no
+    // known command left is refused as before; a flaw of the file (json, type, symlink, size) was refused above, never tolerated.
+    let (known, unknown): (Vec<Item>, Vec<Item>) = set
+        .items
+        .into_iter()
+        .partition(|i| fs_interfaces::capabilities::is_known(&i.key));
+    if known.is_empty() && !unknown.is_empty() {
+        return Err(bad("command-capability-unknown"));
     }
+    set.items = known;
+    set.skipped = unknown.into_iter().map(|i| i.key).collect();
+    Ok(set)
 }

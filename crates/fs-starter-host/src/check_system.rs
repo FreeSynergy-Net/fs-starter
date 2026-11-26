@@ -116,6 +116,17 @@ fn check_modules(sources: &StarterSources, r: &mut Report) {
             ),
         );
     }
+    // a command of a newer module this host does not know: only that command is left out, the module stays (yellow, with the cause)
+    for (module, key) in modules.skipped() {
+        r.say(
+            "yellow",
+            &format!(
+                "command-refused module={} command={} why=capability-unknown",
+                val(module),
+                val(key)
+            ),
+        );
+    }
     if modules.known().is_empty() && modules.refused().is_empty() {
         r.say("yellow", "no-module-installed");
     }

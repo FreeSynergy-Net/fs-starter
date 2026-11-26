@@ -105,7 +105,7 @@ fn check_is_red_for_a_form_key_the_module_does_not_have() {
 }
 
 #[test]
-fn a_commands_file_with_a_capability_that_is_not_on_the_contract_list_is_refused() {
+fn a_capability_that_is_not_on_the_contract_list_leaves_out_only_that_command() {
     let i = install();
     let file = i.folder("planning").join("catalog").join("commands.json");
     let text = std::fs::read_to_string(&file).unwrap();
@@ -121,6 +121,11 @@ fn a_commands_file_with_a_capability_that_is_not_on_the_contract_list_is_refused
         String::from_utf8_lossy(&out.stdout),
         String::from_utf8_lossy(&out.stderr)
     );
-    assert!(all.contains("command-capability-unknown"), "{all}");
-    assert!(!all.contains("planning.task.create"), "{all}");
+    // tolerant reader: the module stays, only the one command is not offered (said by `--check-system`, see tests/tolerant.rs)
+    assert!(!all.contains("command-capability-unknown"), "{all}");
+    assert!(all.contains("planning.task.create"), "{all}");
+    assert!(
+        !all.contains("task.steal") && !all.contains("planning.task.delete"),
+        "{all}"
+    );
 }

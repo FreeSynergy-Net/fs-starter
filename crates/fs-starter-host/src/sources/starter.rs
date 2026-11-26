@@ -102,7 +102,14 @@ impl StarterSources {
         match range::fits(range, &known.version) {
             Ok(true) => {}
             Ok(false) => {
-                return Err(contract("version").with("version", known.version.to_string()));
+                let c = contract("version").with("version", known.version.to_string());
+                // the module is the old one: name its package and say what to do (ADR 0104: "please update", never silent)
+                return Err(if range::too_old(range, &known.version) {
+                    c.with("package", format!("fs-module-{name}"))
+                        .with("action", "update")
+                } else {
+                    c
+                });
             }
             Err(reason) => return Err(contract("range").with("reason", reason)),
         }

@@ -63,6 +63,9 @@ pub struct ModuleSet {
     pub version: String,
     /// The commands.
     pub items: Vec<Item>,
+    /// Raw keys the contract list of this host does not know (a newer module): left out of `items`, never offered, said by
+    /// `--check-system`. Empty for a set that did not come from a file.
+    pub skipped: Vec<String>,
 }
 
 /// Why a set was refused (all reasons are given at once; nothing is added then).

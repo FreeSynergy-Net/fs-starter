@@ -103,6 +103,12 @@ impl Modules {
         &self.known
     }
 
+    /// `(module, raw key)` of the commands left out because the contract list of this host does not know the capability.
+    #[must_use]
+    pub fn skipped(&self) -> &[(String, String)] {
+        self.registry.skipped()
+    }
+
     /// The module folders the registry refused, with the reasons (an empty name: a folder that could not be read at all).
     #[must_use]
     pub fn refused(&self) -> &[(String, Vec<Refusal>)] {

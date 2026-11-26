@@ -47,6 +47,23 @@ pub fn fits(text: &str, have: &Version) -> Result<bool, String> {
     Ok(need(text)?.req().matches(have))
 }
 
+/// Is `have` BELOW the need `text`: a lower bound (`>`, `>=`) of it that `have` does not meet? Then the installed module is the old
+/// one (its package is to be updated); a version above an upper bound is the program that is old, not the module. An unreadable need is
+/// `false` (it is said as its own cause).
+#[must_use]
+pub fn too_old(text: &str, have: &Version) -> bool {
+    use semver::{Op, VersionReq};
+    need(text).is_ok_and(|n| {
+        n.req().comparators.iter().any(|c| {
+            matches!(c.op, Op::Greater | Op::GreaterEq)
+                && !VersionReq {
+                    comparators: vec![c.clone()],
+                }
+                .matches(have)
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -65,6 +82,18 @@ mod tests {
         assert_eq!(fits("groups@>0.1.0", &v("0.1.0")), Ok(false));
         assert_eq!(fits("groups@<=0.1.0", &v("0.1.0")), Ok(true));
         assert_eq!(fits("groups@=1.0.0", &v("1.0.0")), Ok(true));
+    }
+
+    #[test]
+    fn only_a_version_below_a_lower_bound_is_too_old() {
+        let r = "groups@>=0.0.5, <0.1.0";
+        assert!(too_old(r, &v("0.0.4")));
+        assert!(!too_old(r, &v("0.0.5")));
+        assert!(
+            !too_old(r, &v("0.1.0")),
+            "above the bound: the program is old"
+        );
+        assert!(!too_old("groups@>=x", &v("0.0.1")));
     }
 
     #[test]
