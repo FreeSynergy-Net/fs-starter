@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: FreeSynergy-Net/fs-release/actions/setup-rust@ccb018e91d8ee12e4b804225b8226b50a129ab6e
+      - uses: FreeSynergy-Net/fs-release/actions/setup-rust@1ff2e85094271fb0d5859c7f1fd6ae109fc678e6
         with:
           components: rustfmt,clippy
           cache-key: windows

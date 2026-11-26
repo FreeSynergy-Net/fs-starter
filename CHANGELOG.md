@@ -26,6 +26,8 @@ Version = tag.
 - Pins (pin-13a wave): fs-components* 08d501d9d81a111ece4b95115eb4540223c83fac, fs-forms 04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d, fs-rpc/fs-trusted-path 7a656f456f3f05805f1fa2c128b21837ebd21eb9 (head e0471c7c differs only by its changelog), fs-modules-planning 8b1e616d075958757a04d6b824d8580680a10b78 (pulls fs-modules-person bfebf590), fs-interfaces 92dbb53e unchanged. One known double: fs-forms-client/-run still pin fs-rpc dba7125f (owner fs-forms; `KNOWN_OLD` in `tests/pins.rs`). API break of fs-components-core: `pages.rs::rows` builds the row with `FormRow::from_values` (the field path stays with each value; the position heuristic is gone). Written with the help of Claude (Anthropic).
 
 
+- Pins (level-1ff2e850): the workflow callers (check, release, package-probe, windows) now use fs-release 1ff2e85094271fb0d5859c7f1fd6ae109fc678e6 (was ccb018e9), set with `scripts/pin-refs.sh` (`pin-chain green`).
+
 ### Deutsch
 
 - Pins (Welle pin-14): fs-components* 4a923bbc843f07534376213a04ee9e2806070611 (people-B DetailPage, people-C TileGrid; baut ohne Codeänderung), fs-forms 91cbda84f6447efadeb866e6d1cc223f47f1b69c, fs-rpc/fs-trusted-path/fs-settings-rpc bfcb9d374a09489bac2d08b077ba81d51d47785c, fs-modules-planning/fs-tasks-core 2291f815440e47557aa08addb51e5b0b6389509b (pinnt fs-modules-person 99e0eba2a626a9f20d6cde2babe975af7e3e8454, ein fs-person im Lock), fs-settings 4a923bbc (über fs-components), fs-interfaces 92dbb53e unverändert; `cargo tree -d`: 0 fs-Doppel, `KNOWN_OLD` leer, `tests/pins.rs` nachgezogen. Mit Hilfe von Claude (Anthropic) geschrieben.
@@ -47,6 +49,8 @@ Version = tag.
 
 - Pins (Welle pin-13a): fs-components* 08d501d9d81a111ece4b95115eb4540223c83fac, fs-forms 04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d, fs-rpc/fs-trusted-path 7a656f456f3f05805f1fa2c128b21837ebd21eb9 (der Kopf e0471c7c unterscheidet sich nur im Changelog), fs-modules-planning 8b1e616d075958757a04d6b824d8580680a10b78 (zieht fs-modules-person bfebf590), fs-interfaces 92dbb53e unverändert. Ein bekanntes Doppel: fs-forms-client/-run pinnen fs-rpc noch auf dba7125f (Besitzer fs-forms; `KNOWN_OLD` in `tests/pins.rs`). API-Bruch in fs-components-core: `pages.rs::rows` baut die Zeile mit `FormRow::from_values` (der Feldpfad bleibt am Wert; die Positions-Heuristik ist weg). Mit Hilfe von Claude (Anthropic) geschrieben.
 
+
+- Pins (Stand level-1ff2e850): die Workflow-Aufrufer (check, release, package-probe, windows) nutzen fs-release 1ff2e85094271fb0d5859c7f1fd6ae109fc678e6 (vorher ccb018e9), gesetzt mit `scripts/pin-refs.sh` (`pin-chain green`).
 
 ## 0.0.9
 
