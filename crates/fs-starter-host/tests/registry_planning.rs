@@ -68,7 +68,13 @@ fn check_of_the_sw7_forms_against_the_real_planning_files_is_green() {
     println!("rc={:?}\n{text}", out.status.code());
     assert_eq!(out.status.code(), Some(0), "{text}");
     assert!(text.contains("source planning 0.0.2 checked"), "{text}");
-    assert!(!text.contains("red") && !text.contains("yellow"), "{text}");
+    // the one yellow that is meant: these planning files have no `catalog/types.bin` yet (pin-13b); nothing else is yellow, nothing red
+    assert!(
+        text.contains("yellow no-type-catalog module=planning"),
+        "{text}"
+    );
+    let rest = text.replace("yellow no-type-catalog module=planning", "");
+    assert!(!rest.contains("red") && !rest.contains("yellow"), "{text}");
 }
 
 /// The planning forms with the key of one channel changed: `--check` must say red, never green (SW-5: the keys of the forms are checked

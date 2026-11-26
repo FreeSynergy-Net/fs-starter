@@ -1907,7 +1907,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-bind"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d#04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=f825f72963612d65c9965f5dfb7d60bfc02aa31d#f825f72963612d65c9965f5dfb7d60bfc02aa31d"
 dependencies = [
  "fs-components-commands",
  "sha2 0.10.9",
@@ -1916,12 +1916,12 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d#04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=f825f72963612d65c9965f5dfb7d60bfc02aa31d#f825f72963612d65c9965f5dfb7d60bfc02aa31d"
 dependencies = [
  "capnp",
  "capnp-rpc",
  "fs-interfaces",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=dba7125f4c8baa51d55786bbbff150b9052c35a1)",
+ "fs-rpc",
  "semver",
  "tokio",
 ]
@@ -1929,7 +1929,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d#04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=f825f72963612d65c9965f5dfb7d60bfc02aa31d#f825f72963612d65c9965f5dfb7d60bfc02aa31d"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1938,7 +1938,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d#04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=f825f72963612d65c9965f5dfb7d60bfc02aa31d#f825f72963612d65c9965f5dfb7d60bfc02aa31d"
 dependencies = [
  "semver",
  "sha2 0.10.9",
@@ -1947,7 +1947,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d#04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=f825f72963612d65c9965f5dfb7d60bfc02aa31d#f825f72963612d65c9965f5dfb7d60bfc02aa31d"
 dependencies = [
  "chrono",
  "fs-components",
@@ -1969,7 +1969,7 @@ dependencies = [
  "fs-interfaces",
  "fs-notification",
  "fs-objects",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=dba7125f4c8baa51d55786bbbff150b9052c35a1)",
+ "fs-rpc",
  "fs-types",
  "percent-encoding",
  "tokio",
@@ -1978,7 +1978,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-testdata"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d#04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=f825f72963612d65c9965f5dfb7d60bfc02aa31d#f825f72963612d65c9965f5dfb7d60bfc02aa31d"
 dependencies = [
  "chrono",
  "fake",
@@ -2050,7 +2050,7 @@ dependencies = [
 [[package]]
 name = "fs-modules-planning"
 version = "0.0.8"
-source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=8b1e616d075958757a04d6b824d8580680a10b78#8b1e616d075958757a04d6b824d8580680a10b78"
+source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=875a10456a966b6d2aa346b4fb86e5abd0c345ca#875a10456a966b6d2aa346b4fb86e5abd0c345ca"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -2058,7 +2058,7 @@ dependencies = [
  "fs-modules-planning-client",
  "fs-objects",
  "fs-person-service",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
+ "fs-rpc",
  "fs-tasks-core",
  "fs-types",
  "serde_json",
@@ -2069,13 +2069,13 @@ dependencies = [
 [[package]]
 name = "fs-modules-planning-client"
 version = "0.0.8"
-source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=8b1e616d075958757a04d6b824d8580680a10b78#8b1e616d075958757a04d6b824d8580680a10b78"
+source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=875a10456a966b6d2aa346b4fb86e5abd0c345ca#875a10456a966b6d2aa346b4fb86e5abd0c345ca"
 dependencies = [
  "capnp",
  "capnp-rpc",
  "fs-interfaces",
  "fs-jscalendar",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
+ "fs-rpc",
  "serde_json",
  "tokio",
 ]
@@ -2146,7 +2146,7 @@ dependencies = [
  "fs-interfaces",
  "fs-objects",
  "fs-person",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
+ "fs-rpc",
  "fs-types",
  "tokio",
  "uuid",
@@ -2155,7 +2155,7 @@ dependencies = [
 [[package]]
 name = "fs-rank"
 version = "0.0.8"
-source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=8b1e616d075958757a04d6b824d8580680a10b78#8b1e616d075958757a04d6b824d8580680a10b78"
+source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=875a10456a966b6d2aa346b4fb86e5abd0c345ca#875a10456a966b6d2aa346b4fb86e5abd0c345ca"
 dependencies = [
  "fracindex",
  "thiserror 2.0.21",
@@ -2179,27 +2179,7 @@ dependencies = [
  "chrono",
  "fs-interfaces",
  "fs-objects",
- "fs-trusted-path 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
- "fs-types",
- "futures",
- "rustix 1.1.6",
- "tokio",
- "tokio-util",
- "uuid",
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "fs-rpc"
-version = "0.1.4"
-source = "git+https://github.com/FreeSynergy-Net/fs-rpc?rev=dba7125f4c8baa51d55786bbbff150b9052c35a1#dba7125f4c8baa51d55786bbbff150b9052c35a1"
-dependencies = [
- "capnp",
- "capnp-rpc",
- "chrono",
- "fs-interfaces",
- "fs-objects",
- "fs-trusted-path 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=dba7125f4c8baa51d55786bbbff150b9052c35a1)",
+ "fs-trusted-path",
  "fs-types",
  "futures",
  "rustix 1.1.6",
@@ -2228,7 +2208,7 @@ dependencies = [
  "capnp",
  "capnp-rpc",
  "fs-interfaces",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
+ "fs-rpc",
  "fs-settings",
  "fs-types",
  "futures",
@@ -2243,10 +2223,10 @@ dependencies = [
  "async-trait",
  "capnp",
  "fs-conformance",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
+ "fs-rpc",
  "fs-settings",
  "fs-starter",
- "fs-trusted-path 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
+ "fs-trusted-path",
  "fs-types",
  "roxmltree",
  "semver",
@@ -2263,6 +2243,8 @@ dependencies = [
  "capnp-rpc",
  "fs-components-commands",
  "fs-components-kanban",
+ "fs-components-mf2",
+ "fs-components-words",
  "fs-forms-bind",
  "fs-forms-exchange",
  "fs-forms-layout",
@@ -2272,7 +2254,7 @@ dependencies = [
  "fs-module",
  "fs-modules-planning",
  "fs-objects",
- "fs-rpc 0.1.4 (git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9)",
+ "fs-rpc",
  "fs-settings",
  "fs-settings-rpc",
  "fs-starter",
@@ -2292,7 +2274,7 @@ dependencies = [
 [[package]]
 name = "fs-tasks-core"
 version = "0.0.8"
-source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=8b1e616d075958757a04d6b824d8580680a10b78#8b1e616d075958757a04d6b824d8580680a10b78"
+source = "git+https://github.com/FreeSynergy-Net/fs-modules-planning?rev=875a10456a966b6d2aa346b4fb86e5abd0c345ca#875a10456a966b6d2aa346b4fb86e5abd0c345ca"
 dependencies = [
  "async-trait",
  "chrono",
@@ -2311,14 +2293,6 @@ dependencies = [
 name = "fs-trusted-path"
 version = "0.1.4"
 source = "git+https://github.com/FreeSynergy-Net/fs-rpc?rev=7a656f456f3f05805f1fa2c128b21837ebd21eb9#7a656f456f3f05805f1fa2c128b21837ebd21eb9"
-dependencies = [
- "windows-sys 0.61.2",
-]
-
-[[package]]
-name = "fs-trusted-path"
-version = "0.1.4"
-source = "git+https://github.com/FreeSynergy-Net/fs-rpc?rev=dba7125f4c8baa51d55786bbbff150b9052c35a1#dba7125f4c8baa51d55786bbbff150b9052c35a1"
 dependencies = [
  "windows-sys 0.61.2",
 ]

@@ -18,7 +18,7 @@ use super::{
     known::{Known, Modules},
     level::Levels,
     probe::{self, Probed},
-    range, service,
+    range, service, types, words,
 };
 
 use fs_forms_bind::ModuleForm;
@@ -174,11 +174,32 @@ impl StarterSources {
     ) -> Result<(FormRecords, Levels), Coded> {
         let (mut records, level) =
             service::fetch_level(known, wires, &self.limits, self.end_started)?;
+        self.decorate(known, &mut records)?;
+        Ok((records, level))
+    }
+
+    /// What every read of a module gets besides its rows: the command keys, the description of the data type of each form
+    /// (`catalog/types.bin`) and the words of the module (`catalog/texts/`). A module without them is read as before.
+    ///
+    /// # Errors
+    /// `host-notice-data-contract` (cause `types-<cause>`) for a `types.bin` that cannot be used.
+    fn decorate(&self, known: &Known, records: &mut FormRecords) -> Result<(), Coded> {
         let keys = self.command_keys(&known.name);
         for data in &mut records.forms {
             data.commands.clone_from(&keys);
         }
-        Ok((records, level))
+        match types::read(&known.folder) {
+            Ok(Some(registry)) => types::attach(records, &registry),
+            Ok(None) => {}
+            Err(b) => {
+                return Err(Coded::new("host-notice-data-contract")
+                    .with("contract", known.name.clone())
+                    .with("cause", format!("types-{}", b.cause))
+                    .with("reason", b.reason));
+            }
+        }
+        records.module_words = words::PackedWords::of(&known.folder, &known.name);
+        Ok(())
     }
 
     /// [`Self::read_level`] for a held one-time run: the service is NOT ended; the flag says that this read started it.
@@ -188,12 +209,9 @@ impl StarterSources {
         wires: &[Wire],
     ) -> (Result<(FormRecords, Levels), Coded>, bool) {
         let (got, started) = super::service_keep::fetch_keeping(known, wires, &self.limits);
-        let got = got.map(|(mut records, level)| {
-            let keys = self.command_keys(&known.name);
-            for data in &mut records.forms {
-                data.commands.clone_from(&keys);
-            }
-            (records, level)
+        let got = got.and_then(|(mut records, level)| {
+            self.decorate(known, &mut records)?;
+            Ok((records, level))
         });
         (got, started)
     }

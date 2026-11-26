@@ -22,7 +22,13 @@ fn a_module_that_fits_is_green() {
     let (rc, out) = check(&i);
     assert_eq!(rc, Some(0), "{out}");
     assert!(out.contains("source groups 0.1.0 checked"), "{out}");
-    assert!(!out.contains("red") && !out.contains("yellow"), "{out}");
+    // the one yellow that is meant: the module has no `catalog/types.bin` (pin-13b); nothing else is yellow, nothing red
+    assert!(
+        out.contains("yellow no-type-catalog module=groups"),
+        "{out}"
+    );
+    let rest = out.replace("yellow no-type-catalog module=groups", "");
+    assert!(!rest.contains("red") && !rest.contains("yellow"), "{out}");
     assert!(!i.started("groups"), "--check starts no service");
 }
 
@@ -116,4 +122,21 @@ fn a_module_in_a_folder_the_command_line_names_is_never_bound() {
     );
     let out = i.run(&["--check", "--description", &groups()], "light", &[]);
     assert!(String::from_utf8_lossy(&out.stdout).contains("source-unknown"));
+}
+
+#[test]
+fn a_type_catalog_that_is_no_message_is_red_with_its_cause() {
+    let i = Install::new();
+    i.module("groups", "0.1.0", GOOD_FORMS, &Service::None);
+    std::fs::write(
+        i.folder("groups").join("catalog").join("types.bin"),
+        b"not a message",
+    )
+    .unwrap();
+    let (rc, out) = check(&i);
+    assert_eq!(rc, Some(3), "{out}");
+    assert!(
+        out.contains("red type-catalog-broken module=groups cause=damaged"),
+        "{out}"
+    );
 }

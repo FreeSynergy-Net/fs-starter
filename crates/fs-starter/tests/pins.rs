@@ -1,17 +1,9 @@
 //! The pins of the lifted libraries, read from `Cargo.lock` (K4b, mutant P4: `fs-conformance` back on the `rev` of fs-types main 339aa24
 //! has no `fs-types` of its own and so keeps "one source" green; only the exact tag shows it).
 
-/// The doubles that are KNOWN and wait for a follow-up commit of their owner. A line here is allowed only with the reason and the owner
-/// that has to move; the test below fails when it is no longer needed.
-/// pin-13a: `fs-forms-client` and `fs-forms-run` (fs-forms 04e22e2a, C2) still pin fs-rpc dba7125f (wave 12); the host and the services
-/// (planning, person) are on 7a656f45 (wave 13: the same code, only its own fs-components pin moved). The owner moves: fs-forms.
-const KNOWN_OLD: [(&str, &str); 2] = [
-    ("fs-rpc", "rev=dba7125f4c8baa51d55786bbbff150b9052c35a1"),
-    (
-        "fs-trusted-path",
-        "rev=dba7125f4c8baa51d55786bbbff150b9052c35a1",
-    ),
-];
+/// The doubles that are KNOWN and wait for a follow-up commit of their owner: none (pin-13b: every library has one source).
+/// A line here is allowed only with the reason and the owner that has to move; the test below fails when it is no longer needed.
+const KNOWN_OLD: [(&str, &str); 0] = [];
 
 /// The `source` line of the package `name` in the workspace lock (there must be exactly one, apart from the `KNOWN_OLD` doubles).
 fn source_of(name: &str) -> String {
@@ -82,23 +74,23 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ),
         (
             "fs-forms-run",
-            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
+            "REV:f825f72963612d65c9965f5dfb7d60bfc02aa31d",
         ),
         (
             "fs-forms-bind",
-            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
+            "REV:f825f72963612d65c9965f5dfb7d60bfc02aa31d",
         ),
         (
             "fs-forms-testdata",
-            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
+            "REV:f825f72963612d65c9965f5dfb7d60bfc02aa31d",
         ),
         (
             "fs-forms-layout",
-            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
+            "REV:f825f72963612d65c9965f5dfb7d60bfc02aa31d",
         ),
         (
             "fs-forms-exchange",
-            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
+            "REV:f825f72963612d65c9965f5dfb7d60bfc02aa31d",
         ),
         (
             "fs-components",
@@ -107,11 +99,11 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ("fs-module", "REV:92dbb53e9c9ea2c48e85a27712f0456f2a7b8161"),
         (
             "fs-modules-planning",
-            "REV:8b1e616d075958757a04d6b824d8580680a10b78",
+            "REV:875a10456a966b6d2aa346b4fb86e5abd0c345ca",
         ),
         (
             "fs-tasks-core",
-            "REV:8b1e616d075958757a04d6b824d8580680a10b78",
+            "REV:875a10456a966b6d2aa346b4fb86e5abd0c345ca",
         ),
         ("fs-person", "REV:bfebf590689d21d64851661b39e52fee286a617d"),
     ] {

@@ -81,6 +81,9 @@ impl Records for HeldRecords {
     fn is_sample(&self) -> bool {
         self.records.is_sample()
     }
+    fn module_words(&self) -> Option<Arc<dyn fs_forms_run::ModuleWords>> {
+        self.records.module_words()
+    }
     fn clock(&self) -> Arc<dyn fs_forms_run::Clock> {
         self.records.clock()
     }
