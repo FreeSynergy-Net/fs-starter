@@ -122,7 +122,7 @@ fn check_modules(sources: &StarterSources, r: &mut Report) {
     for known in modules.known() {
         let began = std::time::Instant::now();
         match sources.probe(&known.name) {
-            Ok(read) => {
+            Ok(probed) => {
                 r.say(
                     "ok",
                     &format!(
@@ -132,8 +132,11 @@ fn check_modules(sources: &StarterSources, r: &mut Report) {
                         began.elapsed().as_millis()
                     ),
                 );
-                for line in read {
-                    r.say("ok", line.strip_prefix("fs-starter: ").unwrap_or(&line));
+                for line in &probed.read {
+                    r.say("ok", line.strip_prefix("fs-starter: ").unwrap_or(line));
+                }
+                for line in probed.not_probed_lines(&known.name) {
+                    r.say("yellow", &line);
                 }
             }
             Err(code) => r.say(

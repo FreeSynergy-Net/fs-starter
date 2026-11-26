@@ -2,6 +2,16 @@
 
 Version = tag.
 
+## Unreleased
+
+### English
+
+- Fix: `--check-system` no longer reads a form of the kind `single-record` (its scope is always the id of one record; a module refuses any other scope with 404 `unknown-scope`, so the check showed `red module-down ... form-source-unknown-scope` for a healthy module such as person). `StarterSources::probe` reads only the forms that need no scope and says the others as `yellow single-record-not-probed module=M form=F` (never red, never silent). The form is not read with the id of the first row of the list form: the pairing of the two forms is the business of the layout. Written with help from Claude (AI), reviewed by the maintainers.
+
+### Deutsch
+
+- Fehlerbehebung: `--check-system` liest keine Form der Art `single-record` mehr (ihr Bereich ist immer die Id genau eines Datensatzes; ein Modul lehnt jeden anderen Bereich mit 404 `unknown-scope` ab, so zeigte die Pruefung `red module-down ... form-source-unknown-scope` fuer ein gesundes Modul wie person). `StarterSources::probe` liest nur Formen ohne Bereich und nennt die uebrigen als `yellow single-record-not-probed module=M form=F` (nie rot, nie stumm). Die Form wird nicht mit der Id der ersten Zeile der Listenform gelesen: die Zuordnung beider Formen ist Sache des Layouts. Mit Hilfe von Claude (KI) geschrieben, von den Betreuern geprueft.
+
 ## 0.0.9
 
 ### English

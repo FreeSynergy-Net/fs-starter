@@ -121,7 +121,18 @@ mod unix {
                     .await
                     .map_err(as_problem);
             }
-            let Some(rows) = self.groups.read(name).await else {
+            // like a module with a one-record form: its scope is ALWAYS a record id, a read without one is refused (404)
+            let single = name == "single-record";
+            if single && params.get()?.get_scope()?.to_str()?.is_empty() {
+                return Err(Problem::new(
+                    "form-source-unknown-scope",
+                    "unknown-scope",
+                    "a single record needs the id of the record",
+                    404,
+                )
+                .into_error());
+            }
+            let Some(rows) = self.groups.read(if single { "rows" } else { name }).await else {
                 return Err(unknown_form());
             };
             let rows = rows.map_err(|detail| {

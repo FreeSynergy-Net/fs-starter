@@ -17,11 +17,14 @@ use super::{
     declared, invoke,
     known::{Known, Modules},
     level::Levels,
+    probe::{self, Probed},
     range, service,
 };
 
 use fs_forms_bind::ModuleForm;
 use fs_forms_run::{Coded, FormData, FormRecords, name_of};
+
+pub use super::lines::{line, read_lines};
 
 use super::entries::{Entry, Wire, select};
 use super::invoke::Written;
@@ -129,14 +132,15 @@ impl StarterSources {
 
     /// Start the service of `module` (the one road of the window: `ensure_single`, version handshake, heartbeat), read the forms it
     /// declares WITHOUT a layout (no source says a type: a form declared for several types is read for the primary type only, the
-    /// rest is said; [`select`]), and answer what was read as `read_lines`. A window reads by the `(number, type, scope)` of its
-    /// layout sources instead (`Sources::connect_wanted`). A one-time command builds the sources with
-    /// [`Self::ending_what_it_started`], so a service this call started is ended again.
+    /// rest is said; [`select`]), and answer what was read as `read_lines`. A form that needs a record scope (`single-record`) is not
+    /// read but named in `Probed::not_probed`. A window reads by the `(number, type, scope)` of its layout sources instead
+    /// (`Sources::connect_wanted`). A one-time command builds the sources with [`Self::ending_what_it_started`], so a service this
+    /// call started is ended again.
     ///
     /// # Errors
     /// `host-notice-source-unknown` (no such module), `host-notice-data-contract` (the forms cannot be read), else the
     /// `host-notice-data-*` codes of the connection.
-    pub fn probe(&self, module: &str) -> Result<Vec<String>, Coded> {
+    pub fn probe(&self, module: &str) -> Result<Probed, Coded> {
         let known = self
             .modules
             .find(module)
@@ -149,8 +153,12 @@ impl StarterSources {
         let began = std::time::Instant::now();
         let chosen = select(&entries, &[]);
         chosen.say(module);
-        let records = self.read(known, &chosen.wires)?;
-        Ok(read_lines(module, &records, began.elapsed()))
+        let (wires, not_probed) = probe::split(chosen);
+        let records = self.read(known, &wires)?;
+        Ok(Probed {
+            read: read_lines(module, &records, began.elapsed()),
+            not_probed,
+        })
     }
 
     /// Read every form of `known` through the service, with the command set of the module on each form (what `allowed` asks).
@@ -253,42 +261,6 @@ impl StarterSources {
                 .with("command", command)
         })
     }
-}
-
-/// What a read gave, one line per form: `fs-starter: read module=M form=F records=N ms=T provider=P` (+ ` empty` when the service answered
-/// with no record: the service is there, there is just nothing in it).
-#[must_use]
-pub fn read_lines(module: &str, records: &FormRecords, took: std::time::Duration) -> Vec<String> {
-    if records.forms.is_empty() {
-        return vec![format!(
-            "fs-starter: read module={module} form=- records=0 ms={} provider={:?} no-form",
-            took.as_millis(),
-            records.provider
-        )];
-    }
-    records
-        .forms
-        .iter()
-        .map(|f| {
-            let n = f.rows.len();
-            format!(
-                "fs-starter: read module={module} form={} records={n} ms={} provider={:?}{}",
-                f.declared.form.name,
-                took.as_millis(),
-                records.provider,
-                if n == 0 { " empty" } else { "" }
-            )
-        })
-        .collect()
-}
-
-/// A code with its parameters as one line (`code key=value ...`).
-#[must_use]
-pub fn line(c: &Coded) -> String {
-    let params: Vec<String> = c.params.iter().map(|(k, v)| format!("{k}={v}")).collect();
-    format!("{} {}", c.code, params.join(" "))
-        .trim_end()
-        .to_owned()
 }
 
 #[cfg(test)]
