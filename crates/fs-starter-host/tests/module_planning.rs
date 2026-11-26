@@ -156,7 +156,7 @@ async fn two_rows_entries_are_not_mixed_up_the_lane_source_gets_lanes_the_task_s
                 got[task].rows.iter().all(|r| r
                     .values
                     .iter()
-                    .any(|(c, v)| c == "label" && v.iter().any(|t| !t.is_empty()))),
+                    .any(|(c, v)| c == "label" && v.iter().any(|t| !t.text.is_empty()))),
                 "a task row without its title"
             );
             // the lane source: the lanes of the axis, never the cards
@@ -216,7 +216,7 @@ async fn without_a_wish_the_task_entry_is_read_with_the_titles_and_the_lane_entr
             assert!(rows.rows.iter().all(|r| {
                 r.values
                     .iter()
-                    .any(|(c, v)| c == "label" && v.iter().any(|t| !t.is_empty()))
+                    .any(|(c, v)| c == "label" && v.iter().any(|t| !t.text.is_empty()))
             }));
         })
         .await;

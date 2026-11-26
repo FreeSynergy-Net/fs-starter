@@ -44,32 +44,30 @@ fn rows(
     for record in list {
         let key = text(record.get_id(), 256)?;
         let values = record.get_values().map_err(|_| ())?;
-        let mut by_channel = Vec::new();
-        for (channel, fields) in &form.map {
-            let mut got: Vec<String> = Vec::new();
-            for field in fields {
-                for v in values {
-                    if v.get_path().map_err(|_| ())?.to_str().map_err(|_| ())? == field {
-                        got.push(text(v.get_text(), limits.text)?);
-                    }
-                }
+        // only the fields the module mapped are read (a value of another field is never seen, nor its text checked)
+        let mut wire: Vec<(String, String)> = Vec::new();
+        for v in values {
+            let path = v.get_path().map_err(|_| ())?.to_str().map_err(|_| ())?;
+            if form
+                .map
+                .iter()
+                .any(|(_, fields)| fields.iter().any(|f| f == path))
+            {
+                wire.push((path.to_owned(), text(v.get_text(), limits.text)?));
             }
+        }
+        // the field path stays with the value (`FormRow::from_values`, the one Adapter of fs-components-core)
+        // no statement of `may` = nothing may be written (the controls stay locked)
+        let mut row = FormRow::from_values(&key, may(record.get_may(), limits)?, &form.map, wire);
+        for (_, got) in &mut row.values {
             got.truncate(limits.values);
-            *bytes += got.iter().map(String::len).sum::<usize>();
-            if !got.is_empty() {
-                by_channel.push((channel.clone(), got));
-            }
+            *bytes += got.iter().map(|v| v.text.len()).sum::<usize>();
         }
         *bytes += key.len();
         if *bytes > limits.bytes {
             return Err(());
         }
-        out.push(FormRow {
-            key,
-            values: by_channel,
-            // no statement = nothing may be written (the controls stay locked)
-            may: may(record.get_may(), limits)?,
-        });
+        out.push(row);
     }
     Ok(out)
 }

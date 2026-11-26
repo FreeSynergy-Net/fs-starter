@@ -1,9 +1,17 @@
 //! The pins of the lifted libraries, read from `Cargo.lock` (K4b, mutant P4: `fs-conformance` back on the `rev` of fs-types main 339aa24
 //! has no `fs-types` of its own and so keeps "one source" green; only the exact tag shows it).
 
-/// The doubles that are KNOWN and wait for a follow-up commit of their owner: none (E3 final, 24.11.: every library has one source).
-/// A line here is allowed only with the reason and the owner that has to move; the test below fails when it is no longer needed.
-const KNOWN_OLD: [(&str, &str); 0] = [];
+/// The doubles that are KNOWN and wait for a follow-up commit of their owner. A line here is allowed only with the reason and the owner
+/// that has to move; the test below fails when it is no longer needed.
+/// pin-13a: `fs-forms-client` and `fs-forms-run` (fs-forms 04e22e2a, C2) still pin fs-rpc dba7125f (wave 12); the host and the services
+/// (planning, person) are on 7a656f45 (wave 13: the same code, only its own fs-components pin moved). The owner moves: fs-forms.
+const KNOWN_OLD: [(&str, &str); 2] = [
+    ("fs-rpc", "rev=dba7125f4c8baa51d55786bbbff150b9052c35a1"),
+    (
+        "fs-trusted-path",
+        "rev=dba7125f4c8baa51d55786bbbff150b9052c35a1",
+    ),
+];
 
 /// The `source` line of the package `name` in the workspace lock (there must be exactly one, apart from the `KNOWN_OLD` doubles).
 fn source_of(name: &str) -> String {
@@ -53,59 +61,59 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ("fs-objects", "REV:e38093f1ec61b7c9faaa6f6046f65addb11dcf46"),
         (
             "fs-settings-rpc",
-            "REV:dba7125f4c8baa51d55786bbbff150b9052c35a1",
+            "REV:7a656f456f3f05805f1fa2c128b21837ebd21eb9",
         ),
         (
             "fs-settings",
-            "REV:f2e90244ff830197e56c127aa5da53ac591a66ea",
+            "REV:08d501d9d81a111ece4b95115eb4540223c83fac",
         ),
         (
             "fs-components-commands",
-            "REV:f2e90244ff830197e56c127aa5da53ac591a66ea",
+            "REV:08d501d9d81a111ece4b95115eb4540223c83fac",
         ),
-        ("fs-rpc", "REV:dba7125f4c8baa51d55786bbbff150b9052c35a1"),
+        ("fs-rpc", "REV:7a656f456f3f05805f1fa2c128b21837ebd21eb9"),
         (
             "fs-components-kanban",
-            "REV:f2e90244ff830197e56c127aa5da53ac591a66ea",
+            "REV:08d501d9d81a111ece4b95115eb4540223c83fac",
         ),
         (
             "fs-trusted-path",
-            "REV:dba7125f4c8baa51d55786bbbff150b9052c35a1",
+            "REV:7a656f456f3f05805f1fa2c128b21837ebd21eb9",
         ),
         (
             "fs-forms-run",
-            "REV:15ac9c6c0eb84cfae1123312b8f07c14152e155f",
+            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
         ),
         (
             "fs-forms-bind",
-            "REV:15ac9c6c0eb84cfae1123312b8f07c14152e155f",
+            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
         ),
         (
             "fs-forms-testdata",
-            "REV:15ac9c6c0eb84cfae1123312b8f07c14152e155f",
+            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
         ),
         (
             "fs-forms-layout",
-            "REV:15ac9c6c0eb84cfae1123312b8f07c14152e155f",
+            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
         ),
         (
             "fs-forms-exchange",
-            "REV:15ac9c6c0eb84cfae1123312b8f07c14152e155f",
+            "REV:04e22e2a5362fadb3b7f53bfe8a9ad54f859ef1d",
         ),
         (
             "fs-components",
-            "REV:f2e90244ff830197e56c127aa5da53ac591a66ea",
+            "REV:08d501d9d81a111ece4b95115eb4540223c83fac",
         ),
         ("fs-module", "REV:92dbb53e9c9ea2c48e85a27712f0456f2a7b8161"),
         (
             "fs-modules-planning",
-            "REV:70b32260cc4ae25f6e6095868a3ae3040eb884ec",
+            "REV:8b1e616d075958757a04d6b824d8580680a10b78",
         ),
         (
             "fs-tasks-core",
-            "REV:70b32260cc4ae25f6e6095868a3ae3040eb884ec",
+            "REV:8b1e616d075958757a04d6b824d8580680a10b78",
         ),
-        ("fs-person", "REV:37683fdd032c37d0c79660bfb74caa10f0197ea9"),
+        ("fs-person", "REV:bfebf590689d21d64851661b39e52fee286a617d"),
     ] {
         let source = source_of(name);
         let want = match tag.strip_prefix("REV:") {

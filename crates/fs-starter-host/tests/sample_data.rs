@@ -140,12 +140,7 @@ fn cards(records: &Arc<dyn Records>) -> Vec<(String, Vec<String>)> {
         .rows
         .iter()
         .map(|r| {
-            let col = r
-                .values
-                .iter()
-                .find(|(c, _)| c == "column")
-                .map(|(_, v)| v.clone())
-                .unwrap_or_default();
+            let col = r.all("column").into_iter().map(str::to_owned).collect();
             (r.key.clone(), col)
         })
         .collect()
