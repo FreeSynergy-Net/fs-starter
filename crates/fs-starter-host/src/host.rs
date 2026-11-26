@@ -16,10 +16,11 @@ use crate::sources::StarterSources;
 use crate::{package, pending, shell};
 
 /// The help text of the host (the words of the window host follow it).
-pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data] [--new-instance] [--picture FILE.png [--steps FILE]]\n\
+pub const HELP: &str = "fs-starter (--description PATH | --program NAME | PATH) [--frontend ID] [--style NAME] [--sample-data [--sample-now RFC3339]] [--new-instance] [--picture FILE.png [--steps FILE]]\n\
     Opens the window of a program from its description, without building the program.\n\
     --steps FILE (only with --picture) plays the steps of FILE before the picture is taken.\n\
     --sample-data (only this word, never a default) makes the data of every [[source]] from the description itself: test data held in this process, marked as sample data in the status line; no service is started and no place, update hook or mark of the program is taken; nothing is written outside the process.\n\
+    --sample-now T (only with --sample-data) takes T (RFC 3339, e.g. 2026-11-25T09:00:00Z) as the now of the view instead of the moment of the sample data; a value that is no RFC 3339 date-time is refused and nothing starts.\n\
     --program NAME takes the installed data package /usr/share/freesynergy/programs/NAME (only a place that passes the system check).\n\
     --new-instance opens one more window of the program next to the running ones (window-2 .. window-9); without it a second start hands its words to the first window. With --picture it takes no place.\n\
 fs-starter --list-commands [--modules DIR]\n\

@@ -5,7 +5,7 @@
 use std::sync::Arc;
 use std::time::Instant;
 
-use fs_forms_run::{CatalogBlockForms, Coded, Described, FormRecords, Records};
+use fs_forms_run::{CatalogBlockForms, Clock, Coded, Described, FixedClock, FormRecords, Records};
 use fs_forms_testdata::{SAMPLE_PROVIDER, SampleSpec};
 use fs_types::coded::{ErrorCode, Param, message_key};
 
@@ -49,8 +49,15 @@ pub(in crate::sources) fn connect(
     let began = Instant::now();
     let me = identity(sources.program.as_deref(), sources.slot);
     let mut units: Vec<Arc<Unit>> = Vec::new();
+    let mut now = None;
     for spec in &specs {
         let mut set = spec.build().map_err(|e| failed("build", &e))?;
+        // the "now" of the set (the first source that has one) is the clock of the records, as a real module brings the system clock
+        if now.is_none() {
+            now = set
+                .now_utc(&spec.spec.anchor.zone)
+                .map_err(|e| failed("build", &e))?;
+        }
         super::bind::commands(&mut set);
         units.push(Arc::new(Unit::start(
             set,
@@ -69,6 +76,7 @@ pub(in crate::sources) fn connect(
         forms,
         problems,
         writer: Some(Arc::new(SampleWriter::new(units))),
+        clock: now.map(|m| Arc::new(FixedClock::new(m)) as Arc<dyn Clock>),
         ..FormRecords::default()
     };
     // what was made, never silent (as for a real module): the person can tell sample lines from real ones

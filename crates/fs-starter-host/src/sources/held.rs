@@ -81,6 +81,9 @@ impl Records for HeldRecords {
     fn is_sample(&self) -> bool {
         self.records.is_sample()
     }
+    fn clock(&self) -> Arc<dyn fs_forms_run::Clock> {
+        self.records.clock()
+    }
     fn forms(&self) -> Arc<Vec<FormData>> {
         self.records.forms()
     }

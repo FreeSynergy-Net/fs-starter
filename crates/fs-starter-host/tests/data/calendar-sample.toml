@@ -1,0 +1,41 @@
+# A minimal calendar description for the tests of the "now" of sample data (F4b): one source of Events, one calendar grid, and the fixed
+# events of the sample (their own now: 16 Nov 2026, 09:00 Berlin). Same shape as `describe` in fs-forms-testdata/tests/described_support.
+schema = 4
+kind = "frontend"
+id = "t"
+extends = "net.example.T"
+exec = "fs-forms-run"
+title = "t"
+
+[[source]]
+elem = "source:1"
+n = 1
+contract = "x@>=0.1, <0.2"
+type = "Event"
+scope = "all"
+
+[[page]]
+elem = "page:p"
+page = "p"
+frame = "app-window"
+navigation = "single"
+
+[[page.place]]
+elem = "block:p/0"
+at = "main0"
+block = "calendar-grid"
+source = 1
+
+[[message]]
+elem = "message:t/de"
+key = "t"
+lang = "de"
+text = "T"
+
+[sample]
+anchor = { week = "2026-W47", zone = "Europe/Berlin" }
+
+[[sample.set]]
+source = 1
+form = "bars-in-time@^1.1.0"
+fixed = "events.sample"
