@@ -1898,7 +1898,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-bind"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=4a549f114e28fa1cfdd2b51c792ad622994165c6#4a549f114e28fa1cfdd2b51c792ad622994165c6"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=fadd78ae5519c9b93b62586fc20c5d4f0fce16da#fadd78ae5519c9b93b62586fc20c5d4f0fce16da"
 dependencies = [
  "fs-components-commands",
  "sha2 0.10.9",
@@ -1907,7 +1907,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-client"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=4a549f114e28fa1cfdd2b51c792ad622994165c6#4a549f114e28fa1cfdd2b51c792ad622994165c6"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=fadd78ae5519c9b93b62586fc20c5d4f0fce16da#fadd78ae5519c9b93b62586fc20c5d4f0fce16da"
 dependencies = [
  "capnp",
  "capnp-rpc",
@@ -1920,7 +1920,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-exchange"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=4a549f114e28fa1cfdd2b51c792ad622994165c6#4a549f114e28fa1cfdd2b51c792ad622994165c6"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=fadd78ae5519c9b93b62586fc20c5d4f0fce16da#fadd78ae5519c9b93b62586fc20c5d4f0fce16da"
 dependencies = [
  "fs-forms-layout",
  "toml_edit 0.22.27",
@@ -1929,7 +1929,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-layout"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=4a549f114e28fa1cfdd2b51c792ad622994165c6#4a549f114e28fa1cfdd2b51c792ad622994165c6"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=fadd78ae5519c9b93b62586fc20c5d4f0fce16da#fadd78ae5519c9b93b62586fc20c5d4f0fce16da"
 dependencies = [
  "semver",
  "sha2 0.10.9",
@@ -1938,7 +1938,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-run"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=4a549f114e28fa1cfdd2b51c792ad622994165c6#4a549f114e28fa1cfdd2b51c792ad622994165c6"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=fadd78ae5519c9b93b62586fc20c5d4f0fce16da#fadd78ae5519c9b93b62586fc20c5d4f0fce16da"
 dependencies = [
  "chrono",
  "fs-components",
@@ -1969,7 +1969,7 @@ dependencies = [
 [[package]]
 name = "fs-forms-testdata"
 version = "0.1.0"
-source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=4a549f114e28fa1cfdd2b51c792ad622994165c6#4a549f114e28fa1cfdd2b51c792ad622994165c6"
+source = "git+https://github.com/FreeSynergy-Net/fs-forms?rev=fadd78ae5519c9b93b62586fc20c5d4f0fce16da#fadd78ae5519c9b93b62586fc20c5d4f0fce16da"
 dependencies = [
  "chrono",
  "fake",
