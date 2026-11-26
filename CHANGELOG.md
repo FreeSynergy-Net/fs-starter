@@ -6,7 +6,7 @@ Version = tag.
 
 ### English
 
-- Work in progress: a pre-release, parts are missing (session, help, MCP and the update source are still placeholders; `--check-system` reports them yellow). It can change between 0.0.x versions. Not for production use. `--sample-now` has no effect until the clock of the sample data is wired. On Windows the host does not find or start a module service yet; programs with modules do not run there.
+- Work in progress: a pre-release, parts are missing (session, help, MCP and the update source are still placeholders; `--check-system` reports them yellow). It can change between 0.0.x versions. Not for production use. On Windows the host does not find or start a module service yet; programs with modules do not run there.
 
 - Fix: `--check-system` no longer reads a form of the kind `single-record` (its scope is always the id of one record; a module refuses any other scope with 404 `unknown-scope`, so the check showed `red module-down ... form-source-unknown-scope` for a healthy module such as person). `StarterSources::probe` reads only the forms that need no scope and says the others as `yellow single-record-not-probed module=M form=F` (never red, never silent). The form is not read with the id of the first row of the list form: the pairing of the two forms is the business of the layout. Written with help from Claude (AI), reviewed by the maintainers.
 
@@ -18,7 +18,7 @@ Version = tag.
 
 ### Deutsch
 
-- Arbeitsversion: Vorabversion, Teile fehlen (Sitzung, Hilfe, MCP und Update-Quelle sind noch Platzhalter; `--check-system` meldet sie gelb), kann sich zwischen 0.0.x-Versionen ändern; nicht für den Produktivbetrieb. `--sample-now` hat keine Wirkung, bis die Uhr der Beispieldaten angeschlossen ist. Unter Windows findet und startet der Host noch keinen Modul-Dienst; Programme mit Modulen laufen dort noch nicht.
+- Arbeitsversion: Vorabversion, Teile fehlen (Sitzung, Hilfe, MCP und Update-Quelle sind noch Platzhalter; `--check-system` meldet sie gelb), kann sich zwischen 0.0.x-Versionen ändern; nicht für den Produktivbetrieb. Unter Windows findet und startet der Host noch keinen Modul-Dienst; Programme mit Modulen laufen dort noch nicht.
 
 - Fehlerbehebung: `--check-system` liest keine Form der Art `single-record` mehr (ihr Bereich ist immer die Id genau eines Datensatzes; ein Modul lehnt jeden anderen Bereich mit 404 `unknown-scope` ab, so zeigte die Pruefung `red module-down ... form-source-unknown-scope` fuer ein gesundes Modul wie person). `StarterSources::probe` liest nur Formen ohne Bereich und nennt die uebrigen als `yellow single-record-not-probed module=M form=F` (nie rot, nie stumm). Die Form wird nicht mit der Id der ersten Zeile der Listenform gelesen: die Zuordnung beider Formen ist Sache des Layouts. Mit Hilfe von Claude (KI) geschrieben, von den Betreuern geprueft.
 
