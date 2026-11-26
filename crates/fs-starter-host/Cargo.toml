@@ -98,6 +98,12 @@ freesynergy-filesystem = "*"
 [package.metadata.generate-rpm.obsoletes]
 fs-starter-host = "*"
 
+# The level of the form-source contract this host speaks (`fs_interfaces::forms::FORM_SOURCE_LEVEL`), offered to the package manager so a module package can
+# `Requires: freesynergy-form-source >= N` (fs-release 669072ab, option A). RPM only; the deb needs nothing new. `tests/form_source_level.rs` keeps the number
+# and the constant equal (contract test); change both together.
+[package.metadata.generate-rpm.provides]
+freesynergy-form-source = "= 2"
+
 # DEB (cargo-deb, built by the release CI only). Same name as the RPM: `fs-starter` (cargo-deb would take the crate name `fs-starter-host`). From 0.0.8 on
 # the deb replaces the earlier `fs-starter-host` package (0.0.4 .. 0.0.7): Replaces (takes over its files), Conflicts (apt removes it on the upgrade),
 # Provides (whatever might depend on the old name stays satisfied). `tests/package_names.rs` and `package-probe.yml` keep deb and rpm on one name.
