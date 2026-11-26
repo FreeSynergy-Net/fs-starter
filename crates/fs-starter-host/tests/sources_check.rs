@@ -140,3 +140,41 @@ fn a_type_catalog_that_is_no_message_is_red_with_its_cause() {
         "{out}"
     );
 }
+
+/// A module with a type catalog (the real one of person) and, if given, the packed texts of person.
+fn module_with_catalog(texts: Option<&[u8]>) -> Install {
+    let i = Install::new();
+    i.module("groups", "0.1.0", GOOD_FORMS, &Service::None);
+    let catalog = i.folder("groups").join("catalog");
+    let data = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/data/person/catalog");
+    std::fs::copy(data.join("types.bin"), catalog.join("types.bin")).unwrap();
+    if let Some(manifest) = texts {
+        std::fs::create_dir(catalog.join("texts")).unwrap();
+        std::fs::write(catalog.join("texts/manifest.mf2m"), manifest).unwrap();
+    }
+    i
+}
+
+#[test]
+fn a_type_catalog_without_texts_is_yellow_heads_would_be_word_ids() {
+    let (rc, out) = check(&module_with_catalog(None));
+    assert_eq!(rc, Some(0), "{out}");
+    assert!(
+        out.contains("yellow no-module-texts module=groups"),
+        "{out}"
+    );
+    assert!(
+        !out.contains("no-type-catalog") && !out.contains("red"),
+        "{out}"
+    );
+}
+
+#[test]
+fn texts_that_do_not_load_are_red_with_their_cause() {
+    let (rc, out) = check(&module_with_catalog(Some(b"not a manifest")));
+    assert_eq!(rc, Some(3), "{out}");
+    assert!(
+        out.contains("red module-texts-broken module=groups cause="),
+        "{out}"
+    );
+}

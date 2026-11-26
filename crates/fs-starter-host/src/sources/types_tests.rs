@@ -2,6 +2,8 @@
 //!
 //! Pattern: Table of cases (each cause one case).
 
+use std::path::Path;
+
 use super::{Broken, read};
 
 fn module(bytes: Option<&[u8]>) -> tempfile::TempDir {
@@ -62,6 +64,21 @@ fn a_link_is_refused_and_not_followed() {
             got,
             Err(Broken {
                 cause: "symlink",
+                ..
+            })
+        ),
+        "{got:?}"
+    );
+}
+
+#[test]
+fn a_folder_that_cannot_be_read_is_read_failed_not_too_large() {
+    let got = read(Path::new("/this/folder/is/not/there"));
+    assert!(
+        matches!(
+            got,
+            Err(Broken {
+                cause: "read-failed",
                 ..
             })
         ),

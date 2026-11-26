@@ -7,7 +7,7 @@ use std::process::ExitCode;
 use fs_forms_run::{Coded, FormData, command_key};
 use fs_starter::Exit;
 
-use crate::sources::{StarterSources, bare, types};
+use crate::sources::{StarterSources, bare, types, words};
 
 /// One finding of the match: what `--check` prints and what `--check-system` turns into its own lines.
 pub(crate) enum Finding {
@@ -65,7 +65,18 @@ pub(crate) fn findings(ranges: &[String], sources: &StarterSources) -> Vec<Findi
                 }
                 // the words of the heads come from the type catalog of the module: none is said, a broken one is red with its cause
                 match types::read(&known.folder) {
-                    Ok(Some(_)) => {}
+                    Ok(Some(_)) => match words::check(&known.folder) {
+                        Ok(true) => {}
+                        // heads would be the bare word ids of the type catalog (`person.emails`)
+                        Ok(false) => out.push(Finding::Yellow(format!(
+                            "no-module-texts module={}",
+                            known.name
+                        ))),
+                        Err(why) => out.push(Finding::Red(format!(
+                            "module-texts-broken module={} cause={why:?}",
+                            known.name
+                        ))),
+                    },
                     Ok(None) => out.push(Finding::Yellow(format!(
                         "no-type-catalog module={}",
                         known.name

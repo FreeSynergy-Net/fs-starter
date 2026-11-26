@@ -45,11 +45,12 @@ pub fn read(folder: &Path) -> Result<Option<TypeRegistry>, Broken> {
         Ok(false) => return Ok(None),
         Ok(true) => {}
         Err(crate::registry::Refusal::Unreadable(c)) => {
+            // `check` also says `read-failed` (the folder cannot be read): never a size problem
             return Err(broken(
-                if c == "symlink" {
-                    "symlink"
-                } else {
-                    "too-large"
+                match c.as_str() {
+                    "symlink" => "symlink",
+                    "too-large" => "too-large",
+                    _ => "read-failed",
                 },
                 "",
             ));
