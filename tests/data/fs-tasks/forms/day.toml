@@ -90,6 +90,7 @@ command = "reopen"
 [[action]]
 elem = "action:3"
 trigger = "quick-add"
+at = "block:day/add"
 source = 1
 command = "create"
 

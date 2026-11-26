@@ -314,18 +314,21 @@ text = "tasks-board-empty-text"
 [[action]]
 elem = "action:1"
 trigger = "quick-add"
+at = "block:board/main"
 source = 1
 command = "create"
 
 [[action]]
 elem = "action:2"
 trigger = "drop"
+at = "block:board/main"
 source = 1
 command = "move"
 
 [[action]]
 elem = "action:3"
 trigger = "menu"
+at = "block:board/main"
 source = 1
 command = "delete"
 confirm = "confirm"

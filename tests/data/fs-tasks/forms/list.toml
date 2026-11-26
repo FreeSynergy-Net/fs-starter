@@ -321,6 +321,7 @@ role = "input"
 [[action]]
 elem = "action:1"
 trigger = "menu"
+at = "block:list/main"
 source = 1
 command = "create"
 

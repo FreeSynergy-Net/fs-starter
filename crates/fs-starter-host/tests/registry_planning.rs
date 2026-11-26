@@ -1,6 +1,7 @@
 //! SW-5, acceptance: the REAL, unchanged `catalog/commands.json` and `catalog/forms.json` of fs-modules-planning main 87874b3 (bare
 //! contract keys, no `id`) and the SW-7 forms of fs-tasks (52ff9246: `planning@>=0.0.1, <0.1.0`, keys without prefix) through the
-//! host: `--list-commands` and `--check`. Both copies are in `tests/data/` and must never be edited (a change there is a new copy).
+//! host: `--list-commands` and `--check`. Both copies are in `tests/data/` and are not edited, with ONE exception: the three `[[action]]` of the
+//! board of fs-tasks got `at = "block:board/main"` (fs-forms-layout 4a549f11 refuses a gesture without a place: cause `at-missing`).
 
 mod support;
 use support::install::Install;
