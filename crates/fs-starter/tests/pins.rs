@@ -74,23 +74,23 @@ fn the_lifted_libraries_are_pinned_by_their_tags_or_commits() {
         ),
         (
             "fs-forms-run",
-            "REV:91cbda84f6447efadeb866e6d1cc223f47f1b69c",
+            "REV:0841aebf99b315826773e95864e4deb4d05e29b4",
         ),
         (
             "fs-forms-bind",
-            "REV:91cbda84f6447efadeb866e6d1cc223f47f1b69c",
+            "REV:0841aebf99b315826773e95864e4deb4d05e29b4",
         ),
         (
             "fs-forms-testdata",
-            "REV:91cbda84f6447efadeb866e6d1cc223f47f1b69c",
+            "REV:0841aebf99b315826773e95864e4deb4d05e29b4",
         ),
         (
             "fs-forms-layout",
-            "REV:91cbda84f6447efadeb866e6d1cc223f47f1b69c",
+            "REV:0841aebf99b315826773e95864e4deb4d05e29b4",
         ),
         (
             "fs-forms-exchange",
-            "REV:91cbda84f6447efadeb866e6d1cc223f47f1b69c",
+            "REV:0841aebf99b315826773e95864e4deb4d05e29b4",
         ),
         (
             "fs-components",

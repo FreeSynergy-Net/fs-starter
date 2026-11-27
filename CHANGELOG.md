@@ -6,6 +6,8 @@ Version = tag.
 
 ### English
 
+- Pins (pin-15 wave): fs-forms 91cbda84 -> 0841aebf99b315826773e95864e4deb4d05e29b4 (people-module: P-F1..P-F4 on the module person); fs-components 4a923bbc, fs-rpc bfcb9d37, planning/tasks-core 2291f815, fs-interfaces 92dbb53e unchanged (the same as fs-forms 0841aebf pins); one state per fs crate (`cargo tree -d`: 0 fs duplicates), `tests/pins.rs` updated. NOT in this wave: fs-components 75ff65f0 (kanban as grid + card, BREAKING for the board): fs-forms main does not pin it yet, so dragging cards stays out until fs-forms takes it. Written with the help of Claude (Anthropic).
+
 - Pins (pin-14 wave): fs-components* 4a923bbc843f07534376213a04ee9e2806070611 (people-B DetailPage, people-C TileGrid; builds without a code change), fs-forms 91cbda84f6447efadeb866e6d1cc223f47f1b69c, fs-rpc/fs-trusted-path/fs-settings-rpc bfcb9d374a09489bac2d08b077ba81d51d47785c, fs-modules-planning/fs-tasks-core 2291f815440e47557aa08addb51e5b0b6389509b (pins fs-modules-person 99e0eba2a626a9f20d6cde2babe975af7e3e8454, one fs-person in the lock), fs-settings 4a923bbc (via fs-components), fs-interfaces 92dbb53e unchanged; `cargo tree -d`: 0 fs duplicates, `KNOWN_OLD` empty, `tests/pins.rs` updated. Written with the help of Claude (Anthropic).
 
 - Tolerant reader (cards K2/K5): a `capability` in `catalog/commands.json` that the pinned contract list does not know (a command of a newer module) no longer refuses the whole module: only that command is left out (`ModuleSet::skipped`, `Registry::skipped`) and `--check-system` says it as `yellow command-refused module=M command=C why=capability-unknown`, once per command. A file with no known command left, and every flaw of the file (json, type, symlink, size), stays a refusal of the module (red). A module below the need of a program (`host-notice-data-contract` with `cause=version`, version under a lower bound) now names its package and the action: `package=fs-module-M action=update`; a version above the need is the program to update and gets no such hint. Newer form minors are matched by fs-forms-bind (other repo), not changed here. New test `tests/tolerant.rs`; `registry_planning` test renamed and turned (the module stays). Written with the help of Claude (Anthropic).
@@ -27,9 +29,11 @@ Version = tag.
 
 
 - Pins (level-1ff2e850): the workflow callers (check, release, package-probe, windows) now use fs-release 1ff2e85094271fb0d5859c7f1fd6ae109fc678e6 (was ccb018e9), set with `scripts/pin-refs.sh` (`pin-chain green`).
-- The rpm now `Provides: freesynergy-form-source = 2` (`[package.metadata.generate-rpm.provides]`), so module packages can require the form-source level; `tests/form_source_level.rs` keeps the number equal to `FORM_SOURCE_LEVEL` of fs-interfaces. Not checked in a built rpm yet (no cargo-generate-rpm locally).
+- The rpm now `Provides: freesynergy-form-source = 2` (`[package.metadata.generate-rpm.provides]`), so module packages can require the form-source level; `tests/form_source_level.rs` keeps the number equal to `FORM_SOURCE_LEVEL` of fs-interfaces. Checked with `cargo generate-rpm` 0.21.1 (the metadata only: `rpm -qp --provides` shows it) and in `package-probe` (job `names`, both architectures).
 
 ### Deutsch
+
+- Pins (Welle pin-15): fs-forms 91cbda84 -> 0841aebf99b315826773e95864e4deb4d05e29b4 (People-Modul: P-F1..P-F4 auf dem Modul person); fs-components 4a923bbc, fs-rpc bfcb9d37, planning/tasks-core 2291f815, fs-interfaces 92dbb53e unverändert (dieselben wie in fs-forms 0841aebf); ein Stand je fs-Crate (`cargo tree -d`: 0 fs-Dubletten), `tests/pins.rs` nachgezogen. NICHT in dieser Welle: fs-components 75ff65f0 (Kanban als grid + card, BRUCH für das Brett): fs-forms main pinnt es noch nicht, das Ziehen von Karten bleibt draußen, bis fs-forms es übernimmt. Mit Hilfe von Claude (Anthropic) geschrieben.
 
 - Pins (Welle pin-14): fs-components* 4a923bbc843f07534376213a04ee9e2806070611 (people-B DetailPage, people-C TileGrid; baut ohne Codeänderung), fs-forms 91cbda84f6447efadeb866e6d1cc223f47f1b69c, fs-rpc/fs-trusted-path/fs-settings-rpc bfcb9d374a09489bac2d08b077ba81d51d47785c, fs-modules-planning/fs-tasks-core 2291f815440e47557aa08addb51e5b0b6389509b (pinnt fs-modules-person 99e0eba2a626a9f20d6cde2babe975af7e3e8454, ein fs-person im Lock), fs-settings 4a923bbc (über fs-components), fs-interfaces 92dbb53e unverändert; `cargo tree -d`: 0 fs-Doppel, `KNOWN_OLD` leer, `tests/pins.rs` nachgezogen. Mit Hilfe von Claude (Anthropic) geschrieben.
 
@@ -52,7 +56,7 @@ Version = tag.
 
 
 - Pins (Stand level-1ff2e850): die Workflow-Aufrufer (check, release, package-probe, windows) nutzen fs-release 1ff2e85094271fb0d5859c7f1fd6ae109fc678e6 (vorher ccb018e9), gesetzt mit `scripts/pin-refs.sh` (`pin-chain green`).
-- Das rpm bietet jetzt `Provides: freesynergy-form-source = 2` (`[package.metadata.generate-rpm.provides]`), damit Modulpakete den Stand der Formquelle verlangen können; `tests/form_source_level.rs` hält die Zahl gleich `FORM_SOURCE_LEVEL` aus fs-interfaces. Noch nicht in einem gebauten rpm geprüft (lokal kein cargo-generate-rpm).
+- Das rpm bietet jetzt `Provides: freesynergy-form-source = 2` (`[package.metadata.generate-rpm.provides]`), damit Modulpakete den Stand der Formquelle verlangen können; `tests/form_source_level.rs` hält die Zahl gleich `FORM_SOURCE_LEVEL` aus fs-interfaces. Mit `cargo generate-rpm` 0.21.1 geprüft (nur die Metadaten: `rpm -qp --provides` zeigt es) und in `package-probe` (Job `names`, beide Architekturen).
 
 ## 0.0.9
 

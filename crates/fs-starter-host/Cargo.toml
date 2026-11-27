@@ -21,10 +21,10 @@ path = "src/main.rs"
 [dependencies]
 fs-starter = { path = "../fs-starter", version = "0.0.10" }
 fs-types = { git = "https://github.com/FreeSynergy-Net/fs-types", rev = "722d3ce0156711d40cb278f2e835e865d9448290", version = "0.0.7" }
-fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "91cbda84f6447efadeb866e6d1cc223f47f1b69c", version = "0.1.0" }
-fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "91cbda84f6447efadeb866e6d1cc223f47f1b69c", version = "0.1.0" }
+fs-forms-run = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "0841aebf99b315826773e95864e4deb4d05e29b4", version = "0.1.0" }
+fs-forms-bind = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "0841aebf99b315826773e95864e4deb4d05e29b4", version = "0.1.0" }
 # The test data of `--sample-data` (a `SampleModule` made from the description, held in this process; ADR: sample data are a module). Same repo and rev as fs-forms-run (one source).
-fs-forms-testdata = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "91cbda84f6447efadeb866e6d1cc223f47f1b69c", version = "0.1.0" }
+fs-forms-testdata = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "0841aebf99b315826773e95864e4deb4d05e29b4", version = "0.1.0" }
 toml = "0.8"
 # The one reader of module versions (`Version`), already in the lock; ranges are `fs_types::interface::InterfaceReq`.
 semver = "1.0.28"
@@ -71,8 +71,8 @@ tokio = { version = "1", features = ["rt", "macros", "sync", "time", "net"] }
 # Conformance suite of the contract module_v1 and its fake (fs-module of fs-interfaces 0.3.0; the same source as fs-interfaces above, checked in the lock).
 fs-module = { git = "https://github.com/FreeSynergy-Net/fs-interfaces", rev = "92dbb53e9c9ea2c48e85a27712f0456f2a7b8161", version = "0.3.0" }
 # Reading a description in the host tests (the layout `Described` carries): the same rev as fs-forms-run.
-fs-forms-layout = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "91cbda84f6447efadeb866e6d1cc223f47f1b69c", version = "0.1.0" }
-fs-forms-exchange = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "91cbda84f6447efadeb866e6d1cc223f47f1b69c", version = "0.1.0" }
+fs-forms-layout = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "0841aebf99b315826773e95864e4deb4d05e29b4", version = "0.1.0" }
+fs-forms-exchange = { git = "https://github.com/FreeSynergy-Net/fs-forms", rev = "0841aebf99b315826773e95864e4deb4d05e29b4", version = "0.1.0" }
 
 # The real planning service in this process (Unix only: its tests use a Unix socket); every library on the same tag as above (one source each).
 [target.'cfg(unix)'.dev-dependencies]
