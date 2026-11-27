@@ -70,7 +70,8 @@ jobs:
             dpkg-deb -f "${debs[0]}" "$f" | tr ',' '\n' | grep -qx "[[:space:]]*$OLD[[:space:]]*" || { echo "::error::deb $f does not name $OLD"; exit 1; }
           done
           rpm -qp --obsoletes "${rpms[0]}" | grep -q "^$OLD\b" || { echo "::error::rpm does not obsolete $OLD"; exit 1; }
-          echo "ok: deb and rpm are both $PROGRAM and take over $OLD"
+          rpm -qp --provides "${rpms[0]}" | grep -qx 'freesynergy-form-source = 2' || { echo "::error::rpm does not provide freesynergy-form-source = 2 (FORM_SOURCE_LEVEL; tests/form_source_level.rs keeps Cargo.toml and the code equal)"; exit 1; }
+          echo "ok: deb and rpm are both $PROGRAM, take over $OLD, the rpm provides the form-source level"
   # Gate: deb and rpm really install the desktop entry, the metainfo and the hicolor icon (listing as proof).
   icons:
     needs: linux
